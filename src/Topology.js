@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { hierarchy, tree } from 'd3-hierarchy'
 import { select, event } from 'd3-selection'
-import { linkVertical } from 'd3-shape'
+import { line, linkVertical, curveCardinalClosed } from 'd3-shape'
 import { } from 'd3-transition'
 import { zoom } from 'd3-zoom'
 
@@ -111,20 +111,11 @@ export class TopologyComponent extends Component {
 
         var svg = select(this.node);
 
-        var redraw = () => {
-            g.attr("transform", event.transform.toString())
-        }
-
         var g = svg
             .call(zoom()
-                //.scaleExtent([0.05, 3])
-                .on("zoom", redraw))
+                .scaleExtent([0.05, 3])
+                .on("zoom", () => { g.attr("transform", event.transform.toString()) }))
             .append("g")
-
-        var gNodes = g.append("g")
-            .attr("class", "nodes")
-            /*.attr("transform",
-                "translate(" + this.margin.left + "," + this.margin.top + ")")*/
 
         var gLinks = g.append("g")
             .attr("class", "links")
@@ -132,8 +123,9 @@ export class TopologyComponent extends Component {
             .attr("stroke", "#555")
             .attr("stroke-opacity", 0.4)
             .attr("stroke-width", 1.5)
-            /*.attr("transform",
-                "translate(" + this.margin.left + "," + this.margin.top + ")")*/
+
+        var gNodes = g.append("g")
+            .attr("class", "nodes")
 
         var i = 0;
 
@@ -170,7 +162,7 @@ export class TopologyComponent extends Component {
             this.tree(root)
 
             var link = gLinks.selectAll('path.link')
-                .data(root.links(), d => { return d.source.data.id + d.target.data.id })
+                .data(root.links(), d => d.source.data.id + d.target.data.id )
             link.enter()
                 .append('path')
                 .attr("class", "link")
@@ -194,6 +186,34 @@ export class TopologyComponent extends Component {
                 .append("g")
                 .attr("class", "node")
                 .attr("transform", d => `translate(${d.x},${d.y})`)
+
+            var hexagon = (d, size) => {
+                var s32 = (Math.sqrt(3)/2)
+
+                if (!size) {
+                    size = 20
+                }
+
+                return [
+                    {"x": size, "y": 0},
+                    {"x": size / 2, "y": size * s32},
+                    {"x": -size / 2, "y": size * s32},
+                    {"x": -size, "y": 0},
+                    {"x": -size / 2, "y": -size * s32},
+                    {"x": size / 2, "y": -size * s32}
+                ]
+            }
+
+            var liner = line()
+                .x(d =>  d.x)
+                .y(d =>  d.y)
+                .curve(curveCardinalClosed.tension(0.7))
+
+            nodeEnter.append("path") //draw elements
+                .attr("d", d => liner(hexagon(d)))
+                .attr("stroke", "#455f6b")
+                .attr("fill", "#c3dde2")
+                .attr("stroke-dasharray", "5,5")
 
             nodeEnter.append("circle")
                 .attr("fill", d => d.children ? "#555" : "#999")
