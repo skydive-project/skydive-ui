@@ -114,8 +114,11 @@ export class TopologyComponent extends Component {
         var g = svg
             .call(zoom()
                 .scaleExtent([0.05, 3])
-                .on("zoom", () => { g.attr("transform", event.transform.toString()) }))
+                .on("zoom", () => g.attr("transform", event.transform.toString()) ))
             .append("g")
+
+        var gLayers = g.append("g")
+            .attr("class", "layers")
 
         var gLinks = g.append("g")
             .attr("class", "links")
@@ -178,11 +181,11 @@ export class TopologyComponent extends Component {
                     .y(d => d.y))
 
             var node = gNodes.selectAll('g.node')
-                .data(root.descendants(), d =>{ return d.data.id })
+                .data(root.descendants(), d => d.data.id )
             node.exit().remove()
 
             var nodeEnter = node.enter()
-                .filter(function (d) { return d.data.data })
+                .filter(d => d.data.data )
                 .append("g")
                 .attr("class", "node")
                 .attr("transform", d => `translate(${d.x},${d.y})`)
@@ -209,7 +212,7 @@ export class TopologyComponent extends Component {
                 .y(d =>  d.y)
                 .curve(curveCardinalClosed.tension(0.7))
 
-            nodeEnter.append("path") //draw elements
+            nodeEnter.append("path")
                 .attr("d", d => liner(hexagon(d)))
                 .attr("stroke", "#455f6b")
                 .attr("fill", "#c3dde2")
@@ -221,15 +224,15 @@ export class TopologyComponent extends Component {
 
             nodeEnter.append("text")
                 .attr("dy", ".35em")
-                .attr("x", d => { return d.children ? +30 : 0 })
-                .attr("y", d => { return d.children ? 0 : 20 })
+                .attr("x", d => d.children ? +40 : 0)
+                .attr("y", d => d.children ? 0 : 30)
                 .style("text-anchor", "middle")
-                .text(d => { return d.data.data ? d.data.data.name : "" })
+                .text(d => d.data.data ? d.data.data.name : "")
 
             node.transition()
                 .duration(500)
                 .attr("transform", d => `translate(${d.x},${d.y})`)
-        }, 1000)
+        }, 200)
     }
 
     render() {
