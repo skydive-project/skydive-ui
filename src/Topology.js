@@ -1,8 +1,9 @@
 import React, { Component } from 'react'
 import { hierarchy, tree } from 'd3-hierarchy'
-import { select } from 'd3-selection'
+import { select, event } from 'd3-selection'
 import { linkVertical } from 'd3-shape'
 import { } from 'd3-transition'
+import { zoom } from 'd3-zoom'
 
 
 export class TopologyComponent extends Component {
@@ -108,13 +109,22 @@ export class TopologyComponent extends Component {
             return child
         }
 
-        var g = select(this.node)
+        var svg = select(this.node);
+
+        var redraw = () => {
+            g.attr("transform", event.transform.toString())
+        }
+
+        var g = svg
+            .call(zoom()
+                //.scaleExtent([0.05, 3])
+                .on("zoom", redraw))
             .append("g")
 
         var gNodes = g.append("g")
             .attr("class", "nodes")
-            .attr("transform",
-                "translate(" + this.margin.left + "," + this.margin.top + ")")
+            /*.attr("transform",
+                "translate(" + this.margin.left + "," + this.margin.top + ")")*/
 
         var gLinks = g.append("g")
             .attr("class", "links")
@@ -122,8 +132,8 @@ export class TopologyComponent extends Component {
             .attr("stroke", "#555")
             .attr("stroke-opacity", 0.4)
             .attr("stroke-width", 1.5)
-            .attr("transform",
-                "translate(" + this.margin.left + "," + this.margin.top + ")")
+            /*.attr("transform",
+                "translate(" + this.margin.left + "," + this.margin.top + ")")*/
 
         var i = 0;
 
@@ -191,7 +201,8 @@ export class TopologyComponent extends Component {
 
             nodeEnter.append("text")
                 .attr("dy", ".35em")
-                .attr("y", d => { return d.children ? -20 : 20 })
+                .attr("x", d => { return d.children ? +30 : 0 })
+                .attr("y", d => { return d.children ? 0 : 20 })
                 .style("text-anchor", "middle")
                 .text(d => { return d.data.data ? d.data.data.name : "" })
 
