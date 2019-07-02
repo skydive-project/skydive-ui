@@ -4,7 +4,9 @@ import { select, event } from 'd3-selection'
 import { line, linkVertical, curveCardinalClosed } from 'd3-shape'
 import { } from 'd3-transition'
 import { zoom } from 'd3-zoom'
-
+import { polygonHull } from 'd3-polygon'
+import { schemeOranges } from 'd3-scale-chromatic'
+import { scaleOrdinal } from 'd3-scale'
 
 export class TopologyComponent extends Component {
     constructor(props) {
@@ -14,9 +16,9 @@ export class TopologyComponent extends Component {
         this.height = 1200
 
         this.nodeWidth = 80
-        this.nodeHeight = 100
+        this.nodeHeight = 120
 
-        this.tree = tree().size([this.width, this.height]).nodeSize([this.nodeWidth, this.nodeHeight])
+        this.tree = tree().nodeSize([this.nodeWidth, this.nodeHeight])
     }
 
     componentDidMount() {
@@ -152,8 +154,6 @@ export class TopologyComponent extends Component {
             .attr("class", "layer-links")
             .attr("fill", "none")
             .attr("stroke", "#400")
-            .attr("stroke-opacity", 0.8)
-            .attr("stroke-width", 2)
 
         var gNodes = g.append("g")
             .attr("class", "nodes")
@@ -208,73 +208,77 @@ export class TopologyComponent extends Component {
                 return links
             }
 
-            var _layerNodeBB = (node, bb) => {
-                if (!bb) {
-                    bb =  { node: node, nodeMinX: node, nodeMinY: node, nodeMaxX: node, nodeMaxY: node, margin: 0 }
-                } else {
-                    if (node.x < bb.nodeMinX.x) {
-                        bb.nodeMinX = node
-                    }
-                    if (node.y < bb.nodeMinY.y) {
-                        bb.nodeMinY = node
-                    }
-                    if (node.x > bb.nodeMaxX.x) {
-                        bb.nodeMaxX = node
-                    }
-                    if (node.y > bb.nodeMaxY.y) {
-                        bb.nodeMaxY = node
-                    }
+            var _layerNodes = (node, nodes) => {
+                if (!nodes) {
+                    nodes = []
+                }
 
-                    if (node.data.layer !== bb.node.data.layer) {
-                        bb.margin = 50
-                    } else {
-                        bb.margin = 40
-                    }
+                if (node.data._node) {
+                    nodes.push(node)
                 }
 
                 if (node.children) {
-                    node.children.forEach(child => _layerNodeBB(child, bb))
+                    node.children.forEach(child => {
+                        _layerNodes(child, nodes)
+                    })
                 }
 
-                return bb
+                return nodes
             }
 
-            var layerBBs = (node, bbs) => {
-                if (!bbs) {
-                    bbs = []
+            var layerNodes = (node, nodes) => {
+                if (!nodes) {
+                    nodes = []
                 }
 
-                if (node.data._node && node.parent && node.data.layer !== node.parent.data.layer) {
-                    bbs.push(_layerNodeBB(node))
+                if (node.data.parent && node.data.parent.layer !== node.data.layer) {
+                    nodes.push({ id: node.data.id, nodes: _layerNodes(node) })
                 }
 
                 if (node.children) {
-                    node.children.forEach(child => layerBBs(child, bbs))
+                    node.children.forEach(child => {
+                        layerNodes(child, nodes)
+                    })
                 }
 
-                return bbs
+                return nodes
             }
 
-            var layer = gLayers.selectAll('rect.layer')
-                .data(layerBBs(root), d => d.id)
+            var layerPoints = (node) => {
+                return node.nodes.map(n => [n.x, n.y])
+            }
+
+            var layerPath = (node) => {
+                let hull = polygonHull(layerPoints(node))
+                if (hull) {
+                    return "M" + hull.join("L") + "Z";
+                }
+                return ""
+            }
+
+            var colors = scaleOrdinal(schemeOranges[9]);
+
+            var layer = gLayers.selectAll("path.layer")
+                .data(layerNodes(root), d => d.id)
             var layerEnter = layer.enter()
-                .append('rect')
+                .append("path")
                 .attr("class", "layer")
-                .attr("x", d => d.nodeMinX.x - d.margin)
-                .attr("y", d => d.nodeMinY.y - d.margin)
-                .attr("rx", 15)
-                .attr("width", d => d.nodeMaxX.x - d.nodeMinX.x + d.margin*2)
-                .attr("height", d => d.nodeMaxY.y - d.nodeMinY.y + d.margin*2)
-                .attr("stroke", "#5e7b8c")
-                .attr("fill", "#da9723")
-                .attr("fill-opacity", "0.3")
-                .attr("stroke-dasharray", "5,10")
+                .attr("d", layerPath)
+                .attr("stroke-width", "72px")
+                .attr("stroke-linejoin", "round")
+                .attr("stroke", (d, i) => colors(d.id))
+                .attr("fill", (d, i) => colors(d.id))
+                .style("opacity", 0)
             layer.exit().remove()
+
+            layerEnter.transition()
+                .duration(500)
+                .style("opacity", 1)
 
             layer.transition()
                 .duration(500)
-                .attr("x", d => d.nodeMinX.x - d.margin)
-                .attr("y", d => d.nodeMinY.y - d.margin)
+                .style("opacity", 1)
+                .attr("d", layerPath)
 
             var link = gLinks.selectAll('path.link')
                 .data(root.links(), d => d.source.data.id + d.target.data.id)
@@ -294,7 +298,6 @@ export class TopologyComponent extends Component {
 
             link.transition()
                 .duration(500)
-                .style("opacity", 1)
                 .attr("d", linkVertical()
                     .x(d => d.x)
                     .y(d => d.y))
@@ -387,7 +390,6 @@ export class TopologyComponent extends Component {
                 .style("opacity", 1)
                 .attr("transform", d => `translate(${d.x},${d.y})`)
 
-
             var layerLink = gLayerLinks.selectAll('path.link')
                 .data(visibleLayerLinks(), d => d.id)
             var layerLinkEnter = layerLink.enter()
@@ -427,17 +429,21 @@ export class TopologyComponent extends Component {
 
             addLayerLink(hbr, br, { RelationType: "layer2" })
 
-            addChild(br, "port1-" + i, { name: "port1" }, 2)
-            addChild(br, "port2-" + i, { name: "port2" }, 2)
+            var port1 = addChild(br, "port1-" + i, { name: "port1" }, 2)
+            var port2 = addChild(br, "port2-" + i, { name: "port2" }, 2)
             addChild(br, "port3-" + i, { name: "port3" }, 2)
 
             var ns1 = addChild(host, "ns1-" + i, { name: "ns1" }, 3)
             addChild(ns1, "ns1-lo-" + i, { name: "lo" }, 3)
-            addChild(ns1, "ns1-eth0-" + i, { name: "eth0" }, 3)
+            var eth0 = addChild(ns1, "ns1-eth0-" + i, { name: "eth0" }, 3)
+
+            addLayerLink(port1, eth0, { RelationType: "layer2" })
 
             var ns2 = addChild(host, "ns2-" + i, { name: "ns2" }, 3)
             addChild(ns2, "ns2-lo-" + i, { name: "lo" }, 3)
-            addChild(ns2, "ns2-eth0-0" + i, { name: "eth0" }, 3)
+            var eth0 = addChild(ns2, "ns2-eth0-0" + i, { name: "eth0" }, 3)
+
+            addLayerLink(port2, eth0, { RelationType: "layer2" })
 
             update(null, true)
         }, 200)
