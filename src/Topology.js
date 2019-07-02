@@ -137,11 +137,15 @@ export class TopologyComponent extends Component {
                 .on("zoom", () => g.attr("transform", event.transform.toString())))
             .append("g")
 
+        var gLayers = g.append("g")
+            .attr("class", "layers")
+            .attr("fill", "none")
+
         var gLinks = g.append("g")
             .attr("class", "links")
             .attr("fill", "none")
             .attr("stroke", "#555")
-            .attr("stroke-opacity", 0.4)
+            .attr("stroke-opacity", 0.5)
             .attr("stroke-width", 1)
 
         var gLayerLinks = g.append("g")
@@ -149,7 +153,7 @@ export class TopologyComponent extends Component {
             .attr("fill", "none")
             .attr("stroke", "#400")
             .attr("stroke-opacity", 0.8)
-            .attr("stroke-width", 1.5)
+            .attr("stroke-width", 2)
 
         var gNodes = g.append("g")
             .attr("class", "nodes")
@@ -203,6 +207,74 @@ export class TopologyComponent extends Component {
 
                 return links
             }
+
+            var _layerNodeBB = (node, bb) => {
+                if (!bb) {
+                    bb =  { node: node, nodeMinX: node, nodeMinY: node, nodeMaxX: node, nodeMaxY: node, margin: 0 }
+                } else {
+                    if (node.x < bb.nodeMinX.x) {
+                        bb.nodeMinX = node
+                    }
+                    if (node.y < bb.nodeMinY.y) {
+                        bb.nodeMinY = node
+                    }
+                    if (node.x > bb.nodeMaxX.x) {
+                        bb.nodeMaxX = node
+                    }
+                    if (node.y > bb.nodeMaxY.y) {
+                        bb.nodeMaxY = node
+                    }
+
+                    if (node.data.layer !== bb.node.data.layer) {
+                        bb.margin = 50
+                    } else {
+                        bb.margin = 40
+                    }
+                }
+
+                if (node.children) {
+                    node.children.forEach(child => _layerNodeBB(child, bb))
+                }
+
+                return bb
+            }
+
+            var layerBBs = (node, bbs) => {
+                if (!bbs) {
+                    bbs = []
+                }
+
+                if (node.data._node && node.parent && node.data.layer !== node.parent.data.layer) {
+                    bbs.push(_layerNodeBB(node))
+                }
+
+                if (node.children) {
+                    node.children.forEach(child => layerBBs(child, bbs))
+                }
+
+                return bbs
+            }
+
+            var layer = gLayers.selectAll('rect.layer')
+                .data(layerBBs(root), d => d.id)
+            var layerEnter = layer.enter()
+                .append('rect')
+                .attr("class", "layer")
+                .attr("x", d => d.nodeMinX.x - d.margin)
+                .attr("y", d => d.nodeMinY.y - d.margin)
+                .attr("rx", 15)
+                .attr("width", d => d.nodeMaxX.x - d.nodeMinX.x + d.margin*2)
+                .attr("height", d => d.nodeMaxY.y - d.nodeMinY.y + d.margin*2)
+                .attr("stroke", "#5e7b8c")
+                .attr("fill", "#da9723")
+                .attr("fill-opacity", "0.3")
+                .attr("stroke-dasharray", "5,10")
+            layer.exit().remove()
+
+            layer.transition()
+                .duration(500)
+                .attr("x", d => d.nodeMinX.x - d.margin)
+                .attr("y", d => d.nodeMinY.y - d.margin)
 
             var link = gLinks.selectAll('path.link')
                 .data(root.links(), d => d.source.data.id + d.target.data.id)
@@ -286,7 +358,9 @@ export class TopologyComponent extends Component {
                 .style("text-anchor", "middle")
                 .text(d => d.data._node.data ? d.data._node.data.name : "")
 
-            var exco = nodeEnter.append("g")
+            var exco = nodeEnter
+                .filter(d => d.data._node.children.length > 0)
+                .append("g")
             exco.on("click", expand);
 
             exco.append("circle")
