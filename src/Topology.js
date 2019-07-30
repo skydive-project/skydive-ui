@@ -204,9 +204,25 @@ export class TopologyComponent extends Component {
             var visibleLayerLinks = () => {
                 let links = []
 
+                let findVisible = (node) => {
+                    while(node) {
+                        if (holders[node.id]) {
+                            return node
+                        }
+                        node = node.parent
+                    }
+                }
+
                 layerLinks.forEach(link => {
-                    if (holders[link.source.id] && holders[link.target.id]) {
-                        links.push(link)
+                    let source = findVisible(link.source)
+                    let target = findVisible(link.target)
+
+                    if (source && target && source !== target) {
+                        links.push({
+                            id: link.id,
+                            source: source,
+                            target: target,
+                        })
                     }
                 })
 
@@ -479,7 +495,7 @@ export class TopologyComponent extends Component {
 
         var i = 0
         setInterval(() => {
-            if (i > 2) {
+            if (i > 1) {
                 return
             }
             i++
