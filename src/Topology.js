@@ -22,6 +22,22 @@ export class TopologyComponent extends Component {
         this.nodeHeight = 200
 
         this.tree = tree().nodeSize([this.nodeWidth, this.nodeHeight])
+
+        this.root = {
+            id: "root",
+            data: {
+                name: "root"
+            },
+            layer: 0,
+            children: []
+        }
+        this.maxLayer = 0
+
+        // node state
+        this.nodeStates = {}
+        this.nodeStates[this.root.id] = this.defaultState()
+
+        this.layerLinks = []
     }
 
     componentDidMount() {
@@ -32,25 +48,54 @@ export class TopologyComponent extends Component {
         this.createTree()
     }
 
-    createTree() {
-        // node state
-        var states = {}
-        var defaultState = () => { return { expanded: true } }
+    defaultState() { 
+        return { expanded: true } 
+    }
 
-        var treeRoot = {
-            id: "root",
-            data: {
-                name: "root"
-            },
-            layer: 0,
+    addChild(parent, id, data, layer) {
+        if (layer > this.maxLayer) {
+            this.maxLayer = layer
+        }
+
+        var child = {
+            id: id,
+            parent: parent,
+            layer: layer,
+            data: data,
             children: []
         }
-        states[treeRoot.id] = defaultState()
+        parent.children.push(child)
 
-        var layerLinks = []
+        this.nodeStates[id] = this.defaultState()
 
+        return child
+    }
+
+    addLayerLink(node1, node2, data) {
+        this.layerLinks.push({
+            id: node1.id + "-" + node2.id,
+            data: data,
+            source: node1,
+            target: node2
+        })
+    }
+
+    cloneTree(node, parent) {
+        let state = this.nodeStates[node.id]
+        let cloned = { id: node.id, _node: node, layer: node.layer, children: [], parent: parent, state: state }
+
+        if (this.nodeStates[node.id].expanded) {
+            node.children.forEach(child => {
+                cloned.children.push(this.cloneTree(child, cloned))
+            })
+        }
+
+        return cloned
+    }
+
+    normalizeTree(node) {
         // return depth of the given layer
-        var layerHeight = (node, layer, currDepth) => {
+        let layerHeight = (node, layer, currDepth) => {
             if (node.layer > layer) {
                 return 0
             }
@@ -66,21 +111,8 @@ export class TopologyComponent extends Component {
             return maxDepth
         }
 
-        var clone = (node, parent) => {
-            let state = states[node.id]
-            let cloned = { id: node.id, _node: node, layer: node.layer, children: [], parent: parent, state: state }
-
-            if (states[node.id].expanded) {
-                node.children.forEach(child => {
-                    cloned.children.push(clone(child, cloned))
-                })
-            }
-
-            return cloned
-        }
-
         // re-order tree to add placeholder node in order to separate layers
-        var normalizeTreeHeight = (root, node, layer, currDepth) => {
+        let normalizeTreeHeight = (root, node, layer, currDepth) => {
             if (node.layer > layer) {
                 return
             }
@@ -104,36 +136,14 @@ export class TopologyComponent extends Component {
             })
         }
 
-        var maxLayer = 0
-
-        var addChild = (parent, id, data, layer) => {
-            if (layer > maxLayer) {
-                maxLayer = layer
-            }
-
-            var child = {
-                id: id,
-                parent: parent,
-                layer: layer,
-                data: data,
-                children: []
-            }
-            parent.children.push(child)
-
-            states[id] = defaultState()
-
-            return child
+        var tree = this.cloneTree(node)
+        for (let i = 0; i <= this.maxLayer; i++) {
+            normalizeTreeHeight(tree, tree, i, 0)
         }
+        return tree
+    }
 
-        var addLayerLink = (node1, node2, data) => {
-            layerLinks.push({
-                id: node1.id + "-" + node2.id,
-                data: data,
-                source: node1,
-                target: node2
-            })
-        }
-
+    createTree() {
         var svg = select(this.node)
 
         var g = svg
@@ -187,119 +197,155 @@ export class TopologyComponent extends Component {
             update()
         }
 
-        var update = () => {
-            let normTreeRoot = clone(treeRoot)
-            for (let i = 0; i <= maxLayer; i++) {
-                normalizeTreeHeight(normTreeRoot, normTreeRoot, i, 0)
+        var visibleLayerLinks = (holders) => {
+            let links = []
+
+            let findVisible = (node) => {
+                while (node) {
+                    if (holders[node.id]) {
+                        return node
+                    }
+                    node = node.parent
+                }
             }
 
-            let root = hierarchy(normTreeRoot)
+            this.layerLinks.forEach(link => {
+                let source = findVisible(link.source)
+                let target = findVisible(link.target)
+
+                if (source && target && source !== target) {
+                    links.push({
+                        id: link.id,
+                        source: source,
+                        target: target,
+                    })
+                }
+            })
+
+            return links
+        }
+
+        var boundingBox = (node, bb) => {
+            if (!bb) {
+                bb = [node.x, node.x]
+            } else {
+                if (bb[0] > node.x) {
+                    bb[0] = node.x
+                }
+                if (bb[1] < node.x) {
+                    bb[1] = node.x
+                }
+            }
+
+            if (node.children) {
+                node.children.forEach(child => {
+                    boundingBox(child, bb)
+                })
+            }
+
+            return bb
+        }
+
+        var nodesRect = (root, nodes) => {
+            let node0 = nodes[0]
+            let nBB = [node0.y, node0.y]
+
+            for (let node of nodes) {
+                if (nBB[0] > node.y) {
+                    nBB[0] = node.y
+                }
+                if (nBB[1] < node.y) {
+                    nBB[1] = node.y
+                }
+            }
+
+            let gBB = boundingBox(root)
+            const margin = 100
+
+            return {
+                x: gBB[0] - margin,
+                y: nBB[0] - margin,
+                width: gBB[1] - gBB[0] + margin * 2,
+                height: nBB[1] - nBB[0] + margin * 2
+            }
+        }
+
+        var _layerNodes = (node, nodes) => {
+            if (!nodes) {
+                nodes = {}
+            }
+
+            if (node.data.layer) {
+                let arr = nodes[node.data.layer]
+                if (!arr) {
+                    nodes[node.data.layer] = arr = { id: node.data.layer, nodes: [node] }
+                } else {
+                    arr.nodes.push(node)
+                }
+            }
+
+            if (node.children) {
+                node.children.forEach(child => {
+                    _layerNodes(child, nodes)
+                })
+            }
+
+            return nodes
+        }
+
+        var layerNodes = (node) => {
+            return Object.values(_layerNodes(node, {}))
+        }
+
+        var hexagon = (d, size) => {
+            var s32 = (Math.sqrt(3) / 2)
+
+            if (!size) {
+                size = 20
+            }
+
+            return [
+                { "x": size, "y": 0 },
+                { "x": size / 2, "y": size * s32 },
+                { "x": -size / 2, "y": size * s32 },
+                { "x": -size, "y": 0 },
+                { "x": -size / 2, "y": -size * s32 },
+                { "x": size / 2, "y": -size * s32 }
+            ]
+        }
+
+        var liner = line()
+            .x(d => d.x)
+            .y(d => d.y)
+            .curve(curveCardinalClosed.tension(0.7))
+
+        var types = {
+            host: { color: "#114B5F", icon: "\uf109", text: "#eee" },
+            bridge: { color: "#1A936F", icon: "\uf1e0", text: "#eee" },
+            interface: { color: "#88D498", icon: "\uf120", text: "#444" },
+            netns: { color: "#C6DABF", icon: "\uf24d", text: "#444" },
+            port: { color: "#1A936F", icon: "\uf0e8", text: "#eee" },
+            unknown: { color: "#C9ADA7", icon: "\uf192", text: "#444" }
+        }
+
+        var type = (d) => {
+            return types[d.data._node.data.type] ? types[d.data._node.data.type] : types["unknown"]
+        }
+
+        var groupColors = (d) => {
+            return colorOranges(d.data._node.layer)
+        }
+
+        var update = () => {
+            let normRoot = this.normalizeTree(this.root)
+
+            let root = hierarchy(normRoot)
             this.tree(root)
 
             let holders = {}
             root.each(node => {
                 holders[node.data.id] = node
             })
-
-            var visibleLayerLinks = () => {
-                let links = []
-
-                let findVisible = (node) => {
-                    while(node) {
-                        if (holders[node.id]) {
-                            return node
-                        }
-                        node = node.parent
-                    }
-                }
-
-                layerLinks.forEach(link => {
-                    let source = findVisible(link.source)
-                    let target = findVisible(link.target)
-
-                    if (source && target && source !== target) {
-                        links.push({
-                            id: link.id,
-                            source: source,
-                            target: target,
-                        })
-                    }
-                })
-
-                return links
-            }
-
-            var _layerNodes = (node, nodes) => {
-                if (!nodes) {
-                    nodes = {}
-                }
-
-                if (node.data.layer) {
-                    let arr = nodes[node.data.layer]
-                    if (!arr) {
-                        nodes[node.data.layer] = arr = { id: node.data.layer, nodes: [node] }
-                    } else {
-                        arr.nodes.push(node)
-                    }
-                }
-
-                if (node.children) {
-                    node.children.forEach(child => {
-                        _layerNodes(child, nodes)
-                    })
-                }
-
-                return nodes
-            }
-
-            var layerNodes = (node) => {
-                return Object.values(_layerNodes(node, {}))
-            }
-
-            var boundingBox = (node, bb) => {
-                if (!bb) {
-                    bb = [node.x, node.x]
-                } else {
-                    if (bb[0] > node.x) {
-                        bb[0] = node.x
-                    }
-                    if (bb[1] < node.x) {
-                        bb[1] = node.x
-                    }
-                }
-
-                if (node.children) {
-                    node.children.forEach(child => {
-                        boundingBox(child, bb)
-                    })
-                }
-
-                return bb
-            }
-
-            var nodesRect = (nodes) => {
-                let node0 = nodes[0]
-                let nBB = [node0.y, node0.y]
-
-                for (let node of nodes) {
-                    if (nBB[0] > node.y) {
-                        nBB[0] = node.y
-                    }
-                    if (nBB[1] < node.y) {
-                        nBB[1] = node.y
-                    }
-                }
-
-                let gBB = boundingBox(root)
-                const margin = 100
-
-                return {
-                    x: gBB[0] - margin,
-                    y: nBB[0] - margin,
-                    width: gBB[1] - gBB[0] + margin * 2,
-                    height: nBB[1] - nBB[0] + margin * 2
-                }
-            }
 
             var linker = linkVertical()
                 .x(d => d.x)
@@ -315,7 +361,7 @@ export class TopologyComponent extends Component {
                 .attr("stroke", "#000")
                 .attr("stroke-dasharray", "5,10")
                 .attr("fill", d => colorBlues(d.id))
-                .attrs(d => nodesRect(d.nodes))
+                .attrs(d => nodesRect(root, d.nodes))
             layers.exit().remove()
 
             layersEnter.transition()
@@ -324,7 +370,7 @@ export class TopologyComponent extends Component {
 
             layers.transition()
                 .duration(500)
-                .attrs(d => nodesRect(d.nodes))
+                .attrs(d => nodesRect(root, d.nodes))
 
             var hieraLink = gHieraLinks.selectAll('path.link')
                 .data(root.links(), d => d.source.data.id + d.target.data.id)
@@ -365,10 +411,6 @@ export class TopologyComponent extends Component {
 
             const hexSize = 30
 
-            var groupColors = (d) => {
-                return colorOranges(d.data._node.layer)
-            }
-
             nodeEnter.append("circle")
                 .attr("r", hexSize + 14)
                 .attr("fill", "#fff")
@@ -378,41 +420,6 @@ export class TopologyComponent extends Component {
             nodeEnter.append("circle")
                 .attr("r", hexSize + 8)
                 .attr("fill", groupColors)
-
-            var hexagon = (d, size) => {
-                var s32 = (Math.sqrt(3) / 2)
-
-                if (!size) {
-                    size = 20
-                }
-
-                return [
-                    { "x": size, "y": 0 },
-                    { "x": size / 2, "y": size * s32 },
-                    { "x": -size / 2, "y": size * s32 },
-                    { "x": -size, "y": 0 },
-                    { "x": -size / 2, "y": -size * s32 },
-                    { "x": size / 2, "y": -size * s32 }
-                ]
-            }
-
-            var liner = line()
-                .x(d => d.x)
-                .y(d => d.y)
-                .curve(curveCardinalClosed.tension(0.7))
-
-            var types = {
-                host: { color: "#114B5F", icon: "\uf109", text: "#eee" },
-                bridge: { color: "#1A936F", icon: "\uf1e0", text: "#eee" },
-                interface: { color: "#88D498", icon: "\uf120", text: "#444" },
-                netns: { color: "#C6DABF", icon: "\uf24d", text: "#444" },
-                port: { color: "#1A936F", icon: "\uf0e8", text: "#eee" },
-                unknown: { color: "#C9ADA7", icon: "\uf192", text: "#444" }
-            }
-
-            var type = (d) => {
-                return types[d.data._node.data.type] ? types[d.data._node.data.type] : types["unknown"]
-            }
 
             nodeEnter.append("path")
                 .attr("d", d => liner(hexagon(d, hexSize)))
@@ -443,17 +450,17 @@ export class TopologyComponent extends Component {
 
             exco.append("circle")
                 .attr("class", "collapse")
-                .attr("cx", hexSize - 5)
-                .attr("cy", hexSize - 5)
-                .attr("r", d => d.data._node.children.length ? 10 : 0)
+                .attr("cx", hexSize)
+                .attr("cy", hexSize)
+                .attr("r", d => d.data._node.children.length ? 15 : 0)
                 .attr("fill", "#48e448")
                 .attr("stroke", "#666")
 
             exco.append("text")
                 .attr("class", "text-collapse")
-                .attr("x", hexSize - 5)
-                .attr("y", hexSize - 1)
-                .style("font-size", "10px")
+                .attr("x", hexSize)
+                .attr("y", hexSize + 6)
+                .style("font-size", "14px")
                 .attr("fill", "#fff")
                 .attr("text-anchor", "middle")
                 .style("font-family", "FontAwesome")
@@ -469,7 +476,7 @@ export class TopologyComponent extends Component {
                 .y(d => holders[d.node.id].y + d.dy)
 
             var layerLink = gLayerLinks.selectAll('path.layer-link')
-                .data(visibleLayerLinks(), d => d.id)
+                .data(visibleLayerLinks(holders), d => d.id)
             var layerLinkEnter = layerLink.enter()
                 .append('path')
                 .attr("class", "layer-link")
@@ -500,36 +507,39 @@ export class TopologyComponent extends Component {
             }
             i++
 
-            var host = addChild(treeRoot, "host-" + i, { name: "host " + i, type: "host" }, 1)
-            addChild(host, "host-lo-" + i, { name: "lo", type: "interface" }, 1)
-            addChild(host, "host-ethO-" + i, { name: "eth0", type: "interface" }, 1)
-            var hbr = addChild(host, "host-br-int-" + i, { name: "br-int", type: "interface" }, 1)
+            var host = this.addChild(this.root, "host-" + i, { name: "host " + i, type: "host" }, 1)
+            this.addChild(host, "host-lo-" + i, { name: "lo", type: "interface" }, 1)
+            this.addChild(host, "host-ethO-" + i, { name: "eth0", type: "interface" }, 1)
+            var hbr = this.addChild(host, "host-br-int-" + i, { name: "br-int", type: "interface" }, 1)
 
-            var br = addChild(host, "br-int-" + i, { name: "br-int", type: "bridge" }, 2)
+            var br = this.addChild(host, "br-int-" + i, { name: "br-int", type: "bridge" }, 2)
 
-            addLayerLink(hbr, br, { RelationType: "layer2" })
+            this.addLayerLink(hbr, br, { RelationType: "layer2" })
 
-            var port1 = addChild(br, "port1-" + i, { name: "port1", type: "port" }, 2)
-            var port2 = addChild(br, "port2-" + i, { name: "port2", type: "port" }, 2)
-            var port3 = addChild(br, "port3-" + i, { name: "port3", type: "port" }, 2)
+            var port1 = this.addChild(br, "port1-" + i, { name: "port1", type: "port" }, 2)
+            var port2 = this.addChild(br, "port2-" + i, { name: "port2", type: "port" }, 2)
+            var port3 = this.addChild(br, "port3-" + i, { name: "port3", type: "port" }, 2)
 
-            addLayerLink(br, port1, { RelationType: "layer2" })
-            addLayerLink(br, port2, { RelationType: "layer2" })
-            addLayerLink(br, port3, { RelationType: "layer2" })
+            this.addLayerLink(br, port1, { RelationType: "layer2" })
+            this.addLayerLink(br, port2, { RelationType: "layer2" })
+            this.addLayerLink(br, port3, { RelationType: "layer2" })
 
-            var ns1 = addChild(host, "ns1-" + i, { name: "ns1", type: "netns" }, 3)
-            addChild(ns1, "ns1-lo-" + i, { name: "lo", type: "interface" }, 3)
-            var eth0 = addChild(ns1, "ns1-eth0-" + i, { name: "eth0", type: "interface" }, 3)
+            var tap = this.addChild(host, "tap-" + i, { name: "tap123", type: "interface" }, 3)
+            this.addLayerLink(port3, tap, { RelationType: "layer2" })
 
-            addLayerLink(port1, eth0, { RelationType: "layer2" })
+            var ns1 = this.addChild(host, "ns1-" + i, { name: "ns1", type: "netns" }, 4)
+            this.addChild(ns1, "ns1-lo-" + i, { name: "lo", type: "interface" }, 4)
+            var eth0 = this.addChild(ns1, "ns1-eth0-" + i, { name: "eth0", type: "interface" }, 4)
 
-            var ns2 = addChild(host, "ns2-" + i, { name: "ns2", type: "netns" }, 3)
-            addChild(ns2, "ns2-lo-" + i, { name: "lo", type: "interface" }, 3)
-            var eth0 = addChild(ns2, "ns2-eth0-0" + i, { name: "eth0", type: "interface" }, 3)
+            this.addLayerLink(port1, eth0, { RelationType: "layer2" })
 
-            addLayerLink(port2, eth0, { RelationType: "layer2" })
+            var ns2 = this.addChild(host, "ns2-" + i, { name: "ns2", type: "netns" }, 4)
+            this.addChild(ns2, "ns2-lo-" + i, { name: "lo", type: "interface" }, 4)
+            var eth0 = this.addChild(ns2, "ns2-eth0-0" + i, { name: "eth0", type: "interface" }, 4)
 
-            update(null, true)
+            this.addLayerLink(port2, eth0, { RelationType: "layer2" })
+
+            update()
         }, 700)
     }
 
