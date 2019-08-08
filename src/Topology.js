@@ -12,6 +12,146 @@ var colorOranges = scaleOrdinal(schemeOranges[9])
 var colorBlues = scaleOrdinal(schemeBlues[9])
 
 export class TopologyComponent extends Component {
+    // TEMP(safchain) this has to be moved to another external component
+    types = {
+        host: { color: "#114B5F", icon: "\uf109", text: "#eee" },
+        bridge: { color: "#1A936F", icon: "\uf1e0", text: "#eee" },
+        interface: { color: "#88D498", icon: "\uf120", text: "#444" },
+        netns: { color: "#C6DABF", icon: "\uf24d", text: "#444" },
+        port: { color: "#1A936F", icon: "\uf0e8", text: "#eee" },
+        unknown: { color: "#C9ADA7", icon: "\uf192", text: "#444" }
+    }
+
+    type = (d) => {
+        return this.types[d.data._node.data.type] ? this.types[d.data._node.data.type] : this.types["unknown"]
+    }
+
+    hexagon = (d, size) => {
+        var s32 = (Math.sqrt(3) / 2)
+
+        if (!size) {
+            size = 20
+        }
+
+        return [
+            { "x": size, "y": 0 },
+            { "x": size / 2, "y": size * s32 },
+            { "x": -size / 2, "y": size * s32 },
+            { "x": -size, "y": 0 },
+            { "x": -size / 2, "y": -size * s32 },
+            { "x": size / 2, "y": -size * s32 }
+        ]
+    }
+
+    liner = line()
+        .x(d => d.x)
+        .y(d => d.y)
+        .curve(curveCardinalClosed.tension(0.7))
+
+    groupColors = (d) => {
+        return colorOranges(d.data._node.layer)
+    }
+
+    visibleLayerLinks = (holders) => {
+        let links = []
+
+        let findVisible = (node) => {
+            while (node) {
+                if (holders[node.id]) {
+                    return node
+                }
+                node = node.parent
+            }
+        }
+
+        this.layerLinks.forEach(link => {
+            let source = findVisible(link.source)
+            let target = findVisible(link.target)
+
+            if (source && target && source !== target) {
+                links.push({
+                    id: link.id,
+                    source: source,
+                    target: target,
+                })
+            }
+        })
+
+        return links
+    }
+
+    boundingBox = (node, bb) => {
+        if (!bb) {
+            bb = [node.x, node.x]
+        } else {
+            if (bb[0] > node.x) {
+                bb[0] = node.x
+            }
+            if (bb[1] < node.x) {
+                bb[1] = node.x
+            }
+        }
+
+        if (node.children) {
+            node.children.forEach(child => {
+                this.boundingBox(child, bb)
+            })
+        }
+
+        return bb
+    }
+
+    nodesRect = (root, nodes) => {
+        let node0 = nodes[0]
+        let nBB = [node0.y, node0.y]
+
+        for (let node of nodes) {
+            if (nBB[0] > node.y) {
+                nBB[0] = node.y
+            }
+            if (nBB[1] < node.y) {
+                nBB[1] = node.y
+            }
+        }
+
+        let gBB = this.boundingBox(root)
+        const margin = 100
+
+        return {
+            x: gBB[0] - margin,
+            y: nBB[0] - margin,
+            width: gBB[1] - gBB[0] + margin * 2,
+            height: nBB[1] - nBB[0] + margin * 2
+        }
+    }
+
+    _layerNodes = (node, nodes) => {
+        if (!nodes) {
+            nodes = {}
+        }
+
+        if (node.data.layer) {
+            let arr = nodes[node.data.layer]
+            if (!arr) {
+                nodes[node.data.layer] = arr = { id: node.data.layer, nodes: [node] }
+            } else {
+                arr.nodes.push(node)
+            }
+        }
+
+        if (node.children) {
+            node.children.forEach(child => {
+                this._layerNodes(child, nodes)
+            })
+        }
+
+        return nodes
+    }
+
+    layerNodes = (node) => {
+        return Object.values(this._layerNodes(node, {}))
+    }
+
     constructor(props) {
         super(props)
 
@@ -41,34 +181,154 @@ export class TopologyComponent extends Component {
     }
 
     componentDidMount() {
-        this.createTree()
+        this.createSVG()
+
+        this.parseTopology()
     }
 
     componentDidUpdate() {
-        this.createTree()
+        this.createSVG()
     }
 
-    defaultState() { 
-        return { expanded: true } 
+    createSVG() {
+        var svg = select(this.node)
+
+        var g = svg
+            .call(zoom()
+                .scaleExtent([0.05, 3])
+                .on("zoom", () => g.attr("transform", event.transform.toString())))
+            .append("g")
+
+        this.gLayers = g.append("g")
+            .attr("class", "layers")
+            .attr("fill", "none")
+            .attr("fill-opacity", 0.2)
+
+        this.gHieraLinks = g.append("g")
+            .attr("class", "links")
+            .attr("fill", "none")
+            .attr("stroke", "#555")
+            .attr("stroke-opacity", 0.9)
+            .attr("stroke-width", 1)
+
+        this.gLayerLinks = g.append("g")
+            .attr("class", "layer-links")
+            .attr("fill", "none")
+            .attr("stroke", "#c8293c")
+            .attr("stroke-width", 3)
+
+        this.gNodes = g.append("g")
+            .attr("class", "nodes")
     }
 
-    addChild(parent, id, data, layer) {
-        if (layer > this.maxLayer) {
-            this.maxLayer = layer
-        }
+    // TEMP(safchain) this has to be moved to another external component consuming a message bus
+    parseTopology() {
+        var i = 0
+        setInterval(() => {
+            if (i > 1) {
+                return
+            }
+            i++
 
+            var host = this.addNode("host-" + i, { name: "host " + i, type: "host" })
+            this.setParent(host, this.root, 1)
+
+            var n = this.addNode("host-lo-" + i, { name: "lo", type: "interface" })
+            this.setParent(n, host, 1)
+
+            n = this.addNode("host-ethO-" + i, { name: "eth0", type: "interface" })
+            this.setParent(n, host, 1)
+
+            var hbr = this.addNode("host-br-int-" + i, { name: "br-int", type: "interface" })
+            this.setParent(n, host, 1)
+
+            var br = this.addNode("br-int-" + i, { name: "br-int", type: "bridge" })
+            this.setParent(br, host, 2)
+
+            this.addLayerLink(hbr, br, { RelationType: "layer2" })
+
+            var port1 = this.addNode("port1-" + i, { name: "port1", type: "port" })
+            this.setParent(port1, br, 2)
+
+            var port2 = this.addNode("port2-" + i, { name: "port2", type: "port" })
+            this.setParent(port2, br, 2)
+
+            var port3 = this.addNode("port3-" + i, { name: "port3", type: "port" })
+            this.setParent(port3, br, 2)
+
+            this.addLayerLink(br, port1, { RelationType: "layer2" })
+            this.addLayerLink(br, port2, { RelationType: "layer2" })
+            this.addLayerLink(br, port3, { RelationType: "layer2" })
+
+            var tap = this.addNode("tap-" + i, { name: "tap123", type: "interface" })
+            this.setParent(tap, host, 3)
+
+            this.addLayerLink(port3, tap, { RelationType: "layer2" })
+
+            var ns1 = this.addNode("ns1-" + i, { name: "ns1", type: "netns" })
+            this.setParent(ns1, host, 4)
+
+            n = this.addNode("ns1-lo-" + i, { name: "lo", type: "interface" })
+            this.setParent(n, ns1, 4)
+
+            var eth0 = this.addNode("ns1-eth0-" + i, { name: "eth0", type: "interface" })
+            this.setParent(eth0, ns1, 4)
+
+            this.addLayerLink(port1, eth0, { RelationType: "layer2" })
+
+            var ns2 = this.addNode("ns2-" + i, { name: "ns2", type: "netns" })
+            this.setParent(ns2, host, 4)
+
+            n = this.addNode("ns2-lo-" + i, { name: "lo", type: "interface" })
+            this.setParent(n, ns2, 4)
+
+            eth0 = this.addNode("ns2-eth0-0" + i, { name: "eth0", type: "interface" })
+            this.setParent(eth0, ns2, 4)
+
+            this.addLayerLink(port2, eth0, { RelationType: "layer2" })
+
+            this.updateTree()
+        }, 700)
+    }
+
+    // TEMP(safchain) this has to be moved to another external component dedicated to topology placement rules
+    layerIndex(node) {
+    }
+
+    defaultState() {
+        return { expanded: true }
+    }
+
+    addNode(id, data) {
         var child = {
             id: id,
-            parent: parent,
-            layer: layer,
             data: data,
             children: []
         }
-        parent.children.push(child)
 
         this.nodeStates[id] = this.defaultState()
 
         return child
+    }
+
+    delNode(child) {
+        child.parent.children = child.parent.children.filter(c => c.id !== child.id)
+    }
+
+    setParent(child, parent, layer) {
+        // remove from previous parent if needed
+        if (child.parent) {
+            child.parent.children = child.parent.children.filter(c => c.id !== child.id)
+        }
+
+        var index = typeof layer === "function" ? layer(child) : layer
+        if (index > this.maxLayer) {
+            this.maxLayer = index
+        }
+
+        child.layer = index
+
+        parent.children.push(child)
     }
 
     addLayerLink(node1, node2, data) {
@@ -143,404 +403,193 @@ export class TopologyComponent extends Component {
         return tree
     }
 
-    createTree() {
-        var svg = select(this.node)
-
-        var g = svg
-            .call(zoom()
-                .scaleExtent([0.05, 3])
-                .on("zoom", () => g.attr("transform", event.transform.toString())))
-            .append("g")
-
-        var gLayers = g.append("g")
-            .attr("class", "layers")
-            .attr("fill", "none")
-            .attr("fill-opacity", 0.2)
-
-        var gHieraLinks = g.append("g")
-            .attr("class", "links")
-            .attr("fill", "none")
-            .attr("stroke", "#555")
-            .attr("stroke-opacity", 0.9)
-            .attr("stroke-width", 1)
-
-        var gLayerLinks = g.append("g")
-            .attr("class", "layer-links")
-            .attr("fill", "none")
-            .attr("stroke", "#c8293c")
-            .attr("stroke-width", 3)
-
-        var gNodes = g.append("g")
-            .attr("class", "nodes")
-
-        var collapse = node => {
-            if (node.state) {
-                node.state.expanded = false
-            }
-            node.children.forEach(child => collapse(child))
+    collapse(node) {
+        if (node.state) {
+            node.state.expanded = false
         }
+        node.children.forEach(child => this.collapse(child))
+    }
 
-        var expand = function (d) {
-            select(this).select("text").text(() => {
-                if (d.data.state.expanded) {
-                    return "\uf067"
-                }
-                return "\uf068"
-            })
-
+    expand(d) {
+        select("node-" + d.data.id).select("text").text(() => {
             if (d.data.state.expanded) {
-                collapse(d.data)
-            } else {
-                d.data.state.expanded = true
+                return "\uf067"
             }
+            return "\uf068"
+        })
 
-            update()
+        if (d.data.state.expanded) {
+            this.collapse(d.data)
+        } else {
+            d.data.state.expanded = true
         }
 
-        var visibleLayerLinks = (holders) => {
-            let links = []
+        this.updateTree()
+    }
 
-            let findVisible = (node) => {
-                while (node) {
-                    if (holders[node.id]) {
-                        return node
-                    }
-                    node = node.parent
-                }
-            }
+    updateTree() {
+        let normRoot = this.normalizeTree(this.root)
 
-            this.layerLinks.forEach(link => {
-                let source = findVisible(link.source)
-                let target = findVisible(link.target)
+        let root = hierarchy(normRoot)
+        this.tree(root)
 
-                if (source && target && source !== target) {
-                    links.push({
-                        id: link.id,
-                        source: source,
-                        target: target,
-                    })
-                }
-            })
+        let holders = {}
+        root.each(node => {
+            holders[node.data.id] = node
+        })
 
-            return links
-        }
-
-        var boundingBox = (node, bb) => {
-            if (!bb) {
-                bb = [node.x, node.x]
-            } else {
-                if (bb[0] > node.x) {
-                    bb[0] = node.x
-                }
-                if (bb[1] < node.x) {
-                    bb[1] = node.x
-                }
-            }
-
-            if (node.children) {
-                node.children.forEach(child => {
-                    boundingBox(child, bb)
-                })
-            }
-
-            return bb
-        }
-
-        var nodesRect = (root, nodes) => {
-            let node0 = nodes[0]
-            let nBB = [node0.y, node0.y]
-
-            for (let node of nodes) {
-                if (nBB[0] > node.y) {
-                    nBB[0] = node.y
-                }
-                if (nBB[1] < node.y) {
-                    nBB[1] = node.y
-                }
-            }
-
-            let gBB = boundingBox(root)
-            const margin = 100
-
-            return {
-                x: gBB[0] - margin,
-                y: nBB[0] - margin,
-                width: gBB[1] - gBB[0] + margin * 2,
-                height: nBB[1] - nBB[0] + margin * 2
-            }
-        }
-
-        var _layerNodes = (node, nodes) => {
-            if (!nodes) {
-                nodes = {}
-            }
-
-            if (node.data.layer) {
-                let arr = nodes[node.data.layer]
-                if (!arr) {
-                    nodes[node.data.layer] = arr = { id: node.data.layer, nodes: [node] }
-                } else {
-                    arr.nodes.push(node)
-                }
-            }
-
-            if (node.children) {
-                node.children.forEach(child => {
-                    _layerNodes(child, nodes)
-                })
-            }
-
-            return nodes
-        }
-
-        var layerNodes = (node) => {
-            return Object.values(_layerNodes(node, {}))
-        }
-
-        var hexagon = (d, size) => {
-            var s32 = (Math.sqrt(3) / 2)
-
-            if (!size) {
-                size = 20
-            }
-
-            return [
-                { "x": size, "y": 0 },
-                { "x": size / 2, "y": size * s32 },
-                { "x": -size / 2, "y": size * s32 },
-                { "x": -size, "y": 0 },
-                { "x": -size / 2, "y": -size * s32 },
-                { "x": size / 2, "y": -size * s32 }
-            ]
-        }
-
-        var liner = line()
+        var linker = linkVertical()
             .x(d => d.x)
             .y(d => d.y)
-            .curve(curveCardinalClosed.tension(0.7))
 
-        var types = {
-            host: { color: "#114B5F", icon: "\uf109", text: "#eee" },
-            bridge: { color: "#1A936F", icon: "\uf1e0", text: "#eee" },
-            interface: { color: "#88D498", icon: "\uf120", text: "#444" },
-            netns: { color: "#C6DABF", icon: "\uf24d", text: "#444" },
-            port: { color: "#1A936F", icon: "\uf0e8", text: "#eee" },
-            unknown: { color: "#C9ADA7", icon: "\uf192", text: "#444" }
-        }
+        var layers = this.gLayers.selectAll('rect.layer')
+            .data(this.layerNodes(root))
+        var layersEnter = layers.enter()
+            .append('rect')
+            .attr("class", "layer")
+            .attr("id", d => "toto" + d.id)
+            .style("opacity", 0)
+            .attr("stroke", "#000")
+            .attr("stroke-dasharray", "5,10")
+            .attr("fill", d => colorBlues(d.id))
+            .attrs(d => this.nodesRect(root, d.nodes))
+        layers.exit().remove()
 
-        var type = (d) => {
-            return types[d.data._node.data.type] ? types[d.data._node.data.type] : types["unknown"]
-        }
+        layersEnter.transition()
+            .duration(500)
+            .style("opacity", 1)
 
-        var groupColors = (d) => {
-            return colorOranges(d.data._node.layer)
-        }
+        layers.transition()
+            .duration(500)
+            .attrs(d => this.nodesRect(root, d.nodes))
 
-        var update = () => {
-            let normRoot = this.normalizeTree(this.root)
+        var hieraLink = this.gHieraLinks.selectAll('path.link')
+            .data(root.links(), d => d.source.data.id + d.target.data.id)
+        var hieraLinkEnter = hieraLink.enter()
+            .append('path')
+            .attr("class", "link")
+            .attr("stroke-dasharray", "5,10")
+            .style("opacity", 0)
+            .attr("d", linker)
+        hieraLink.exit().remove()
 
-            let root = hierarchy(normRoot)
-            this.tree(root)
+        hieraLinkEnter.transition()
+            .duration(500)
+            .style("opacity", 1)
 
-            let holders = {}
-            root.each(node => {
-                holders[node.data.id] = node
-            })
+        hieraLink.transition()
+            .duration(500)
+            .attr("d", linker)
 
-            var linker = linkVertical()
-                .x(d => d.x)
-                .y(d => d.y)
+        var node = this.gNodes.selectAll('g.node')
+            .data(root.descendants(), d => d.data.id)
 
-            var layers = gLayers.selectAll('rect.layer')
-                .data(layerNodes(root))
-            var layersEnter = layers.enter()
-                .append('rect')
-                .attr("class", "layer")
-                .attr("id", d => "toto" + d.id)
-                .style("opacity", 0)
-                .attr("stroke", "#000")
-                .attr("stroke-dasharray", "5,10")
-                .attr("fill", d => colorBlues(d.id))
-                .attrs(d => nodesRect(root, d.nodes))
-            layers.exit().remove()
+        node.exit()
+            .transition()
+            .duration(500).style("opacity", 0)
+            .remove()
 
-            layersEnter.transition()
-                .duration(500)
-                .style("opacity", 1)
+        var nodeEnter = node.enter()
+            .filter(d => d.data._node)
+            .append("g")
+            .attr("class", "node")
+            .attr("id", d => "node-" + d.data.id)
+            .style("opacity", 0)
+            .attr("transform", d => `translate(${d.x},${d.y})`)
 
-            layers.transition()
-                .duration(500)
-                .attrs(d => nodesRect(root, d.nodes))
+        nodeEnter.transition()
+            .duration(500)
+            .style("opacity", 1)
 
-            var hieraLink = gHieraLinks.selectAll('path.link')
-                .data(root.links(), d => d.source.data.id + d.target.data.id)
-            var hieraLinkEnter = hieraLink.enter()
-                .append('path')
-                .attr("class", "link")
-                .attr("stroke-dasharray", "5,10")
-                .style("opacity", 0)
-                .attr("d", linker)
-            hieraLink.exit().remove()
+        const hexSize = 30
 
-            hieraLinkEnter.transition()
-                .duration(500)
-                .style("opacity", 1)
+        nodeEnter.append("circle")
+            .attr("r", hexSize + 14)
+            .attr("fill", "#fff")
+            .attr("stroke", this.groupColors)
+            .attr("stroke-width", 3)
 
-            hieraLink.transition()
-                .duration(500)
-                .attr("d", linker)
+        nodeEnter.append("circle")
+            .attr("r", hexSize + 8)
+            .attr("fill", this.groupColors)
 
-            var node = gNodes.selectAll('g.node')
-                .data(root.descendants(), d => d.data.id)
+        nodeEnter.append("path")
+            .attr("d", d => this.liner(this.hexagon(d, hexSize)))
+            .attr("stroke", "#455f6b")
+            .attr("fill", d => this.type(d).color)
+            .attr("stroke-dasharray", "5,5")
 
-            node.exit()
-                .transition()
-                .duration(500).style("opacity", 0)
-                .remove()
+        nodeEnter.append("text")
+            .attr("class", "icon")
+            .style("font-size", "24px")
+            .attr("alignment-baseline", "middle")
+            .attr("fill", d => this.type(d).text)
+            .attr("text-anchor", "middle")
+            .style("font-family", "FontAwesome")
+            .text(d => this.type(d).icon)
 
-            var nodeEnter = node.enter()
-                .filter(d => d.data._node)
-                .append("g")
-                .attr("class", "node")
-                .style("opacity", 0)
-                .attr("transform", d => `translate(${d.x},${d.y})`)
+        nodeEnter.append("text")
+            .style("font-size", "24px")
+            .attr("dy", ".35em")
+            .attr("y", d => d.children ? -60 : 60)
+            .style("text-anchor", "middle")
+            .text(d => d.data._node.data ? d.data._node.data.name : "")
 
-            nodeEnter.transition()
-                .duration(500)
-                .style("opacity", 1)
+        var exco = nodeEnter
+            .filter(d => d.data._node.children.length > 0)
+            .append("g")
+        exco.on("click", d => this.expand(d))
 
-            const hexSize = 30
+        exco.append("circle")
+            .attr("class", "collapse")
+            .attr("cx", hexSize)
+            .attr("cy", hexSize)
+            .attr("r", d => d.data._node.children.length ? 15 : 0)
+            .attr("fill", "#48e448")
+            .attr("stroke", "#666")
 
-            nodeEnter.append("circle")
-                .attr("r", hexSize + 14)
-                .attr("fill", "#fff")
-                .attr("stroke", groupColors)
-                .attr("stroke-width", 3)
+        exco.append("text")
+            .attr("class", "text-collapse")
+            .attr("x", hexSize)
+            .attr("y", hexSize + 6)
+            .style("font-size", "14px")
+            .attr("fill", "#fff")
+            .attr("text-anchor", "middle")
+            .style("font-family", "FontAwesome")
+            .text(d => d.data.state.expanded ? "\uf068" : "\uf067")
 
-            nodeEnter.append("circle")
-                .attr("r", hexSize + 8)
-                .attr("fill", groupColors)
+        node.transition()
+            .duration(500)
+            .style("opacity", 1)
+            .attr("transform", d => `translate(${d.x},${d.y})`)
 
-            nodeEnter.append("path")
-                .attr("d", d => liner(hexagon(d, hexSize)))
-                .attr("stroke", "#455f6b")
-                .attr("fill", d => type(d).color)
-                .attr("stroke-dasharray", "5,5")
+        var layerLinker = linkVertical()
+            .x(d => holders[d.node.id].x)
+            .y(d => holders[d.node.id].y + d.dy)
 
-            nodeEnter.append("text")
-                .attr("class", "icon")
-                .style("font-size", "24px")
-                .attr("alignment-baseline", "middle")
-                .attr("fill", d => type(d).text)
-                .attr("text-anchor", "middle")
-                .style("font-family", "FontAwesome")
-                .text(d => type(d).icon)
+        var layerLink = this.gLayerLinks.selectAll('path.layer-link')
+            .data(this.visibleLayerLinks(holders), d => d.id)
+        var layerLinkEnter = layerLink.enter()
+            .append('path')
+            .attr("class", "layer-link")
+            .style("opacity", 0)
+            .attr('marker-start', "url(#square)")
+            .attr('marker-end', "url(#square)")
+            .attr("d", d => layerLinker(
+                { source: { node: d.source, dy: 55 }, target: { node: d.target, dy: -55 } }
+            ))
+        layerLink.exit().remove()
 
-            nodeEnter.append("text")
-                .style("font-size", "24px")
-                .attr("dy", ".35em")
-                .attr("y", d => d.children ? -60 : 60)
-                .style("text-anchor", "middle")
-                .text(d => d.data._node.data ? d.data._node.data.name : "")
+        layerLinkEnter.transition()
+            .duration(500)
+            .style("opacity", 1)
 
-            var exco = nodeEnter
-                .filter(d => d.data._node.children.length > 0)
-                .append("g")
-            exco.on("click", expand)
-
-            exco.append("circle")
-                .attr("class", "collapse")
-                .attr("cx", hexSize)
-                .attr("cy", hexSize)
-                .attr("r", d => d.data._node.children.length ? 15 : 0)
-                .attr("fill", "#48e448")
-                .attr("stroke", "#666")
-
-            exco.append("text")
-                .attr("class", "text-collapse")
-                .attr("x", hexSize)
-                .attr("y", hexSize + 6)
-                .style("font-size", "14px")
-                .attr("fill", "#fff")
-                .attr("text-anchor", "middle")
-                .style("font-family", "FontAwesome")
-                .text(d => d.data.state.expanded ? "\uf068" : "\uf067")
-
-            node.transition()
-                .duration(500)
-                .style("opacity", 1)
-                .attr("transform", d => `translate(${d.x},${d.y})`)
-
-            var layerLinker = linkVertical()
-                .x(d => holders[d.node.id].x)
-                .y(d => holders[d.node.id].y + d.dy)
-
-            var layerLink = gLayerLinks.selectAll('path.layer-link')
-                .data(visibleLayerLinks(holders), d => d.id)
-            var layerLinkEnter = layerLink.enter()
-                .append('path')
-                .attr("class", "layer-link")
-                .style("opacity", 0)
-                .attr('marker-start', "url(#square)")
-                .attr('marker-end', "url(#square)")
-                .attr("d", d => layerLinker(
-                    { source: { node: d.source, dy: 55 }, target: { node: d.target, dy: -55 } }
-                ))
-            layerLink.exit().remove()
-
-            layerLinkEnter.transition()
-                .duration(500)
-                .style("opacity", 1)
-
-            layerLink.transition()
-                .duration(500)
-                .style("opacity", 1)
-                .attr("d", d => layerLinker(
-                    { source: { node: d.source, dy: 55 }, target: { node: d.target, dy: -55 } }
-                ))
-        }
-
-        var i = 0
-        setInterval(() => {
-            if (i > 1) {
-                return
-            }
-            i++
-
-            var host = this.addChild(this.root, "host-" + i, { name: "host " + i, type: "host" }, 1)
-            this.addChild(host, "host-lo-" + i, { name: "lo", type: "interface" }, 1)
-            this.addChild(host, "host-ethO-" + i, { name: "eth0", type: "interface" }, 1)
-            var hbr = this.addChild(host, "host-br-int-" + i, { name: "br-int", type: "interface" }, 1)
-
-            var br = this.addChild(host, "br-int-" + i, { name: "br-int", type: "bridge" }, 2)
-
-            this.addLayerLink(hbr, br, { RelationType: "layer2" })
-
-            var port1 = this.addChild(br, "port1-" + i, { name: "port1", type: "port" }, 2)
-            var port2 = this.addChild(br, "port2-" + i, { name: "port2", type: "port" }, 2)
-            var port3 = this.addChild(br, "port3-" + i, { name: "port3", type: "port" }, 2)
-
-            this.addLayerLink(br, port1, { RelationType: "layer2" })
-            this.addLayerLink(br, port2, { RelationType: "layer2" })
-            this.addLayerLink(br, port3, { RelationType: "layer2" })
-
-            var tap = this.addChild(host, "tap-" + i, { name: "tap123", type: "interface" }, 3)
-            this.addLayerLink(port3, tap, { RelationType: "layer2" })
-
-            var ns1 = this.addChild(host, "ns1-" + i, { name: "ns1", type: "netns" }, 4)
-            this.addChild(ns1, "ns1-lo-" + i, { name: "lo", type: "interface" }, 4)
-            var eth0 = this.addChild(ns1, "ns1-eth0-" + i, { name: "eth0", type: "interface" }, 4)
-
-            this.addLayerLink(port1, eth0, { RelationType: "layer2" })
-
-            var ns2 = this.addChild(host, "ns2-" + i, { name: "ns2", type: "netns" }, 4)
-            this.addChild(ns2, "ns2-lo-" + i, { name: "lo", type: "interface" }, 4)
-            var eth0 = this.addChild(ns2, "ns2-eth0-0" + i, { name: "eth0", type: "interface" }, 4)
-
-            this.addLayerLink(port2, eth0, { RelationType: "layer2" })
-
-            update()
-        }, 700)
+        layerLink.transition()
+            .duration(500)
+            .style("opacity", 1)
+            .attr("d", d => layerLinker(
+                { source: { node: d.source, dy: 55 }, target: { node: d.target, dy: -55 } }
+            ))
     }
 
     render() {
