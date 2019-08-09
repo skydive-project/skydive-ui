@@ -34,9 +34,6 @@ export class TopologyComponent extends Component {
     constructor(props) {
         super(props)
 
-        this.width = 1200
-        this.height = 1200
-
         this.nodeWidth = 100
         this.nodeHeight = 240
 
@@ -71,7 +68,23 @@ export class TopologyComponent extends Component {
     }
 
     createSVG() {
-        var svg = select(this.node)
+        var width = this.node.clientWidth;
+        var height = this.node.clientHeight;
+
+        var svg = select(this.node).append("svg")
+            .attr("width", width)
+            .attr("height", height)
+
+        svg.append("defs")
+            .append("marker")
+            .attr("id", "square")
+            .attr("viewBox", "-5 -5 10 10")
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M 0,0 m -5,-5 L 5,-5 L 5,5 L -5,5 Z")
+            .attr("fill", "#c8293c")
 
         var g = svg
             .call(zoom()
@@ -143,6 +156,7 @@ export class TopologyComponent extends Component {
                 return 4
             case "netns":
                 return 6
+            default:
         }
 
         if (node.data.OfPort) {
@@ -525,7 +539,7 @@ export class TopologyComponent extends Component {
                 var text = select(this)
                 var y = text.attr("y")
                 var dy = parseFloat(text.attr("dy"))
-                var words = text.text().split(/(?=[\s\-\.\_])/).reverse()
+                var words = text.text().split(/(?=[\s\-._])/).reverse()
                 var line = []
                 var word
 
@@ -614,13 +628,7 @@ export class TopologyComponent extends Component {
 
     render() {
         return (
-            <svg ref={node => this.node = node} width={1200} height={1200}>
-                <defs>
-                    <marker id="square" viewBox="-5 -5 10 10" markerWidth="6" markerHeight="6" orient="auto">
-                        <path d="M 0,0 m -5,-5 L 5,-5 L 5,5 L -5,5 Z" fill="#c8293c"></path>
-                    </marker>
-                </defs>
-            </svg>
+            <div ref={node => this.node = node} style={{ height: "100%" }} />
         )
     }
 }
