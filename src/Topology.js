@@ -246,34 +246,59 @@ export class TopologyComponent extends Component {
         }
 
         // re-order tree to add placeholder node in order to separate layers
-        let normalizeTreeHeight = (root, node, layer, currDepth) => {
+        let normalizeTreeHeight = (root, node, layer, currDepth, cache) => {
             if (node.layer > layer) {
                 return
             }
 
             if (node.layer === layer && node.parent && node.parent.layer !== layer) {
                 let parentDepth = layerHeight(root, node.layer - 1, 0)
+                if (currDepth > parentDepth) {
+                    return
+                }
 
                 let _parent = node._node.parent
-                let children = node.parent.children
-                let index = children.indexOf(node)
 
-                while (currDepth++ <= parentDepth) {
-                    node = { id: node.id + "-" + currDepth, children: [node], _parent: _parent }
+                let pass = node.parent.id + "/" + node.layer
+
+                let first, last
+                if (cache.chains[pass]) {
+                    let chain = cache.chains[pass]
+                    first = chain.first
+
+                    node.parent.children = node.parent.children.filter(d => d !== node)
+
+                    last = chain.last
+                } else {
+                    first = { id: node.id + "-" + currDepth, children: [], _parent: _parent }
+
+                    let children = node.parent.children
+                    let index = children.indexOf(node)
+                    children[index] = first
+
+                    last = first
+
+                    while (currDepth++ < parentDepth) {
+                        let next = { id: node.id + "-" + currDepth, children: [], _parent: _parent }
+                        last.children = [next]
+                        last = next
+                    }
+
+                    cache.chains[pass] = { first: first, last: last }
                 }
-                children[index] = node
+                last.children.push(node)
 
                 return
             }
 
             node.children.forEach(child => {
-                normalizeTreeHeight(root, child, layer, currDepth + 1)
+                normalizeTreeHeight(root, child, layer, currDepth + 1, cache)
             })
         }
 
         var tree = this.cloneTree(node)
         for (let i = 0; i <= this.maxLayer; i++) {
-            normalizeTreeHeight(tree, tree, i, 0)
+            normalizeTreeHeight(tree, tree, i, 0, { chains: {} })
         }
         return tree
     }
