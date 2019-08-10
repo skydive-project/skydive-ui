@@ -90,6 +90,7 @@ export class TopologyComponent extends Component {
             .call(zoom()
                 .scaleExtent([0.05, 3])
                 .on("zoom", () => g.attr("transform", event.transform.toString())))
+                .on("dblclick.zoom", null)
             .append("g")
 
         this.gLayers = g.append("g")
@@ -311,7 +312,7 @@ export class TopologyComponent extends Component {
     }
 
     expand(d) {
-        select("node-" + d.data.id).select("text").text(() => {
+        select("#exco-" + d.data.id).text(() => {
             if (d.data.state.expanded) {
                 return "\uf067"
             }
@@ -476,8 +477,8 @@ export class TopologyComponent extends Component {
             .data(this.layerNodes(root))
         var layersEnter = layers.enter()
             .append('rect')
-            .attr("class", "layer")
             .attr("id", d => d.id)
+            .attr("class", "layer")
             .style("opacity", 0)
             .attr("stroke", "#000")
             .attr("stroke-dasharray", "5,10")
@@ -523,10 +524,11 @@ export class TopologyComponent extends Component {
         var nodeEnter = node.enter()
             .filter(d => d.data._node && d.data._node !== this.root)
             .append("g")
-            .attr("class", "node")
             .attr("id", d => "node-" + d.data.id)
+            .attr("class", "node")
             .style("opacity", 0)
             .attr("transform", d => `translate(${d.x},${d.y})`)
+            .on("dblclick", d => this.expand(d))
 
         nodeEnter.transition()
             .duration(500)
@@ -595,7 +597,6 @@ export class TopologyComponent extends Component {
         var exco = nodeEnter
             .filter(d => d.data._node.children.length > 0)
             .append("g")
-        exco.on("click", d => this.expand(d))
 
         exco.append("circle")
             .attr("class", "collapse")
@@ -606,6 +607,7 @@ export class TopologyComponent extends Component {
             .attr("stroke", "#666")
 
         exco.append("text")
+            .attr("id", d => "exco-" + d.data.id)
             .attr("class", "text-collapse")
             .attr("x", hexSize)
             .attr("y", hexSize + 6)
