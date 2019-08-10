@@ -90,7 +90,7 @@ export class TopologyComponent extends Component {
             .call(zoom()
                 .scaleExtent([0.05, 3])
                 .on("zoom", () => g.attr("transform", event.transform.toString())))
-                .on("dblclick.zoom", null)
+            .on("dblclick.zoom", null)
             .append("g")
 
         this.gLayers = g.append("g")
@@ -105,11 +105,23 @@ export class TopologyComponent extends Component {
             .attr("stroke-opacity", 0.9)
             .attr("stroke-width", 1)
 
+        this.gLayerLinkOverlayLs = g.append("g")
+            .attr("class", "layer-link-overlays")
+            .attr("fill", "none")
+            .attr("stroke", "#ffeb3b91")
+            .attr("stroke-width", 30)
+
         this.gLayerLinks = g.append("g")
             .attr("class", "layer-links")
             .attr("fill", "none")
             .attr("stroke", "#c8293c")
             .attr("stroke-width", 3)
+
+        this.gLayerLinkWraps = g.append("g")
+            .attr("class", "layer-link-wraps")
+            .attr("stroke", "#ffeb3b91")
+            .attr("stroke-width", 30)
+            .attr("opacity", 0)
 
         this.gNodes = g.append("g")
             .attr("class", "nodes")
@@ -626,6 +638,35 @@ export class TopologyComponent extends Component {
             .x(d => holders[d.node.id].x)
             .y(d => holders[d.node.id].y + d.dy)
 
+        let holderLink = (d, margin) => holders[d.source.id].y < holders[d.target.id].y ?
+            { source: { node: d.source, dy: margin }, target: { node: d.target, dy: -margin } } : {
+                source: { node: d.target, dy: margin }, target: { node: d.source, dy: -margin }
+            }
+
+        var layerLinkOverlayL = this.gLayerLinkOverlayLs.selectAll('path.layer-link-overlay')
+            .data(this.visibleLayerLinks(holders), d => d.id)
+        layerLinkOverlayL.enter()
+            .append('path')
+            .attr("id", d => "layer-link-overlay-" + d.id)
+            .attr("class", "layer-link-overlay")
+            .style("opacity", 0)
+            .attr("d", d => layerLinker(holderLink(d, 45)))
+            .on("mouseover", function (d, i) {
+                select(this).transition()
+                    .duration(300)
+                    .style("opacity", 1)
+            })
+            .on("mouseout", function (d, i) {
+                select(this).transition()
+                    .duration(300)
+                    .style("opacity", 0)
+            });
+        layerLinkOverlayL.exit().remove()
+
+        layerLinkOverlayL.transition()
+            .duration(500)
+            .attr("d", d => layerLinker(holderLink(d, 45)))
+
         var layerLink = this.gLayerLinks.selectAll('path.layer-link')
             .data(this.visibleLayerLinks(holders), d => d.id)
         var layerLinkEnter = layerLink.enter()
@@ -634,10 +675,7 @@ export class TopologyComponent extends Component {
             .style("opacity", 0)
             .attr('marker-start', "url(#square)")
             .attr('marker-end', "url(#square)")
-            .attr("d", d => layerLinker(
-                holders[d.source.id].y < holders[d.target.id].y ? { source: { node: d.source, dy: 55 }, target: { node: d.target, dy: -55 } } : {
-                    source: { node: d.target, dy: 55 }, target: { node: d.source, dy: -55 }
-                }))
+            .attr("d", d => layerLinker(holderLink(d, 55)))
         layerLink.exit().remove()
 
         layerLinkEnter.transition()
@@ -646,11 +684,25 @@ export class TopologyComponent extends Component {
 
         layerLink.transition()
             .duration(500)
-            .style("opacity", 1)
-            .attr("d", d => layerLinker(
-                holders[d.source.id].y < holders[d.target.id].y ? { source: { node: d.source, dy: 55 }, target: { node: d.target, dy: -55 } } : {
-                    source: { node: d.target, dy: 55 }, target: { node: d.source, dy: -55 }
-                }))
+            .attr("d", d => layerLinker(holderLink(d, 55)))
+
+        var layerLinkWrap = this.gLayerLinkWraps.selectAll('path.layer-link-wrap')
+            .data(this.visibleLayerLinks(holders), d => d.id)
+        layerLinkWrap.enter()
+            .append('path')
+            .attr("class", "layer-link-wrap")
+            .attr("d", d => layerLinker(holderLink(d, 45)))
+            .on("mouseover", function (d, i) {
+                select("#layer-link-overlay-" + d.id).transition()
+                    .duration(300)
+                    .style("opacity", 1)
+            })
+            .on("mouseout", function (d, i) {
+                select("#layer-link-overlay-" + d.id).transition()
+                    .duration(300)
+                    .style("opacity", 0)
+            });
+        layerLinkWrap.exit().remove()
     }
 
     render() {
