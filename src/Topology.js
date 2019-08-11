@@ -8,6 +8,8 @@ import { schemeOranges, schemeBlues } from 'd3-scale-chromatic'
 import { scaleOrdinal } from 'd3-scale'
 import { } from 'd3-selection-multi'
 
+import './Topology.css';
+
 var colorOranges = scaleOrdinal(schemeOranges[9])
 var colorBlues = scaleOrdinal(schemeBlues[9])
 
@@ -116,6 +118,8 @@ export class TopologyComponent extends Component {
             .attr("fill", "none")
             .attr("stroke", "#c8293c")
             .attr("stroke-width", 3)
+            .attr('marker-start', "url(#square)")
+            .attr('marker-end', "url(#square)")
 
         this.gLayerLinkWraps = g.append("g")
             .attr("class", "layer-link-wraps")
@@ -492,8 +496,6 @@ export class TopologyComponent extends Component {
             .attr("id", d => d.id)
             .attr("class", "layer")
             .style("opacity", 0)
-            .attr("stroke", "#000")
-            .attr("stroke-dasharray", "5,10")
             .attr("fill", d => colorBlues(d.id))
             .attrs(d => this.nodesRect(root, d.nodes))
         layers.exit().remove()
@@ -512,7 +514,6 @@ export class TopologyComponent extends Component {
             .filter(d => d.source.data._node !== this.root && d.source.data._parent !== this.root)
             .append('path')
             .attr("class", "link")
-            .attr("stroke-dasharray", "5,10")
             .style("opacity", 0)
             .attr("d", linker)
         hieraLink.exit().remove()
@@ -549,28 +550,22 @@ export class TopologyComponent extends Component {
         const hexSize = 30
 
         nodeEnter.append("circle")
+            .attr("class", "node-circle")
             .attr("r", hexSize + 14)
-            .attr("fill", "#fff")
             .attr("stroke", this.groupColors)
-            .attr("stroke-width", 3)
 
         nodeEnter.append("circle")
             .attr("r", hexSize + 8)
             .attr("fill", this.groupColors)
 
         nodeEnter.append("path")
+            .attr("class", "node-hexagon")
             .attr("d", d => this.liner(this.hexagon(d, hexSize)))
-            .attr("stroke", "#455f6b")
             .attr("fill", d => this.type(d).color)
-            .attr("stroke-dasharray", "5,5")
 
         nodeEnter.append("text")
-            .attr("class", "icon")
-            .style("font-size", "24px")
-            .attr("alignment-baseline", "middle")
+            .attr("class", "node-icon")
             .attr("fill", d => this.type(d).text)
-            .attr("text-anchor", "middle")
-            .style("font-family", "FontAwesome")
             .text(d => this.type(d).icon)
 
         let wrapText = (text, lineHeight, width) => {
@@ -580,12 +575,12 @@ export class TopologyComponent extends Component {
                 var dy = parseFloat(text.attr("dy"))
                 var words = text.text().split(/(?=[\s\-._])/).reverse()
                 var line = []
-                var word
 
                 var tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
 
                 var lineNumber = 0
-                while (word = words.pop()) {
+                var word = words.pop()
+                while (word) {
                     line.push(word);
                     tspan.text(line.join(""));
                     if (tspan.node().getComputedTextLength() > width) {
@@ -594,15 +589,15 @@ export class TopologyComponent extends Component {
                         line = [word];
                         tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
                     }
+                    word = words.pop()
                 }
             })
         }
 
         nodeEnter.append("text")
-            .style("font-size", "24px")
+            .attr("class", "node-name")
             .attr("dy", ".35em")
             .attr("y", d => d.children ? -60 : 60)
-            .style("text-anchor", "middle")
             .text(d => d.data._node.data ? d.data._node.data.Name : "")
             .call(wrapText, 1.1, this.nodeWidth - 10)
 
@@ -611,22 +606,16 @@ export class TopologyComponent extends Component {
             .append("g")
 
         exco.append("circle")
-            .attr("class", "collapse")
+            .attr("class", "node-exco-circle")
             .attr("cx", hexSize)
             .attr("cy", hexSize)
             .attr("r", d => d.data._node.children.length ? 15 : 0)
-            .attr("fill", "#48e448")
-            .attr("stroke", "#666")
 
         exco.append("text")
             .attr("id", d => "exco-" + d.data.id)
-            .attr("class", "text-collapse")
+            .attr("class", "node-exco-icon")
             .attr("x", hexSize)
             .attr("y", hexSize + 6)
-            .style("font-size", "14px")
-            .attr("fill", "#fff")
-            .attr("text-anchor", "middle")
-            .style("font-family", "FontAwesome")
             .text(d => d.data.state.expanded ? "\uf068" : "\uf067")
 
         node.transition()
@@ -673,8 +662,6 @@ export class TopologyComponent extends Component {
             .append('path')
             .attr("class", "layer-link")
             .style("opacity", 0)
-            .attr('marker-start', "url(#square)")
-            .attr('marker-end', "url(#square)")
             .attr("d", d => layerLinker(holderLink(d, 55)))
         layerLink.exit().remove()
 

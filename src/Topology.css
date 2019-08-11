@@ -1,0 +1,43 @@
+.layer {
+    stroke: #000;
+    stroke-dasharray: 5, 10;
+}
+
+.link {
+    stroke-dasharray: 5, 10;
+}
+
+.node-circle {
+    fill: #fff;
+    stroke-width: 3;
+}
+
+.node-hexagon {
+    stroke: #455f6b;
+    stroke-dasharray: 5, 5;
+}
+
+.node-icon {
+    font-size: 24px;
+    alignment-baseline: middle;
+    text-anchor: middle;
+    font-family: FontAwesome;
+}
+
+.node-name {
+    font-size: 24px;
+    text-anchor: middle;
+}
+
+.node-exco-circle {
+    fill: #48e448;
+    stroke: #666;
+
+}
+
+.node-exco-icon {
+    font-size: 14px;
+    fill: #fff;
+    text-anchor: middle;
+    font-family: FontAwesome;
+}
