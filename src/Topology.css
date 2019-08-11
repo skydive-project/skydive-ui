@@ -8,8 +8,12 @@
 }
 
 .node-circle {
-    fill: #fff;
+    fill: none;
     stroke-width: 3;
+}
+
+.node-highlighted .node-circle {
+    fill: gold;
 }
 
 .node-hexagon {

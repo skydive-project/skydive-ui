@@ -3,7 +3,7 @@ import { hierarchy, tree } from 'd3-hierarchy'
 import { select, event } from 'd3-selection'
 import { line, linkVertical, curveCardinalClosed } from 'd3-shape'
 import { } from 'd3-transition'
-import { zoom } from 'd3-zoom'
+import { zoom, zoomIdentity } from 'd3-zoom'
 import { schemeOranges, schemeBlues } from 'd3-scale-chromatic'
 import { scaleOrdinal } from 'd3-scale'
 import { } from 'd3-selection-multi'
@@ -36,7 +36,7 @@ export class TopologyComponent extends Component {
     constructor(props) {
         super(props)
 
-        this.nodeWidth = 100
+        this.nodeWidth = 110
         this.nodeHeight = 240
 
         this.tree = tree().nodeSize([this.nodeWidth, this.nodeHeight])
@@ -73,11 +73,11 @@ export class TopologyComponent extends Component {
         var width = this.node.clientWidth;
         var height = this.node.clientHeight;
 
-        var svg = select(this.node).append("svg")
+        this.svg = select(this.node).append("svg")
             .attr("width", width)
             .attr("height", height)
 
-        svg.append("defs")
+        this.svg.append("defs")
             .append("marker")
             .attr("id", "square")
             .attr("viewBox", "-5 -5 10 10")
@@ -88,32 +88,35 @@ export class TopologyComponent extends Component {
             .attr("d", "M 0,0 m -5,-5 L 5,-5 L 5,5 L -5,5 Z")
             .attr("fill", "#c8293c")
 
-        var g = svg
-            .call(zoom()
-                .scaleExtent([0.05, 3])
-                .on("zoom", () => g.attr("transform", event.transform.toString())))
+        this.zoom = zoom()
+            .scaleExtent([0.05, 3])
+            .on("zoom", () => this.g.attr("transform", event.transform.toString()))
+
+        this.svg.call(this.zoom)
             .on("dblclick.zoom", null)
+
+        this.g = this.svg
             .append("g")
 
-        this.gLayers = g.append("g")
+        this.gLayers = this.g.append("g")
             .attr("class", "layers")
             .attr("fill", "none")
             .attr("fill-opacity", 0.2)
 
-        this.gHieraLinks = g.append("g")
+        this.gHieraLinks = this.g.append("g")
             .attr("class", "links")
             .attr("fill", "none")
             .attr("stroke", "#555")
             .attr("stroke-opacity", 0.9)
             .attr("stroke-width", 1)
 
-        this.gLayerLinkOverlayLs = g.append("g")
+        this.gLayerLinkOverlayLs = this.g.append("g")
             .attr("class", "layer-link-overlays")
             .attr("fill", "none")
             .attr("stroke", "#ffeb3b91")
             .attr("stroke-width", 30)
 
-        this.gLayerLinks = g.append("g")
+        this.gLayerLinks = this.g.append("g")
             .attr("class", "layer-links")
             .attr("fill", "none")
             .attr("stroke", "#c8293c")
@@ -121,13 +124,13 @@ export class TopologyComponent extends Component {
             .attr('marker-start', "url(#square)")
             .attr('marker-end', "url(#square)")
 
-        this.gLayerLinkWraps = g.append("g")
+        this.gLayerLinkWraps = this.g.append("g")
             .attr("class", "layer-link-wraps")
             .attr("stroke", "#ffeb3b91")
             .attr("stroke-width", 30)
             .attr("opacity", 0)
 
-        this.gNodes = g.append("g")
+        this.gNodes = this.g.append("g")
             .attr("class", "nodes")
     }
 
@@ -161,6 +164,12 @@ export class TopologyComponent extends Component {
         }
 
         this.renderTree()
+
+        this.zoomFit()
+
+        /*for (let node of data.Nodes) {
+            this.highlightNode(node.ID, true)
+        }*/
     }
 
     // TEMP(safchain) this has to be moved to another external component dedicated to topology placement rules
@@ -474,6 +483,26 @@ export class TopologyComponent extends Component {
         return Object.values(this._layerNodes(node, {}))
     }
 
+    highlightNode(id, active) {
+        select("#node-" + id).classed("node-highlighted", active)
+    }
+
+    zoomFit() {
+        var bounds = this.g.node().getBBox();
+        var parent = this.g.node().parentElement;
+        var fullWidth = parent.clientWidth, fullHeight = parent.clientHeight;
+        var width = bounds.width, height = bounds.height;
+        var midX = bounds.x + width / 2, midY = bounds.y + height / 2;
+        if (width === 0 || height === 0) return;
+        var scale = 0.65 / Math.max(width / fullWidth, height / fullHeight);
+        var translate = [fullWidth / 2 - midX * scale, fullHeight / 2 - midY * scale];
+
+        var t = zoomIdentity
+            .translate(translate[0] + 30, translate[1])
+            .scale(scale);
+        this.svg.transition().duration(500).call(this.zoom.transform, t);
+    }
+
     renderTree() {
         let normRoot = this.normalizeTree(this.root)
 
@@ -551,7 +580,7 @@ export class TopologyComponent extends Component {
 
         nodeEnter.append("circle")
             .attr("class", "node-circle")
-            .attr("r", hexSize + 14)
+            .attr("r", hexSize + 16)
             .attr("stroke", this.groupColors)
 
         nodeEnter.append("circle")
@@ -639,7 +668,7 @@ export class TopologyComponent extends Component {
             .attr("id", d => "layer-link-overlay-" + d.id)
             .attr("class", "layer-link-overlay")
             .style("opacity", 0)
-            .attr("d", d => layerLinker(holderLink(d, 45)))
+            .attr("d", d => layerLinker(holderLink(d, 55)))
             .on("mouseover", function (d, i) {
                 select(this).transition()
                     .duration(300)
@@ -654,7 +683,7 @@ export class TopologyComponent extends Component {
 
         layerLinkOverlayL.transition()
             .duration(500)
-            .attr("d", d => layerLinker(holderLink(d, 45)))
+            .attr("d", d => layerLinker(holderLink(d, 55)))
 
         var layerLink = this.gLayerLinks.selectAll('path.layer-link')
             .data(this.visibleLayerLinks(holders), d => d.id)
@@ -678,7 +707,7 @@ export class TopologyComponent extends Component {
         layerLinkWrap.enter()
             .append('path')
             .attr("class", "layer-link-wrap")
-            .attr("d", d => layerLinker(holderLink(d, 45)))
+            .attr("d", d => layerLinker(holderLink(d, 55)))
             .on("mouseover", function (d, i) {
                 select("#layer-link-overlay-" + d.id).transition()
                     .duration(300)
