@@ -51,6 +51,7 @@
 .node-hexagon {
     stroke: #455f6b;
     stroke-dasharray: 5, 5;
+    fill: #C9ADA7;
 }
 
 .node-icon {
@@ -58,6 +59,7 @@
     alignment-baseline: middle;
     text-anchor: middle;
     font-family: FontAwesome;
+    fill: #444;
 }
 
 .node-name {

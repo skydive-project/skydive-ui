@@ -16,22 +16,6 @@ var colorBlues = scaleOrdinal(schemeBlues[9])
 const data = require('./dump.json');
 
 export class TopologyComponent extends Component {
-    // TEMP(safchain) icon and colors
-    // this has to be moved to another external component
-    types = {
-        host: { color: "#114B5F", icon: "\uf109", text: "#eee" },
-        bridge: { color: "#1A936F", icon: "\uf1e0", text: "#eee" },
-        ovsbridge: { color: "#1A936F", icon: "\uf1e0", text: "#eee" },
-        interface: { color: "#88D498", icon: "\uf120", text: "#444" },
-        device: { color: "#88D498", icon: "\uf120", text: "#444" },
-        veth: { color: "#88D498", icon: "\uf120", text: "#444" },
-        tun: { color: "#88D498", icon: "\uf120", text: "#444" },
-        tap: { color: "#88D498", icon: "\uf120", text: "#444" },
-        netns: { color: "#C6DABF", icon: "\uf24d", text: "#444" },
-        port: { color: "#1A936F", icon: "\uf0e8", text: "#eee" },
-        ovsport: { color: "#1A936F", icon: "\uf0e8", text: "#eee" },
-        unknown: { color: "#C9ADA7", icon: "\uf192", text: "#444" }
-    }
 
     constructor(props) {
         super(props)
@@ -46,10 +30,10 @@ export class TopologyComponent extends Component {
             data: {
                 name: "root"
             },
-            layer: 0,
+            layerWeight: 0,
             children: []
         }
-        this.maxLayer = 0
+        this.maxLayerWeight = 0
 
         this.nodes = {}
 
@@ -98,21 +82,27 @@ export class TopologyComponent extends Component {
         this.g = this.svg
             .append("g")
 
+        // layers group
         this.gLayers = this.g.append("g")
             .attr("class", "layers")
 
+        // hiera links group 
         this.gHieraLinks = this.g.append("g")
             .attr("class", "links")
 
+        // link overlay group, like highlight
         this.gLayerLinkOverlayLs = this.g.append("g")
             .attr("class", "layer-link-overlays")
 
+        // non-hiera links group
         this.gLayerLinks = this.g.append("g")
             .attr("class", "layer-links")
 
+        // link wrapper group, used to catch mouse event
         this.gLayerLinkWraps = this.g.append("g")
             .attr("class", "layer-link-wraps")
 
+        // nodes group
         this.gNodes = this.g.append("g")
             .attr("class", "nodes")
     }
@@ -122,7 +112,7 @@ export class TopologyComponent extends Component {
         // first add all the nodes
         for (let node of data.Nodes) {
             let n = this.addNode(node.ID, node.Metadata)
-            this.setParent(n, this.root, this.layerIndex)
+            this.setParent(n, this.root, this.props.nodeLayerWeight)
         }
 
         // then add ownership links
@@ -131,7 +121,7 @@ export class TopologyComponent extends Component {
                 let parent = this.nodes[edge.Parent]
                 let child = this.nodes[edge.Child]
 
-                this.setParent(child, parent, this.layerIndex)
+                this.setParent(child, parent, this.props.nodeLayerWeight)
             }
         }
 
@@ -142,7 +132,7 @@ export class TopologyComponent extends Component {
                 let parent = this.nodes[edge.Parent]
                 let child = this.nodes[edge.Child]
 
-                this.addLayerLink(child, parent, this.layerIndex, edge.Metadata)
+                this.addLayerLink(child, parent, edge.Metadata)
             }
         }
 
@@ -153,26 +143,6 @@ export class TopologyComponent extends Component {
         /*for (let node of data.Nodes) {
             this.highlightNode(node.ID, true)
         }*/
-    }
-
-    // TEMP(safchain) this has to be moved to another external component dedicated to topology placement rules
-    layerIndex(node) {
-        switch (node.data.Type) {
-            case "host":
-                return 3
-            case "bridge":
-            case "ovsbridge":
-                return 4
-            case "netns":
-                return 6
-            default:
-        }
-
-        if (node.data.OfPort) {
-            return 5
-        }
-
-        return node.parent ? node.parent.layer : 1
     }
 
     defaultState() {
@@ -196,7 +166,7 @@ export class TopologyComponent extends Component {
         child.parent.children = child.parent.children.filter(c => c.id !== child.id)
     }
 
-    setParent(child, parent, layer) {
+    setParent(child, parent, layerWeight) {
         // remove from previous parent if needed
         if (child.parent) {
             child.parent.children = child.parent.children.filter(c => c.id !== child.id)
@@ -205,12 +175,12 @@ export class TopologyComponent extends Component {
         parent.children.push(child)
         child.parent = parent
 
-        var index = typeof layer === "function" ? layer(child) : layer
-        if (index > this.maxLayer) {
-            this.maxLayer = index
+        var weight = typeof layerWeight === "function" ? layerWeight(child) : layerWeight
+        if (weight > this.maxLayerWeight) {
+            this.maxLayerWeight = weight
         }
 
-        child.layer = index
+        child.layerWeight = weight
     }
 
     // add a extra link of top of the "classic" tree link
@@ -225,7 +195,7 @@ export class TopologyComponent extends Component {
 
     cloneTree(node, parent) {
         let state = this.nodeStates[node.id]
-        let cloned = { id: node.id, _node: node, layer: node.layer, children: [], parent: parent, state: state }
+        let cloned = { id: node.id, _node: node, layerWeight: node.layerWeight, children: [], parent: parent, state: state }
 
         if (this.nodeStates[node.id].expanded) {
             node.children.forEach(child => {
@@ -238,14 +208,14 @@ export class TopologyComponent extends Component {
 
     normalizeTree(node) {
         // return depth of the given layer
-        let layerHeight = (node, layer, currDepth) => {
-            if (node.layer > layer) {
+        let layerHeight = (node, layerWeight, currDepth) => {
+            if (node.layerWeight > layerWeight) {
                 return 0
             }
 
             var maxDepth = currDepth
             node.children.forEach(child => {
-                let depth = layerHeight(child, layer, currDepth + 1)
+                let depth = layerHeight(child, layerWeight, currDepth + 1)
                 if (depth > maxDepth) {
                     maxDepth = depth
                 }
@@ -255,20 +225,20 @@ export class TopologyComponent extends Component {
         }
 
         // re-order tree to add placeholder node in order to separate layers
-        let normalizeTreeHeight = (root, node, layer, currDepth, cache) => {
-            if (node.layer > layer) {
+        let normalizeTreeHeight = (root, node, layerWeight, currDepth, cache) => {
+            if (node.layerWeight > layerWeight) {
                 return
             }
 
-            if (node.layer === layer && node.parent && node.parent.layer !== layer) {
-                let parentDepth = layerHeight(root, node.layer - 1, 0)
+            if (node.layerWeight === layerWeight && node.parent && node.parent.layerWeight !== layerWeight) {
+                let parentDepth = layerHeight(root, node.layerWeight - 1, 0)
                 if (currDepth > parentDepth) {
                     return
                 }
 
                 let _parent = node._node.parent
 
-                let pass = node.parent.id + "/" + node.layer
+                let pass = node.parent.id + "/" + node.layerWeight
 
                 let first, last
                 if (cache.chains[pass]) {
@@ -301,12 +271,12 @@ export class TopologyComponent extends Component {
             }
 
             node.children.forEach(child => {
-                normalizeTreeHeight(root, child, layer, currDepth + 1, cache)
+                normalizeTreeHeight(root, child, layerWeight, currDepth + 1, cache)
             })
         }
 
         var tree = this.cloneTree(node)
-        for (let i = 0; i <= this.maxLayer; i++) {
+        for (let i = 0; i <= this.maxLayerWeight; i++) {
             normalizeTreeHeight(tree, tree, i, 0, { chains: {} })
         }
         return tree
@@ -336,10 +306,6 @@ export class TopologyComponent extends Component {
         this.renderTree()
     }
 
-    type(d) {
-        return this.types[d.data._node.data.Type] ? this.types[d.data._node.data.Type] : this.types["unknown"]
-    }
-
     hexagon(d, size) {
         var s32 = (Math.sqrt(3) / 2)
 
@@ -363,7 +329,7 @@ export class TopologyComponent extends Component {
         .curve(curveCardinalClosed.tension(0.7))
 
     groupColors(d) {
-        return colorOranges(d.data._node.layer)
+        return colorOranges(d.data._node.layerWeight)
     }
 
     visibleLayerLinks(holders) {
@@ -387,6 +353,7 @@ export class TopologyComponent extends Component {
                     id: link.id,
                     source: source,
                     target: target,
+                    data: link.data
                 })
             }
         })
@@ -444,10 +411,10 @@ export class TopologyComponent extends Component {
             nodes = {}
         }
 
-        if (node.data.layer) {
-            let arr = nodes[node.data.layer]
+        if (node.data.layerWeight) {
+            let arr = nodes[node.data.layerWeight]
             if (!arr) {
-                nodes[node.data.layer] = arr = { id: node.data.layer, nodes: [node] }
+                nodes[node.data.layerWeight] = arr = { id: node.data.layerWeight, nodes: [node] }
             } else {
                 arr.nodes.push(node)
             }
@@ -550,7 +517,7 @@ export class TopologyComponent extends Component {
             .filter(d => d.data._node && d.data._node !== this.root)
             .append("g")
             .attr("id", d => "node-" + d.data.id)
-            .attr("class", "node")
+            .attr("class", d => "node " + this.props.nodeAttrs(d.data._node).class)
             .style("opacity", 0)
             .attr("transform", d => `translate(${d.x},${d.y})`)
             .on("dblclick", d => this.expand(d))
@@ -573,12 +540,10 @@ export class TopologyComponent extends Component {
         nodeEnter.append("path")
             .attr("class", "node-hexagon")
             .attr("d", d => this.liner(this.hexagon(d, hexSize)))
-            .attr("fill", d => this.type(d).color)
 
         nodeEnter.append("text")
             .attr("class", "node-icon")
-            .attr("fill", d => this.type(d).text)
-            .text(d => this.type(d).icon)
+            .text(d => this.props.nodeAttrs(d.data._node).icon)
 
         let wrapText = (text, lineHeight, width) => {
             text.each(function () {
@@ -610,7 +575,7 @@ export class TopologyComponent extends Component {
             .attr("class", "node-name")
             .attr("dy", ".35em")
             .attr("y", d => d.children ? -60 : 60)
-            .text(d => d.data._node.data ? d.data._node.data.Name : "")
+            .text(d => this.props.nodeAttrs(d.data._node).name)
             .call(wrapText, 1.1, this.nodeWidth - 10)
 
         var exco = nodeEnter
@@ -672,7 +637,7 @@ export class TopologyComponent extends Component {
             .data(this.visibleLayerLinks(holders), d => d.id)
         var layerLinkEnter = layerLink.enter()
             .append('path')
-            .attr("class", "layer-link")
+            .attr("class", d => "layer-link " + this.props.linkAttrs(d).class)
             .style("opacity", 0)
             .attr("d", d => layerLinker(holderLink(d, 55)))
         layerLink.exit().remove()
@@ -691,12 +656,12 @@ export class TopologyComponent extends Component {
             .append('path')
             .attr("class", "layer-link-wrap")
             .attr("d", d => layerLinker(holderLink(d, 55)))
-            .on("mouseover", function (d, i) {
+            .on("mouseover", d => {
                 select("#layer-link-overlay-" + d.id).transition()
                     .duration(300)
                     .style("opacity", 1)
             })
-            .on("mouseout", function (d, i) {
+            .on("mouseout", d => {
                 select("#layer-link-overlay-" + d.id).transition()
                     .duration(300)
                     .style("opacity", 0)

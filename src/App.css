@@ -3,23 +3,57 @@
   height: 100%;
 }
 
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 80px;
+
+
+.host .node-hexagon {
+  fill: #114B5F;
 }
 
-.App-header {
-  background-color: #222;
-  height: 150px;
-  padding: 20px;
-  color: white;
+.netns .node-hexagon {
+  fill:#C6DABF;
 }
 
-.App-intro {
-  font-size: large;
+.bridge .node-hexagon, 
+.ovsbrige .node-hexagon {
+  fill: #1A936F;
 }
 
-@keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.interface .node-hexagon,  
+.device .node-hexagon, 
+.tun .node-hexagon, 
+.tap .node-hexagon, 
+.veth .node-hexagon {
+  fill: #88D498;
+}
+
+.port .node-hexagon,  
+.ovsport .node-hexagon {
+  fill: #1A936F;
+}
+
+.host .node-icon {
+  fill: #eee;
+}
+
+
+.netns .node-icon {
+  fill: #444;
+}
+
+.bridge .node-icon, 
+.ovsbrige .node-icon {
+  fill: #eee;
+}
+
+.interface .node-icon,  
+.device .node-icon, 
+.tun .node-icon, 
+.tap .node-icon, 
+.veth .node-icon {
+  fill: #444;
+}
+
+.port .node-icon,  
+.ovsport .node-icon {
+  fill: #eee;
 }
