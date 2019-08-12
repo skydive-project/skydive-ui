@@ -1,6 +1,38 @@
+.layers {
+    fill: none;
+    fill-opacity: 0.2;
+}
+
 .layer {
     stroke: #000;
     stroke-dasharray: 5, 10;
+}
+
+.links {
+    fill: none;
+    stroke: #555;
+    stroke-opacity: 0.9;
+    stroke-width: 1;
+}
+
+.layer-link-overlays {
+    fill: none;
+    stroke: #ffeb3b91;
+    stroke-width: 30;
+}
+
+.layer-links {
+    fill: none;
+    stroke: #c8293c;
+    stroke-width: 3;
+    marker-start: url(#square);
+    marker-end: url(#square);
+}
+
+.layer-link-wraps {
+    stroke: #ffeb3b91;
+    stroke-width: 30;
+    opacity: 0;
 }
 
 .link {

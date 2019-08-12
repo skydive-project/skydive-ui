@@ -89,7 +89,7 @@ export class TopologyComponent extends Component {
             .attr("fill", "#c8293c")
 
         this.zoom = zoom()
-            .scaleExtent([0.05, 3])
+            .scaleExtent([0.3, 3])
             .on("zoom", () => this.g.attr("transform", event.transform.toString()))
 
         this.svg.call(this.zoom)
@@ -100,35 +100,18 @@ export class TopologyComponent extends Component {
 
         this.gLayers = this.g.append("g")
             .attr("class", "layers")
-            .attr("fill", "none")
-            .attr("fill-opacity", 0.2)
 
         this.gHieraLinks = this.g.append("g")
             .attr("class", "links")
-            .attr("fill", "none")
-            .attr("stroke", "#555")
-            .attr("stroke-opacity", 0.9)
-            .attr("stroke-width", 1)
 
         this.gLayerLinkOverlayLs = this.g.append("g")
             .attr("class", "layer-link-overlays")
-            .attr("fill", "none")
-            .attr("stroke", "#ffeb3b91")
-            .attr("stroke-width", 30)
 
         this.gLayerLinks = this.g.append("g")
             .attr("class", "layer-links")
-            .attr("fill", "none")
-            .attr("stroke", "#c8293c")
-            .attr("stroke-width", 3)
-            .attr('marker-start', "url(#square)")
-            .attr('marker-end', "url(#square)")
 
         this.gLayerLinkWraps = this.g.append("g")
             .attr("class", "layer-link-wraps")
-            .attr("stroke", "#ffeb3b91")
-            .attr("stroke-width", 30)
-            .attr("opacity", 0)
 
         this.gNodes = this.g.append("g")
             .attr("class", "nodes")
@@ -165,7 +148,7 @@ export class TopologyComponent extends Component {
 
         this.renderTree()
 
-        this.zoomFit()
+        //this.zoomFit()
 
         /*for (let node of data.Nodes) {
             this.highlightNode(node.ID, true)
@@ -449,9 +432,9 @@ export class TopologyComponent extends Component {
         const margin = this.nodeHeight / 2
 
         return {
-            x: gBB[0] - margin,
+            x: gBB[0] - this.node.clientWidth * 5,
             y: nBB[0] - margin,
-            width: gBB[1] - gBB[0] + margin * 2,
+            width: (gBB[1] - gBB[0]) + this.node.clientWidth * 10,
             height: nBB[1] - nBB[0] + margin * 2
         }
     }
