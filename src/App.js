@@ -35,6 +35,10 @@ class App extends Component {
     return { class: link.RelationType || "" }
   }
 
+  onNodeSelected(node) {
+    console.log(node)
+  }
+
   nodeLayerWeight(node) {
       switch (node.data.Type) {
           case "host":
@@ -57,7 +61,8 @@ class App extends Component {
   render() {
     return (
       <div className="App">
-        <TopologyComponent nodeAttrs={this.nodeAttrs} nodeLayerWeight={this.nodeLayerWeight} linkAttrs={this.linkAttrs} />
+        <TopologyComponent nodeAttrs={this.nodeAttrs} nodeLayerWeight={this.nodeLayerWeight} linkAttrs={this.linkAttrs} 
+          onNodeSelected={this.onNodeSelected}/>
       </div>
     );
   }

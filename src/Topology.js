@@ -42,9 +42,23 @@ export class TopologyComponent extends Component {
         this.nodeStates[this.root.id] = { expanded: true }
 
         this.layerLinks = []
+
+        this.ctrlPressed = false
     }
 
     componentDidMount() {
+        select("body")
+            .on("keydown", () => {
+                if (event.keyCode === 17) {
+                    this.ctrlPressed = true
+                }
+            })
+            .on("keyup", () => {
+                if (event.keyCode === 17) {
+                    this.ctrlPressed = false
+                }
+            })
+
         this.createSVG()
         this.parseTopology(data)
     }
@@ -54,12 +68,13 @@ export class TopologyComponent extends Component {
     }
 
     createSVG() {
-        var width = this.node.clientWidth;
-        var height = this.node.clientHeight;
+        var width = this.svgDiv.clientWidth;
+        var height = this.svgDiv.clientHeight;
 
-        this.svg = select(this.node).append("svg")
+        this.svg = select(this.svgDiv).append("svg")
             .attr("width", width)
             .attr("height", height)
+            .on("click", () => this.unselectAllNodes())
 
         this.svg.append("defs")
             .append("marker")
@@ -138,7 +153,7 @@ export class TopologyComponent extends Component {
 
         this.renderTree()
 
-        //this.zoomFit()
+        this.zoomFit()
 
         /*for (let node of data.Nodes) {
             this.highlightNode(node.ID, true)
@@ -399,9 +414,9 @@ export class TopologyComponent extends Component {
         const margin = this.nodeHeight / 2
 
         return {
-            x: gBB[0] - this.node.clientWidth * 5,
+            x: gBB[0] - this.svgDiv.clientWidth * 5,
             y: nBB[0] - margin,
-            width: (gBB[1] - gBB[0]) + this.node.clientWidth * 10,
+            width: (gBB[1] - gBB[0]) + this.svgDiv.clientWidth * 10,
             height: nBB[1] - nBB[0] + margin * 2
         }
     }
@@ -437,8 +452,35 @@ export class TopologyComponent extends Component {
         select("#node-" + id).classed("node-highlighted", active)
     }
 
+    unselectAllNodes() {
+        var self = this
+
+        this.gNodes.selectAll(".node-selected").each(function () {
+            select(this).classed("node-selected", false)
+
+            if (self.props.onNodeSelected) {
+                var id = this.id.replace(/^node-/, '');
+
+                self.props.onNodeSelected(self.nodes[id], false)
+            }
+        })
+    }
+
+    selectNode(id, active) {
+        event.stopPropagation()
+
+        if (!this.ctrlPressed) {
+            this.unselectAllNodes()
+        }
+        select("#node-" + id).classed("node-selected", active)
+
+        if (this.props.onNodeSelected) {
+            this.props.onNodeSelected(this.nodes[id], active)
+        }
+    }
+
     zoomFit() {
-        var bounds = this.g.node().getBBox();
+        var bounds = this.gNodes.node().getBBox();
         var parent = this.g.node().parentElement;
         var fullWidth = parent.clientWidth, fullHeight = parent.clientHeight;
         var width = bounds.width, height = bounds.height;
@@ -520,7 +562,8 @@ export class TopologyComponent extends Component {
             .attr("class", d => "node " + this.props.nodeAttrs(d.data._node).class)
             .style("opacity", 0)
             .attr("transform", d => `translate(${d.x},${d.y})`)
-            .on("dblclick", d => this.expand(d))
+            .on("dblclick", d => { this.unselectAllNodes(); this.expand(d) })
+            .on("click", d => this.selectNode(d.data.id, true))
 
         nodeEnter.transition()
             .duration(500)
@@ -564,7 +607,11 @@ export class TopologyComponent extends Component {
                         line.pop();
                         tspan.text(line.join(""));
                         line = [word];
-                        tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+                        tspan = text.append("tspan")
+                            .attr("x", 0)
+                            .attr("y", y)
+                            .attr("dy", ++lineNumber * lineHeight + dy + "em")
+                            .text(word);
                     }
                     word = words.pop()
                 }
@@ -671,7 +718,9 @@ export class TopologyComponent extends Component {
 
     render() {
         return (
-            <div ref={node => this.node = node} style={{ height: "100%" }} />
+            <div style={{ height: "100%" }}>
+                <div ref={node => this.svgDiv = node} style={{ height: "100%" }} />
+            </div>
         )
     }
 }

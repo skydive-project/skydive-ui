@@ -48,6 +48,10 @@
     fill: gold;
 }
 
+.node-selected .node-circle {
+    fill: #48e448;
+}
+
 .node-hexagon {
     stroke: #455f6b;
     stroke-dasharray: 5, 5;
