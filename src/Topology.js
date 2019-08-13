@@ -13,8 +13,6 @@ import './Topology.css';
 var colorOranges = scaleOrdinal(schemeOranges[9])
 var colorBlues = scaleOrdinal(schemeBlues[9])
 
-const data = require('./dump.json');
-
 export class TopologyComponent extends Component {
 
     constructor(props) {
@@ -60,7 +58,6 @@ export class TopologyComponent extends Component {
             })
 
         this.createSVG()
-        this.parseTopology(data)
     }
 
     componentDidUpdate() {
@@ -120,44 +117,6 @@ export class TopologyComponent extends Component {
         // nodes group
         this.gNodes = this.g.append("g")
             .attr("class", "nodes")
-    }
-
-    // TEMP(safchain) this has to be moved to another external component consuming a message bus
-    parseTopology(data) {
-        // first add all the nodes
-        for (let node of data.Nodes) {
-            let n = this.addNode(node.ID, node.Metadata)
-            this.setParent(n, this.root, this.props.nodeLayerWeight)
-        }
-
-        // then add ownership links
-        for (let edge of data.Edges) {
-            if (edge.Metadata.RelationType === "ownership") {
-                let parent = this.nodes[edge.Parent]
-                let child = this.nodes[edge.Child]
-
-                this.setParent(child, parent, this.props.nodeLayerWeight)
-            }
-        }
-
-        // finally add remaining links
-        // then add ownership links
-        for (let edge of data.Edges) {
-            if (edge.Metadata.RelationType !== "ownership") {
-                let parent = this.nodes[edge.Parent]
-                let child = this.nodes[edge.Child]
-
-                this.addLayerLink(child, parent, edge.Metadata)
-            }
-        }
-
-        this.renderTree()
-
-        this.zoomFit()
-
-        /*for (let node of data.Nodes) {
-            this.highlightNode(node.ID, true)
-        }*/
     }
 
     defaultState() {

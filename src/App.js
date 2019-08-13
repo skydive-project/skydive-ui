@@ -2,10 +2,53 @@ import React, { Component } from 'react';
 import { TopologyComponent } from './Topology';
 import './App.css';
 
+const data = require('./dump.json');
+
 class App extends Component {
 
   constructor(props) {
     super(props)
+  }
+
+  componentDidMount() {
+    this.parseTopology(data)
+  }
+
+  parseTopology(data) {
+    // first add all the nodes
+    for (let node of data.Nodes) {
+      let n = this.tc.addNode(node.ID, node.Metadata)
+      this.tc.setParent(n, this.tc.root, this.nodeLayerWeight)
+    }
+
+    // then add ownership links
+    for (let edge of data.Edges) {
+      if (edge.Metadata.RelationType === "ownership") {
+        let parent = this.tc.nodes[edge.Parent]
+        let child = this.tc.nodes[edge.Child]
+
+        this.tc.setParent(child, parent, this.nodeLayerWeight)
+      }
+    }
+
+    // finally add remaining links
+    // then add ownership links
+    for (let edge of data.Edges) {
+      if (edge.Metadata.RelationType !== "ownership") {
+        let parent = this.tc.nodes[edge.Parent]
+        let child = this.tc.nodes[edge.Child]
+
+        this.tc.addLayerLink(child, parent, edge.Metadata)
+      }
+    }
+
+    this.tc.renderTree()
+
+    this.tc.zoomFit()
+
+    /*for (let node of data.Nodes) {
+        this.highlightNode(node.ID, true)
+    }*/
   }
 
   nodeAttrs(node) {
@@ -40,29 +83,29 @@ class App extends Component {
   }
 
   nodeLayerWeight(node) {
-      switch (node.data.Type) {
-          case "host":
-              return 3
-          case "bridge":
-          case "ovsbridge":
-              return 4
-          case "netns":
-              return 8
-          default:
-      }
+    switch (node.data.Type) {
+      case "host":
+        return 3
+      case "bridge":
+      case "ovsbridge":
+        return 4
+      case "netns":
+        return 8
+      default:
+    }
 
-      if (node.data.OfPort) {
-          return 5
-      }
+    if (node.data.OfPort) {
+      return 5
+    }
 
-      return node.parent ? node.parent.layerWeight : 1
+    return node.parent ? node.parent.layerWeight : 1
   }
 
   render() {
     return (
       <div className="App">
-        <TopologyComponent nodeAttrs={this.nodeAttrs} nodeLayerWeight={this.nodeLayerWeight} linkAttrs={this.linkAttrs} 
-          onNodeSelected={this.onNodeSelected}/>
+        <TopologyComponent ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} nodeLayerWeight={this.nodeLayerWeight} linkAttrs={this.linkAttrs}
+          onNodeSelected={this.onNodeSelected} />
       </div>
     );
   }
