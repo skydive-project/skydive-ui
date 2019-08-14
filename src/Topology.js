@@ -175,6 +175,9 @@ export class TopologyComponent extends Component {
             node.children.forEach(child => {
                 cloned.children.push(this.cloneTree(child, cloned))
             })
+            if (this.props.sortNodesFnc) {
+                cloned.children.sort((a, b) => this.props.sortNodesFnc(a._node, b._node))
+            }
         }
 
         return cloned

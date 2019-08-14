@@ -97,11 +97,15 @@ class App extends Component {
     return node.parent ? node.parent.layerWeight : 1
   }
 
+  sortNodesFnc(a, b) {
+    return a.data.Name.localeCompare(b.data.Name)
+  }
+
   render() {
     return (
       <div className="App">
         <TopologyComponent ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} nodeLayerWeight={this.nodeLayerWeight} linkAttrs={this.linkAttrs}
-          onNodeSelected={this.onNodeSelected} />
+          onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}/>
       </div>
     );
   }
