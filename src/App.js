@@ -6,10 +6,6 @@ const data = require('./dump.json');
 
 class App extends Component {
 
-  constructor(props) {
-    super(props)
-  }
-
   componentDidMount() {
     this.parseTopology(data)
   }

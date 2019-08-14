@@ -8,7 +8,7 @@ import { schemeOranges, schemeBlues } from 'd3-scale-chromatic'
 import { scaleOrdinal } from 'd3-scale'
 import { } from 'd3-selection-multi'
 
-import './Topology.css';
+import './Topology.css'
 
 var colorOranges = scaleOrdinal(schemeOranges[9])
 var colorBlues = scaleOrdinal(schemeBlues[9])
@@ -65,8 +65,8 @@ export class TopologyComponent extends Component {
     }
 
     createSVG() {
-        var width = this.svgDiv.clientWidth;
-        var height = this.svgDiv.clientHeight;
+        var width = this.svgDiv.clientWidth
+        var height = this.svgDiv.clientHeight
 
         this.svg = select(this.svgDiv).append("svg")
             .attr("width", width)
@@ -411,7 +411,7 @@ export class TopologyComponent extends Component {
             select(this).classed("node-selected", false)
 
             if (self.props.onNodeSelected) {
-                var id = this.id.replace(/^node-/, '');
+                var id = this.id.replace(/^node-/, '')
 
                 self.props.onNodeSelected(self.nodes[id], false)
             }
@@ -432,19 +432,19 @@ export class TopologyComponent extends Component {
     }
 
     zoomFit() {
-        var bounds = this.gNodes.node().getBBox();
-        var parent = this.g.node().parentElement;
-        var fullWidth = parent.clientWidth, fullHeight = parent.clientHeight;
-        var width = bounds.width, height = bounds.height;
-        var midX = bounds.x + width / 2, midY = bounds.y + height / 2;
-        if (width === 0 || height === 0) return;
-        var scale = 0.65 / Math.max(width / fullWidth, height / fullHeight);
-        var translate = [fullWidth / 2 - midX * scale, fullHeight / 2 - midY * scale];
+        var bounds = this.gNodes.node().getBBox()
+        var parent = this.g.node().parentElement
+        var fullWidth = parent.clientWidth, fullHeight = parent.clientHeight
+        var width = bounds.width, height = bounds.height
+        var midX = bounds.x + width / 2, midY = bounds.y + height / 2
+        if (width === 0 || height === 0) return
+        var scale = 0.65 / Math.max(width / fullWidth, height / fullHeight)
+        var translate = [fullWidth / 2 - midX * scale, fullHeight / 2 - midY * scale]
 
         var t = zoomIdentity
             .translate(translate[0] + 30, translate[1])
-            .scale(scale);
-        this.svg.transition().duration(500).call(this.zoom.transform, t);
+            .scale(scale)
+        this.svg.transition().duration(500).call(this.zoom.transform, t)
     }
 
     renderTree() {
@@ -517,10 +517,9 @@ export class TopologyComponent extends Component {
             .on("dblclick", d => { this.unselectAllNodes(); this.expand(d) })
             .on("click", d => this.selectNode(d.data.id, true))
             .on("contextmenu", d => {
-                event.preventDefault();
-                
-            });
-    
+                event.preventDefault()
+
+            })
 
         nodeEnter.transition()
             .duration(500)
@@ -546,29 +545,29 @@ export class TopologyComponent extends Component {
             .text(d => this.props.nodeAttrs(d.data._node).icon)
 
         let wrapText = (text, lineHeight, width) => {
-            text.each(function () {
+            text.each(function (d) {
                 var text = select(this)
                 var y = text.attr("y")
                 var dy = parseFloat(text.attr("dy"))
                 var words = text.text().split(/(?=[\s\-._])/).reverse()
                 var line = []
 
-                var tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+                var tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em")
 
                 var lineNumber = 0
                 var word = words.pop()
                 while (word) {
-                    line.push(word);
-                    tspan.text(line.join(""));
+                    line.push(word)
+                    tspan.text(line.join(""))
                     if (tspan.node().getComputedTextLength() > width) {
-                        line.pop();
-                        tspan.text(line.join(""));
-                        line = [word];
+                        line.pop()
+                        tspan.text(line.join(""))
+                        line = [word]
                         tspan = text.append("tspan")
                             .attr("x", 0)
                             .attr("y", y)
                             .attr("dy", ++lineNumber * lineHeight + dy + "em")
-                            .text(word);
+                            .text(word)
                     }
                     word = words.pop()
                 }
@@ -630,7 +629,7 @@ export class TopologyComponent extends Component {
                 select(this).transition()
                     .duration(300)
                     .style("opacity", 0)
-            });
+            })
         layerLinkOverlayL.exit().remove()
 
         layerLinkOverlayL.transition()
@@ -669,7 +668,7 @@ export class TopologyComponent extends Component {
                 select("#layer-link-overlay-" + d.id).transition()
                     .duration(300)
                     .style("opacity", 0)
-            });
+            })
         layerLinkWrap.exit().remove()
     }
 

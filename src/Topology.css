@@ -67,8 +67,12 @@
 }
 
 .node-name {
-    font-size: 24px;
+    font-size: 22px;
     text-anchor: middle;
+    stroke: #fff;
+    stroke-width: 1px;
+    font-weight: bold;
+    font-family: sans-serif;
 }
 
 .node-exco-circle {
@@ -82,5 +86,5 @@
     fill: #fff;
     text-anchor: middle;
     font-weight: bold;
-    font-family: monospace;
+    font-family: sans-serif;
 }
