@@ -264,13 +264,6 @@ export class TopologyComponent extends Component {
     }
 
     expand(d) {
-        select("#exco-" + d.data.id).text(() => {
-            if (d.data.state.expanded) {
-                return "\uf067"
-            }
-            return "\uf068"
-        })
-
         if (d.data.state.expanded) {
             this.collapse(d.data)
         } else {
@@ -523,6 +516,11 @@ export class TopologyComponent extends Component {
             .attr("transform", d => `translate(${d.x},${d.y})`)
             .on("dblclick", d => { this.unselectAllNodes(); this.expand(d) })
             .on("click", d => this.selectNode(d.data.id, true))
+            .on("contextmenu", d => {
+                event.preventDefault();
+                
+            });
+    
 
         nodeEnter.transition()
             .duration(500)
@@ -590,16 +588,16 @@ export class TopologyComponent extends Component {
 
         exco.append("circle")
             .attr("class", "node-exco-circle")
-            .attr("cx", hexSize)
+            .attr("cx", hexSize + 10)
             .attr("cy", hexSize)
-            .attr("r", d => d.data._node.children.length ? 15 : 0)
+            .attr("r", d => d.data._node.children.length ? 18 : 0)
 
         exco.append("text")
             .attr("id", d => "exco-" + d.data.id)
-            .attr("class", "node-exco-icon")
-            .attr("x", hexSize)
+            .attr("class", "node-exco-children")
+            .attr("x", hexSize + 10)
             .attr("y", hexSize + 6)
-            .text(d => d.data.state.expanded ? "\uf068" : "\uf067")
+            .text(d => d.data._node.children.length > 99 ? "+99" : d.data._node.children.length)
 
         node.transition()
             .duration(500)

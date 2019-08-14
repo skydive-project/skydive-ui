@@ -49,7 +49,7 @@
 }
 
 .node-selected .node-circle {
-    fill: #48e448;
+    fill: #19a2ff;
 }
 
 .node-hexagon {
@@ -77,9 +77,10 @@
 
 }
 
-.node-exco-icon {
-    font-size: 14px;
+.node-exco-children {
+    font-size: 16px;
     fill: #fff;
     text-anchor: middle;
-    font-family: FontAwesome;
+    font-weight: bold;
+    font-family: monospace;
 }
