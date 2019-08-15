@@ -88,3 +88,7 @@
     font-weight: bold;
     font-family: sans-serif;
 }
+
+.context-menu {
+    font-family: FontAwesome;
+}

@@ -6,6 +6,18 @@ const data = require('./dump.json');
 
 class App extends Component {
 
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      isContextMenuOn: "none",
+      contextMenuX: 0,
+      contextMenuY: 0
+    }
+
+    this.onShowNodeContextMenu = this.onShowNodeContextMenu.bind(this)
+  }
+
   componentDidMount() {
     this.parseTopology(data)
   }
@@ -101,11 +113,20 @@ class App extends Component {
     return a.data.Name.localeCompare(b.data.Name)
   }
 
+  onShowNodeContextMenu(node) {
+    return [
+      { class: "context-menu-item", text: "Capture", icon: "\uf0e8", callback: () => { console.log("Capture") } },
+      { class: "context-menu-item", text: "Injection", icon: "\uf0e8", callback: () => { console.log("Injection") } },
+      { class: "context-menu-item", text: "Flows", icon: "\uf0e8", callback: () => { console.log("Flows") } }
+    ]
+  }
+
   render() {
     return (
       <div className="App">
         <TopologyComponent ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} nodeLayerWeight={this.nodeLayerWeight} linkAttrs={this.linkAttrs}
-          onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}/>
+          onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
+          onShowNodeContextMenu={this.onShowNodeContextMenu} />
       </div>
     );
   }

@@ -61,17 +61,21 @@ export class TopologyComponent extends Component {
     }
 
     componentDidUpdate() {
-        this.createSVG()
     }
 
     createSVG() {
         var width = this.svgDiv.clientWidth
         var height = this.svgDiv.clientHeight
+        var margin = 25
+
 
         this.svg = select(this.svgDiv).append("svg")
-            .attr("width", width)
-            .attr("height", height)
-            .on("click", () => this.unselectAllNodes())
+            .attr("width", width - 25)
+            .attr("height", height - 25)
+            .on("click", () => {
+                this.hideNodeContextMenu()
+                this.unselectAllNodes()
+            })
 
         this.svg.append("defs")
             .append("marker")
@@ -86,7 +90,9 @@ export class TopologyComponent extends Component {
 
         this.zoom = zoom()
             .scaleExtent([0.3, 3])
-            .on("zoom", () => this.g.attr("transform", event.transform.toString()))
+            .on("zoom", () => {
+                this.g.attr("transform", event.transform.toString())
+            })
 
         this.svg.call(this.zoom)
             .on("dblclick.zoom", null)
@@ -117,6 +123,10 @@ export class TopologyComponent extends Component {
         // nodes group
         this.gNodes = this.g.append("g")
             .attr("class", "nodes")
+
+        // context menu group
+        this.gContextMenu = this.g.append("g")
+            .attr("class", "context-menu")
     }
 
     defaultState() {
@@ -450,6 +460,47 @@ export class TopologyComponent extends Component {
         this.svg.transition().duration(500).call(this.zoom.transform, t)
     }
 
+    showNodeContextMenu(d) {
+        // hide previous
+        this.hideNodeContextMenu()
+
+        if (this.props.onShowNodeContextMenu) {
+            var data = this.props.onShowNodeContextMenu(d)
+
+            var g = this.gContextMenu.append("g")
+                .attr("opacity", 0)
+            g.transition()
+                .duration(300)
+                .style("opacity", 1)
+
+            var dy = 0
+            for (let item of data) {
+                let gItem = g.append("g")
+                    .attr("class", "context-menu-item " + item.class)
+                    .on("click", () => { item.callback(d) })
+                gItem.append("text")
+                    .attr("class", "context-menu-item-icon")
+                    .attr("x", d.x)
+                    .attr("dx", this.nodeWidth / 2)
+                    .attr("y", d.y)
+                    .attr("dy", dy + "em")
+                    .text(d => item.icon)
+                gItem.append("text")
+                    .attr("class", "context-menu-item-text")
+                    .attr("x", d.x)
+                    .attr("dx", this.nodeWidth / 2 + 20)
+                    .attr("y", d.y)
+                    .attr("dy", dy + "em")
+                    .text(d => item.text)
+                dy += 1.1
+            }
+        }
+    }
+
+    hideNodeContextMenu() {
+        this.gContextMenu.select("g").remove()
+    }
+
     renderTree() {
         let normRoot = this.normalizeTree(this.root)
 
@@ -517,11 +568,17 @@ export class TopologyComponent extends Component {
             .attr("class", d => "node " + this.props.nodeAttrs(d.data._node).class)
             .style("opacity", 0)
             .attr("transform", d => `translate(${d.x},${d.y})`)
-            .on("dblclick", d => { this.unselectAllNodes(); this.expand(d) })
-            .on("click", d => this.selectNode(d.data.id, true))
+            .on("dblclick", d => {
+                this.unselectAllNodes()
+                this.expand(d)
+            })
+            .on("click", d => {
+                this.showNodeContextMenu(d)
+                this.selectNode(d.data.id, true)
+            })
             .on("contextmenu", d => {
                 event.preventDefault()
-
+                this.showNodeContextMenu(d)
             })
 
         nodeEnter.transition()
@@ -677,9 +734,7 @@ export class TopologyComponent extends Component {
 
     render() {
         return (
-            <div style={{ height: "100%" }}>
-                <div ref={node => this.svgDiv = node} style={{ height: "100%" }} />
-            </div>
+            <div ref={node => this.svgDiv = node} style={{ height: "100%" }} />
         )
     }
 }
