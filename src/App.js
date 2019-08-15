@@ -115,9 +115,10 @@ class App extends Component {
 
   onShowNodeContextMenu(node) {
     return [
-      { class: "context-menu-item", text: "Capture", icon: "\uf0e8", callback: () => { console.log("Capture") } },
-      { class: "context-menu-item", text: "Injection", icon: "\uf0e8", callback: () => { console.log("Injection") } },
-      { class: "context-menu-item", text: "Flows", icon: "\uf0e8", callback: () => { console.log("Flows") } }
+      { class: "", text: "Capture", disabled: false, callback: () => { console.log("Capture") } },
+      { class: "", text: "Capture all", disabled: true, callback: () => { console.log("Capture all") } },
+      { class: "", text: "Injection", disabled: false, callback: () => { console.log("Injection") } },
+      { class: "", text: "Flows", disabled: false, callback: () => { console.log("Flows") } }
     ]
   }
 

@@ -68,16 +68,17 @@ export class TopologyComponent extends Component {
         var height = this.svgDiv.clientHeight
         var margin = 25
 
-
         this.svg = select(this.svgDiv).append("svg")
-            .attr("width", width - 25)
-            .attr("height", height - 25)
+            .attr("width", width - margin)
+            .attr("height", height - margin)
             .on("click", () => {
                 this.hideNodeContextMenu()
                 this.unselectAllNodes()
             })
 
-        this.svg.append("defs")
+        var defs = this.svg.append("defs")
+
+        defs
             .append("marker")
             .attr("id", "square")
             .attr("viewBox", "-5 -5 10 10")
@@ -88,8 +89,30 @@ export class TopologyComponent extends Component {
             .attr("d", "M 0,0 m -5,-5 L 5,-5 L 5,5 L -5,5 Z")
             .attr("fill", "#c8293c")
 
+        var filter = defs.append("filter")
+            .attr("id", "drop-shadow")
+            .attr("height", "150%");
+
+        filter.append("feGaussianBlur")
+            .attr("in", "SourceGraphic")
+            .attr("stdDeviation", 5)
+            .attr("result", "blur");
+
+        filter.append("feOffset")
+            .attr("in", "blur")
+            .attr("dx", 0)
+            .attr("dy", 0)
+            .attr("result", "offsetBlur");
+
+        var feMerge = filter.append("feMerge");
+
+        feMerge.append("feMergeNode")
+            .attr("in", "offsetBlur")
+        feMerge.append("feMergeNode")
+            .attr("in", "SourceGraphic");
+
         this.zoom = zoom()
-            .scaleExtent([0.3, 3])
+            .scaleExtent([0.3, 1])
             .on("zoom", () => {
                 this.g.attr("transform", event.transform.toString())
             })
@@ -449,15 +472,24 @@ export class TopologyComponent extends Component {
         var parent = this.g.node().parentElement
         var fullWidth = parent.clientWidth, fullHeight = parent.clientHeight
         var width = bounds.width, height = bounds.height
+        if (width === 0 || height === 0) {
+            return
+        }
         var midX = bounds.x + width / 2, midY = bounds.y + height / 2
-        if (width === 0 || height === 0) return
+
         var scale = 0.65 / Math.max(width / fullWidth, height / fullHeight)
+        if (scale > 1) {
+            scale = 1
+        }
         var translate = [fullWidth / 2 - midX * scale, fullHeight / 2 - midY * scale]
 
         var t = zoomIdentity
             .translate(translate[0] + 30, translate[1])
             .scale(scale)
-        this.svg.transition().duration(500).call(this.zoom.transform, t)
+        this.svg
+            .transition()
+            .duration(500)
+            .call(this.zoom.transform, t)
     }
 
     showNodeContextMenu(d) {
@@ -468,31 +500,54 @@ export class TopologyComponent extends Component {
             var data = this.props.onShowNodeContextMenu(d)
 
             var g = this.gContextMenu.append("g")
-                .attr("opacity", 0)
+                .style("opacity", 0)
             g.transition()
                 .duration(300)
                 .style("opacity", 1)
+            var rect = g.append("rect")
+                .attr("filter", "url(#drop-shadow)")
 
-            var dy = 0
+            var marginX = 20, marginY = 10, paddingY = 30
+
+            var dy = 0, rects = []
             for (let item of data) {
                 let gItem = g.append("g")
                     .attr("class", "context-menu-item " + item.class)
-                    .on("click", () => { item.callback(d) })
-                gItem.append("text")
-                    .attr("class", "context-menu-item-icon")
-                    .attr("x", d.x)
-                    .attr("dx", this.nodeWidth / 2)
+                let rect = gItem.append("rect")
+
+                let text = gItem.append("text")
+                    .classed("disabled", item.disabled)
+                    .attr("x", d.x + this.nodeWidth / 2)
                     .attr("y", d.y)
-                    .attr("dy", dy + "em")
-                    .text(d => item.icon)
-                gItem.append("text")
-                    .attr("class", "context-menu-item-text")
-                    .attr("x", d.x)
-                    .attr("dx", this.nodeWidth / 2 + 20)
-                    .attr("y", d.y)
-                    .attr("dy", dy + "em")
+                    .attr("dy", dy)
                     .text(d => item.text)
-                dy += 1.1
+
+                let bb = text.node().getBBox()
+                rect
+                    .attr("x", bb.x - marginX + 1)
+                    .attr("y", bb.y - paddingY / 4)
+                    .attr("height", bb.height + paddingY / 2)
+                    .style("opacity", 0)
+                rects.push(rect)
+
+                if (!item.disabled) {
+                    gItem.on("click", () => { item.callback(d) })
+                    gItem.on("mouseover", () => { rect.style("opacity", 1) })
+                    gItem.on("mouseout", () => rect.style("opacity", 0))
+                }
+
+                dy += paddingY
+            }
+
+            var bb = g.node().getBBox()
+            rect
+                .attr("x", bb.x - marginX)
+                .attr("y", bb.y - marginY)
+                .attr("width", bb.width + marginX * 2)
+                .attr("height", bb.height + marginY * 2)
+
+            for (let rect of rects) {
+                rect.attr("width", bb.width + marginX * 2 - 2)
             }
         }
     }
@@ -573,7 +628,7 @@ export class TopologyComponent extends Component {
                 this.expand(d)
             })
             .on("click", d => {
-                this.showNodeContextMenu(d)
+                this.hideNodeContextMenu(d)
                 this.selectNode(d.data.id, true)
             })
             .on("contextmenu", d => {

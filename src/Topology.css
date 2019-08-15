@@ -1,3 +1,7 @@
+svg {
+    cursor: default;
+}
+
 .layers {
     fill: none;
     fill-opacity: 0.2;
@@ -90,5 +94,21 @@
 }
 
 .context-menu {
-    font-family: FontAwesome;
+    font-size: 16px;
+}
+
+.context-menu rect {
+    fill: #fff;
+    stroke: #333;
+    stroke-width: 1px;
+}
+
+
+.context-menu-item rect {
+    fill: #eee;
+    stroke: none;
+}
+
+.context-menu-item text.disabled {
+    fill: #888;
 }
