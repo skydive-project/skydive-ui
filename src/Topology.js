@@ -131,6 +131,7 @@ export class TopologyComponent extends Component {
         this.zoom = zoom()
             .scaleExtent([0.3, 1])
             .on("zoom", () => {
+                this.hideNodeContextMenu()
                 this.g.attr("transform", event.transform.toString())
             })
 
@@ -165,7 +166,7 @@ export class TopologyComponent extends Component {
             .attr("class", "nodes")
 
         // context menu group
-        this.gContextMenu = this.g.append("g")
+        this.gContextMenu = this.svg.append("g")
             .attr("class", "context-menu")
     }
 
@@ -516,6 +517,8 @@ export class TopologyComponent extends Component {
         if (this.props.onShowNodeContextMenu) {
             var data = this.props.onShowNodeContextMenu(d)
 
+            var x = event.x, y = event.y
+
             var g = this.gContextMenu.append("g")
                 .style("opacity", 0)
             g.transition()
@@ -534,8 +537,8 @@ export class TopologyComponent extends Component {
 
                 let text = gItem.append("text")
                     .classed("disabled", item.disabled)
-                    .attr("x", d.x + this.nodeWidth / 2)
-                    .attr("y", d.y)
+                    .attr("x", x)
+                    .attr("y", y + paddingY)
                     .attr("dy", dy)
                     .text(d => item.text)
 
