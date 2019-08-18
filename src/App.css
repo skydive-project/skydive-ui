@@ -1,6 +1,19 @@
-.App {
+.app {
   text-align: center;
   height: 100%;
+}
+
+.logo {
+  position: absolute;
+  padding: 10px;
+  background-color: #000000c7;
+  width: 100%;
+  text-align: left;
+}
+
+.logo img {
+  width:120px;
+  height:auto;
 }
 
 .host .node-hexagon {

@@ -17,8 +17,12 @@
 
 import React, { Component } from 'react'
 import Websocket from 'react-websocket'
+import ReactNotification from "react-notifications-component";
+import "react-notifications-component/dist/theme.css";
+
 import { TopologyComponent } from './Topology'
 import './App.css'
+import logo from './Logo.png'
 
 const data = require('./dump.json')
 
@@ -37,6 +41,7 @@ class App extends Component {
 
     this.onShowNodeContextMenu = this.onShowNodeContextMenu.bind(this)
     this.onOpen = this.onOpen.bind(this)
+    this.onClose = this.onClose.bind(this)
     this.onMessage = this.onMessage.bind(this)
   }
 
@@ -170,6 +175,12 @@ class App extends Component {
   }
 
   onClose() {
+    if (this.synced) {
+      this.notify("Connection", "disconnected", "danger")
+    } else {
+      this.notify("Connection", "not connected", "danger")
+    }
+
     this.synced = false
   }
 
@@ -183,17 +194,37 @@ class App extends Component {
   }
 
   onOpen() {
+    this.notify("Connection", "success", "info")
     this.sync()
+    this.notify("Synchronization", "success", "info")
+  }
+
+  notify(title, msg, type) {
+    this.notification.addNotification({
+      title: title,
+      message: msg,
+      type: type,
+      insert: "bottom",
+      container: "top-right",
+      animationIn: ["animated", "fadeIn"],
+      animationOut: ["animated", "fadeOut"],
+      dismiss: { duration: 1500 },
+      dismissable: { click: true }
+    });
   }
 
   render() {
     return (
-      <div className="App">
+      <div className="app">
+        <div className="logo">
+          <img src={logo} alt="logo" />
+        </div>
         <Websocket ref={node => this.websocket = node} url="ws://localhost:8082/ws/subscriber?x-client-type=webui" onOpen={this.onOpen}
-          onMessage={this.onMessage} onClose={this.onClose} />
+          onMessage={this.onMessage} onClose={this.onClose} reconnectIntervalInMilliSeconds="2500" />
         <TopologyComponent ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} nodeLayerWeight={this.nodeLayerWeight} linkAttrs={this.linkAttrs}
           onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
           onShowNodeContextMenu={this.onShowNodeContextMenu} />
+        <ReactNotification ref={node => this.notification = node} />
       </div>
     )
   }

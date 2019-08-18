@@ -20,6 +20,7 @@
     "d3-zoom": "^1.7.3",
     "font-awesome": "^4.7.0",
     "react-docgen": "^4.1.1",
+    "react-notifications-component": "^1.1.1",
     "react-websocket": "^2.0.1"
   },
   "scripts": {
