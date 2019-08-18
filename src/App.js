@@ -15,11 +15,12 @@
  *
  */
 
-import React, { Component } from 'react';
-import { TopologyComponent } from './Topology';
-import './App.css';
+import React, { Component } from 'react'
+import Websocket from 'react-websocket'
+import { TopologyComponent } from './Topology'
+import './App.css'
 
-const data = require('./dump.json');
+const data = require('./dump.json')
 
 class App extends Component {
 
@@ -32,16 +33,26 @@ class App extends Component {
       contextMenuY: 0
     }
 
+    this.synced = false
+
     this.onShowNodeContextMenu = this.onShowNodeContextMenu.bind(this)
+    this.onOpen = this.onOpen.bind(this)
+    this.onWebsocketMessage = this.onWebsocketMessage.bind(this)
   }
 
   componentDidMount() {
-    this.parseTopology(data)
+    //this.parseTopology(data)
   }
 
   parseTopology(data) {
     // first add all the nodes
     for (let node of data.Nodes) {
+
+      // ignore Type ofrule
+      if (node.Metadata.Type === "ofrule") {
+        continue
+      }
+
       let n = this.tc.addNode(node.ID, node.Metadata)
       this.tc.setParent(n, this.tc.root, this.nodeLayerWeight)
     }
@@ -52,7 +63,9 @@ class App extends Component {
         let parent = this.tc.nodes[edge.Parent]
         let child = this.tc.nodes[edge.Child]
 
-        this.tc.setParent(child, parent, this.nodeLayerWeight)
+        if (parent && child) {
+          this.tc.setParent(child, parent, this.nodeLayerWeight)
+        }
       }
     }
 
@@ -104,7 +117,7 @@ class App extends Component {
   }
 
   onNodeSelected(node) {
-    console.log(node)
+
   }
 
   nodeLayerWeight(node) {
@@ -127,6 +140,9 @@ class App extends Component {
   }
 
   sortNodesFnc(a, b) {
+    if(!a.data.Name) {
+      console.log(a.data)
+    }
     return a.data.Name.localeCompare(b.data.Name)
   }
 
@@ -139,15 +155,39 @@ class App extends Component {
     ]
   }
 
+  onWebsocketMessage(msg) {
+    var data = JSON.parse(msg)
+    switch (data.Type) {
+      case "SyncReply":
+      console.log(data)
+        this.parseTopology(data.Obj)
+    }
+  }
+
+  sendMessage(data) {
+    this.websocket.sendMessage(JSON.stringify(data))
+  }
+
+  sync() {
+    var msg = { "Namespace": "Graph", "Type": "SyncRequest", "Obj": null }
+    this.sendMessage(msg)
+  }
+
+  onOpen() {
+    this.sync()
+  }
+
   render() {
     return (
       <div className="App">
+        <Websocket ref={node => this.websocket = node} url="ws://localhost:8082/ws/subscriber?x-client-type=webui" onOpen={this.onOpen}
+          onMessage={this.onWebsocketMessage} />
         <TopologyComponent ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} nodeLayerWeight={this.nodeLayerWeight} linkAttrs={this.linkAttrs}
           onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
           onShowNodeContextMenu={this.onShowNodeContextMenu} />
       </div>
-    );
+    )
   }
 }
 
-export default App;
+export default App

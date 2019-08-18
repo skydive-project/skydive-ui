@@ -586,7 +586,7 @@ export class TopologyComponent extends Component {
 
             this.hideNodeContextMenu(d)
             this.selectNode(d.data.id, true)
-        }, 150)
+        }, 200)
     }
 
     nodeDoubleClick(d) {
