@@ -27,10 +27,14 @@ svg {
 
 .layer-links {
     fill: none;
-    stroke: #c8293c;
+    stroke: #0069bd;
     stroke-width: 3;
     marker-start: url(#square);
     marker-end: url(#square);
+}
+
+.layer-link-marker {
+    fill: #003865;
 }
 
 .layer-link-wraps {

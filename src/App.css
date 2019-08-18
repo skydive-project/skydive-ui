@@ -29,10 +29,13 @@
   fill: #1A936F;
 }
 
+.down .node-hexagon {
+  fill: rgb(163, 0, 0);
+}
+
 .host .node-icon {
   fill: #eee;
 }
-
 
 .netns .node-icon {
   fill: #444;
@@ -53,5 +56,9 @@
 
 .port .node-icon,  
 .ovsport .node-icon {
+  fill: #eee;
+}
+
+.down .node-icon {
   fill: #eee;
 }

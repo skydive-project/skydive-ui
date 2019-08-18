@@ -30,6 +30,9 @@ import './Topology.css'
 var colorOranges = scaleOrdinal(schemeOranges[9])
 var colorBlues = scaleOrdinal(schemeBlues[9])
 
+/**
+ * Topology component. Based on a tree enhanced by multiple layers supports.
+ */
 export class TopologyComponent extends Component {
 
     constructor(props) {
@@ -40,23 +43,8 @@ export class TopologyComponent extends Component {
 
         this.tree = tree().nodeSize([this.nodeWidth, this.nodeHeight])
 
-        this.root = {
-            id: "root",
-            data: {
-                name: "root"
-            },
-            layerWeight: 0,
-            children: []
-        }
-        this.maxLayerWeight = 0
-
-        this.nodes = {}
-
-        // node state
-        this.nodeStates = {}
-        this.nodeStates[this.root.id] = { expanded: true }
-
-        this.layerLinks = []
+        // init tree data structure
+        this.initTree()
 
         this.ctrlPressed = false
     }
@@ -103,8 +91,8 @@ export class TopologyComponent extends Component {
             .attr("markerHeight", 6)
             .attr("orient", "auto")
             .append("path")
+            .attr("class", "layer-link-marker")
             .attr("d", "M 0,0 m -5,-5 L 5,-5 L 5,5 L -5,5 Z")
-            .attr("fill", "#c8293c")
 
         var filter = defs.append("filter")
             .attr("id", "drop-shadow")
@@ -129,7 +117,7 @@ export class TopologyComponent extends Component {
             .attr("in", "SourceGraphic");
 
         this.zoom = zoom()
-            .scaleExtent([0.3, 1])
+            .scaleExtent([0.3, 1.5])
             .on("zoom", () => {
                 this.hideNodeContextMenu()
                 this.g.attr("transform", event.transform.toString())
@@ -174,6 +162,31 @@ export class TopologyComponent extends Component {
         return { expanded: false }
     }
 
+    initTree() {
+        this.root = {
+            id: "root",
+            data: {
+                name: "root"
+            },
+            layerWeight: 0,
+            children: []
+        }
+        this.maxLayerWeight = 0
+
+        this.nodes = {}
+
+        // node state
+        this.nodeStates = {}
+        this.nodeStates[this.root.id] = { expanded: true }
+
+        this.layerLinks = []
+    }
+
+    /**
+     * Add a new node to the tree root
+     * @param {string} id
+     * @param {object} data
+     */
     addNode(id, data) {
         var node = {
             id: id,
@@ -187,10 +200,26 @@ export class TopologyComponent extends Component {
         return node
     }
 
-    delNode(child) {
-        child.parent.children = child.parent.children.filter(c => c.id !== child.id)
+    /**
+     * Remove a node from the tree
+     * @param {node} node
+     */
+    delNode(node) {
+        node.parent.children = node.parent.children.filter(c => c.id !== node.id)
+
+        for (let link of this.layerLinks) {
+            if (link.source === node || link.target === node) {
+                this.layerLinks = this.layerLinks.filter(c => c === link)
+            }
+        }
     }
 
+    /**
+     * Set a node as a child of the given parent with the given weight
+     * @param {noe} child
+     * @param {node} parent
+     * @param {number} layerWeight
+     */
     setParent(child, parent, layerWeight) {
         // remove from previous parent if needed
         if (child.parent) {
@@ -208,7 +237,12 @@ export class TopologyComponent extends Component {
         child.layerWeight = weight
     }
 
-    // add a extra link of top of the "classic" tree link
+    /**
+     * Add a extra link between two node with the given metadata
+     * @param {node} node1
+     * @param {node} node2
+     * @param {object} data
+     */
     addLayerLink(node1, node2, data) {
         this.layerLinks.push({
             id: node1.id + "-" + node2.id,
@@ -454,10 +488,18 @@ export class TopologyComponent extends Component {
         return Object.values(this._layerNodes(node, {}))
     }
 
+    /**
+     * Highlight the node for the given id
+     * @param {string} id
+     * @param {boolean} active
+     */
     highlightNode(id, active) {
         select("#node-" + id).classed("node-highlighted", active)
     }
 
+    /**
+     * Unselect all the nodes
+     */
     unselectAllNodes() {
         var self = this
 
@@ -472,6 +514,11 @@ export class TopologyComponent extends Component {
         })
     }
 
+    /**
+     * Select or Unselect the node of the given id according to active boolean
+     * @param {string} id
+     * @param {boolean} active
+     */
     selectNode(id, active) {
         if (!this.ctrlPressed) {
             this.unselectAllNodes()
@@ -483,6 +530,9 @@ export class TopologyComponent extends Component {
         }
     }
 
+    /**
+     * Zoom until all the nodes are displayed
+     */
     zoomFit() {
         var bounds = this.gNodes.node().getBBox()
         var parent = this.g.node().parentElement
@@ -599,6 +649,9 @@ export class TopologyComponent extends Component {
         this.expand(d)
     }
 
+    /**
+     * Invalidate the view and render the tree
+     */
     renderTree() {
         let normRoot = this.normalizeTree(this.root)
 

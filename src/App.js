@@ -37,7 +37,7 @@ class App extends Component {
 
     this.onShowNodeContextMenu = this.onShowNodeContextMenu.bind(this)
     this.onOpen = this.onOpen.bind(this)
-    this.onWebsocketMessage = this.onWebsocketMessage.bind(this)
+    this.onMessage = this.onMessage.bind(this)
   }
 
   componentDidMount() {
@@ -90,25 +90,30 @@ class App extends Component {
   }
 
   nodeAttrs(node) {
+    var classes = [node.data.Type]
+    if (node.data.State) {
+      classes.push(node.data.State.toLowerCase())
+    }
+
     switch (node.data.Type) {
       case "host":
-        return { class: node.data.Type, name: node.data.Name, icon: "\uf109" }
+        return { class: classes.join(" "), name: node.data.Name, icon: "\uf109" }
       case "bridge":
       case "ovsbridge":
-        return { class: node.data.Type, name: node.data.Name, icon: "\uf1e0" }
+        return { class: classes.join(" "), name: node.data.Name, icon: "\uf1e0" }
       case "interface":
       case "device":
       case "veth":
       case "tun":
       case "tap":
-        return { class: node.data.Type, name: node.data.Name, icon: "\uf120" }
+        return { class: classes.join(" "), name: node.data.Name, icon: "\uf120" }
       case "port":
       case "ovsport":
-        return { class: node.data.Type, name: node.data.Name, icon: "\uf0e8" }
+        return { class: classes.join(" "), name: node.data.Name, icon: "\uf0e8" }
       case "netns":
-        return { class: node.data.Type, name: node.data.Name, icon: "\uf24d" }
+        return { class: classes.join(" "), name: node.data.Name, icon: "\uf24d" }
       default:
-        return { class: node.data.Type, name: node.data.Name, icon: "\uf192" }
+        return { class: classes.join(" "), name: node.data.Name, icon: "\uf192" }
     }
   }
 
@@ -140,7 +145,7 @@ class App extends Component {
   }
 
   sortNodesFnc(a, b) {
-    if(!a.data.Name) {
+    if (!a.data.Name) {
       console.log(a.data)
     }
     return a.data.Name.localeCompare(b.data.Name)
@@ -155,13 +160,17 @@ class App extends Component {
     ]
   }
 
-  onWebsocketMessage(msg) {
+  onMessage(msg) {
     var data = JSON.parse(msg)
     switch (data.Type) {
       case "SyncReply":
-      console.log(data)
         this.parseTopology(data.Obj)
+        this.synced = true
     }
+  }
+
+  onClose() {
+    this.synced = false
   }
 
   sendMessage(data) {
@@ -181,7 +190,7 @@ class App extends Component {
     return (
       <div className="App">
         <Websocket ref={node => this.websocket = node} url="ws://localhost:8082/ws/subscriber?x-client-type=webui" onOpen={this.onOpen}
-          onMessage={this.onWebsocketMessage} />
+          onMessage={this.onMessage} onClose={this.onClose} />
         <TopologyComponent ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} nodeLayerWeight={this.nodeLayerWeight} linkAttrs={this.linkAttrs}
           onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
           onShowNodeContextMenu={this.onShowNodeContextMenu} />
