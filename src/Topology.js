@@ -43,7 +43,6 @@ export class TopologyComponent extends Component {
 
         this.tree = tree().nodeSize([this.nodeWidth, this.nodeHeight])
 
-        // init tree data structure
         this.initTree()
 
         this.ctrlPressed = false
@@ -531,6 +530,18 @@ export class TopologyComponent extends Component {
     }
 
     /**
+     * Select or unSelect node depending of its state
+     * @param {string} id
+     */
+    toggleNode(id) {
+        if (select("#node-" + id).classed("node-selected")) {
+            this.selectNode(id, false)
+        } else {
+            this.selectNode(id, true)
+        }
+    }
+
+    /**
      * Zoom until all the nodes are displayed
      */
     zoomFit() {
@@ -635,7 +646,7 @@ export class TopologyComponent extends Component {
             this._nodeClickID = null
 
             this.hideNodeContextMenu(d)
-            this.selectNode(d.data.id, true)
+            this.toggleNode(d.data.id, true)
         }, 200)
     }
 
