@@ -473,8 +473,6 @@ export class TopologyComponent extends Component {
     }
 
     selectNode(id, active) {
-        event.stopPropagation()
-
         if (!this.ctrlPressed) {
             this.unselectAllNodes()
         }
@@ -576,6 +574,31 @@ export class TopologyComponent extends Component {
         this.gContextMenu.select("g").remove()
     }
 
+    nodeClick(d) {
+        event.stopPropagation()
+
+        if (this._nodeClickID) {
+            return
+        }
+
+        this._nodeClickID = setTimeout(() => {
+            this._nodeClickID = null
+
+            this.hideNodeContextMenu(d)
+            this.selectNode(d.data.id, true)
+        }, 150)
+    }
+
+    nodeDoubleClick(d) {
+        // it's a dbl click then stop click handler
+        if (this._nodeClickID) {
+            clearTimeout(this._nodeClickID)
+            this._nodeClickID = null
+        }
+
+        this.expand(d)
+    }
+
     renderTree() {
         let normRoot = this.normalizeTree(this.root)
 
@@ -643,14 +666,8 @@ export class TopologyComponent extends Component {
             .attr("class", d => "node " + this.props.nodeAttrs(d.data._node).class)
             .style("opacity", 0)
             .attr("transform", d => `translate(${d.x},${d.y})`)
-            .on("dblclick", d => {
-                this.unselectAllNodes()
-                this.expand(d)
-            })
-            .on("click", d => {
-                this.hideNodeContextMenu(d)
-                this.selectNode(d.data.id, true)
-            })
+            .on("dblclick", d => this.nodeDoubleClick(d))
+            .on("click", d => this.nodeClick(d))
             .on("contextmenu", d => {
                 event.preventDefault()
                 this.showNodeContextMenu(d)
@@ -712,7 +729,7 @@ export class TopologyComponent extends Component {
         nodeEnter.append("text")
             .attr("class", "node-name")
             .attr("dy", ".35em")
-            .attr("y", d => d.children ? -60 : 60)
+            .attr("y", 60)
             .text(d => this.props.nodeAttrs(d.data._node).name)
             .call(wrapText, 1.1, this.nodeWidth - 10)
 
