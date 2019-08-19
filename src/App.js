@@ -17,10 +17,12 @@
 
 import React, { Component } from 'react'
 import Websocket from 'react-websocket'
-import ReactNotification from "react-notifications-component";
-import "react-notifications-component/dist/theme.css";
+import ReactNotification from "react-notifications-component"
+import "react-notifications-component/dist/theme.css"
+import Modal from 'react-modal'
 
-import { TopologyComponent } from './Topology'
+import { Topology } from './Topology'
+import { Menu } from './Menu'
 import './App.css'
 import logo from './Logo.png'
 
@@ -34,7 +36,8 @@ class App extends Component {
     this.state = {
       isContextMenuOn: "none",
       contextMenuX: 0,
-      contextMenuY: 0
+      contextMenuY: 0,
+      isMenuOpen: false,
     }
 
     this.synced = false
@@ -46,6 +49,7 @@ class App extends Component {
   }
 
   componentDidMount() {
+    Modal.setAppElement(this.app)
     //this.parseTopology(data)
   }
 
@@ -171,6 +175,7 @@ class App extends Component {
       case "SyncReply":
         this.parseTopology(data.Obj)
         this.synced = true
+      default:
     }
   }
 
@@ -215,13 +220,21 @@ class App extends Component {
 
   render() {
     return (
-      <div className="app">
-        <div className="logo">
-          <img src={logo} alt="logo" />
+      <div className="app" ref={ref => this.app = ref}>
+        <div className="header">
+          <div className="logo" onClick={() => this.setState({ isMenuOpen: true })}>
+            <i className="fa fa-bars" aria-hidden="true"></i>
+            <img src={logo} alt="logo" />
+          </div>
         </div>
+        <Menu
+          isOpen={this.state.isMenuOpen}
+          onRequestClose={() => this.setState({ isMenuOpen: false })}>
+          <div>And I am pane content on left.</div>
+        </Menu>
         <Websocket ref={node => this.websocket = node} url="ws://localhost:8082/ws/subscriber?x-client-type=webui" onOpen={this.onOpen}
-          onMessage={this.onMessage} onClose={this.onClose} reconnectIntervalInMilliSeconds="2500" />
-        <TopologyComponent ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} nodeLayerWeight={this.nodeLayerWeight} linkAttrs={this.linkAttrs}
+          onMessage={this.onMessage} onClose={this.onClose} reconnectIntervalInMilliSeconds={2500} />
+        <Topology ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} nodeLayerWeight={this.nodeLayerWeight} linkAttrs={this.linkAttrs}
           onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
           onShowNodeContextMenu={this.onShowNodeContextMenu} />
         <ReactNotification ref={node => this.notification = node} />

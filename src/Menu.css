@@ -1,0 +1,18 @@
+.menu-header i {
+  margin-right: 10px;
+  font-size: 20px;
+}
+
+.menu-header {
+  font-size: 20px;
+}
+
+.menu-item {
+  margin: 10px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.menu-item i {
+  margin-right: 5px;
+}

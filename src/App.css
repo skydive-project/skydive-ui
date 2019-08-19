@@ -3,7 +3,7 @@
   height: 100%;
 }
 
-.logo {
+.header {
   position: absolute;
   padding: 10px;
   background-color: #000000c7;
@@ -14,6 +14,14 @@
 .logo img {
   width:120px;
   height:auto;
+}
+
+.header i {
+  color: #eee;
+  font-size: 28px;
+  font-weight: normal;
+  margin-right: 10px;
+  vertical-align: text-bottom;
 }
 
 .host .node-hexagon {

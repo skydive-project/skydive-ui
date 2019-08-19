@@ -33,7 +33,7 @@ var colorBlues = scaleOrdinal(schemeBlues[9])
 /**
  * Topology component. Based on a tree enhanced by multiple layers supports.
  */
-export class TopologyComponent extends Component {
+export class Topology extends Component {
 
     constructor(props) {
         super(props)
