@@ -8,6 +8,9 @@
     "react-scripts": "^3.0.1"
   },
   "devDependencies": {
+    "@material-ui/core": "^4.3.2",
+    "@material-ui/icons": "^4.2.1",
+    "clsx": "^1.0.4",
     "d3-geom": "0.0.0",
     "d3-hierarchy": "^1.1.8",
     "d3-polygon": "^1.0.5",
@@ -21,8 +24,10 @@
     "font-awesome": "^4.7.0",
     "react-docgen": "^4.1.1",
     "react-notifications-component": "^1.1.1",
+    "react-resize-observer": "^1.1.1",
     "react-sliding-pane": "^3.1.0",
-    "react-websocket": "^2.0.1"
+    "react-websocket": "^2.0.1",
+    "roboto-fontface": "^0.10.0"
   },
   "scripts": {
     "start": "react-scripts start",

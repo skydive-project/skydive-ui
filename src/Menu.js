@@ -15,28 +15,38 @@
  *
  */
 
-import React, { Component } from 'react'
-import SlidingPane from 'react-sliding-pane'
-import 'react-sliding-pane/dist/react-sliding-pane.css'
+import React from 'react'
+import ListItem from '@material-ui/core/ListItem'
+import ListItemIcon from '@material-ui/core/ListItemIcon'
+import ListItemText from '@material-ui/core/ListItemText'
+import SettingsIcon from '@material-ui/icons/Settings'
+import InfoIcon from '@material-ui/icons/Info'
+import LibraryBooksIcon from '@material-ui/icons/LibraryBooks'
 
-import './Menu.css'
+export const mainListItems = (
+    <div>
+        <ListItem button>
+            <ListItemIcon>
+                <SettingsIcon />
+            </ListItemIcon>
+            <ListItemText primary="Settings" />
+        </ListItem>
+    </div>
+);
 
-export class Menu extends Component {
-
-    render() {
-        return (
-            <SlidingPane
-                closeIcon={<div className="menu-header"><i className="fa fa-angle-left" aria-hidden="true"></i>Skydive ver. 0.24</div>}
-                isOpen={this.props.isOpen}
-                from='left'
-                width='300px'
-                onRequestClose={this.props.onRequestClose}>
-                <div>
-                    <div className="menu-item"><i className="fa fa-angle-right" aria-hidden="true"></i>Settings</div>
-                    <div className="menu-item"><i className="fa fa-angle-right" aria-hidden="true"></i>Documentation</div>
-                    <div className="menu-item"><i className="fa fa-angle-right" aria-hidden="true"></i>About</div>
-                </div>
-            </SlidingPane>
-        )
-    }
-}
+export const helpListItems = (
+    <div>
+        <ListItem button>
+            <ListItemIcon>
+                <LibraryBooksIcon />
+            </ListItemIcon>
+            <ListItemText primary="Documentation" />
+        </ListItem>
+        <ListItem button>
+            <ListItemIcon>
+                <InfoIcon />
+            </ListItemIcon>
+            <ListItemText primary="About" />
+        </ListItem>
+    </div>
+);

@@ -16,17 +16,118 @@
  */
 
 import React, { Component } from 'react'
+import clsx from 'clsx';
 import Websocket from 'react-websocket'
 import ReactNotification from "react-notifications-component"
 import "react-notifications-component/dist/theme.css"
-import Modal from 'react-modal'
+
+import { withStyles } from '@material-ui/core/styles'
+import CssBaseline from '@material-ui/core/CssBaseline'
+import Drawer from '@material-ui/core/Drawer'
+import AppBar from '@material-ui/core/AppBar'
+import Toolbar from '@material-ui/core/Toolbar'
+import IconButton from '@material-ui/core/IconButton'
+import MenuIcon from '@material-ui/icons/Menu'
+import Typography from '@material-ui/core/Typography'
+import Badge from '@material-ui/core/Badge'
+import NotificationsIcon from '@material-ui/icons/Notifications'
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
+import Divider from '@material-ui/core/Divider'
+import List from '@material-ui/core/List'
+import Container from '@material-ui/core/Container'
 
 import { Topology } from './Topology'
-import { Menu } from './Menu'
+import { mainListItems, helpListItems } from './Menu';
 import './App.css'
 import logo from './Logo.png'
 
 const data = require('./dump.json')
+
+const styles = theme => ({
+  root: {
+    display: 'flex',
+  },
+  toolbar: {
+    paddingRight: 24, // keep right padding when drawer closed
+  },
+  toolbarIcon: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    padding: '0 8px',
+    ...theme.mixins.toolbar,
+  },
+  appBar: {
+    backgroundColor: '#000',
+    zIndex: theme.zIndex.drawer + 1,
+    transition: theme.transitions.create(['width', 'margin'], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+  },
+  appBarShift: {
+    marginLeft: drawerWidth,
+    width: `calc(100% - ${drawerWidth}px)`,
+    transition: theme.transitions.create(['width', 'margin'], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+  },
+  menuButton: {
+    marginRight: 36,
+  },
+  menuButtonHidden: {
+    display: 'none',
+  },
+  title: {
+    textAlign: 'left',
+    flexGrow: 1,
+  },
+  drawerPaper: {
+    position: 'relative',
+    whiteSpace: 'nowrap',
+    width: drawerWidth,
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+  },
+  drawerPaperClose: {
+    overflowX: 'hidden',
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+    width: theme.spacing(7),
+    [theme.breakpoints.up('sm')]: {
+      width: theme.spacing(0),
+    },
+  },
+  appBarSpacer: theme.mixins.toolbar,
+  content: {
+    flexGrow: 1,
+    height: '100vh',
+    overflow: 'auto',
+    backgroundColor: 'white',
+  },
+  container: {
+    paddingTop: theme.spacing(0),
+    paddingBottom: theme.spacing(0),
+    paddingLeft: theme.spacing(0),
+    paddingRight: theme.spacing(0),
+  },
+  paper: {
+    padding: theme.spacing(2),
+    display: 'flex',
+    overflow: 'auto',
+    flexDirection: 'column',
+  },
+  topology: {
+    height: `calc(100vh - ${80}px)`,
+  }
+})
+
+const drawerWidth = 300
 
 class App extends Component {
 
@@ -37,7 +138,7 @@ class App extends Component {
       isContextMenuOn: "none",
       contextMenuX: 0,
       contextMenuY: 0,
-      isMenuOpen: false,
+      isNavOpen: false,
     }
 
     this.synced = false
@@ -49,7 +150,6 @@ class App extends Component {
   }
 
   componentDidMount() {
-    Modal.setAppElement(this.app)
     //this.parseTopology(data)
   }
 
@@ -92,10 +192,6 @@ class App extends Component {
     this.tc.renderTree()
 
     this.tc.zoomFit()
-
-    /*for (let node of data.Nodes) {
-        this.highlightNode(node.ID, true)
-    }*/
   }
 
   nodeAttrs(node) {
@@ -218,29 +314,70 @@ class App extends Component {
     });
   }
 
+  openDrawer() {
+    this.setState({ isNavOpen: true })
+  }
+
+  closeDrawer() {
+    this.setState({ isNavOpen: false })
+  }
+
   render() {
+    const { classes } = this.props;
+
     return (
-      <div className="app" ref={ref => this.app = ref}>
-        <div className="header">
-          <div className="logo" onClick={() => this.setState({ isMenuOpen: true })}>
-            <i className="fa fa-bars" aria-hidden="true"></i>
-            <img src={logo} alt="logo" />
-          </div>
-        </div>
-        <Menu
-          isOpen={this.state.isMenuOpen}
-          onRequestClose={() => this.setState({ isMenuOpen: false })}>
-          <div>And I am pane content on left.</div>
-        </Menu>
+      <div className={classes.root}>
+        <CssBaseline />
         <Websocket ref={node => this.websocket = node} url="ws://localhost:8082/ws/subscriber?x-client-type=webui" onOpen={this.onOpen}
           onMessage={this.onMessage} onClose={this.onClose} reconnectIntervalInMilliSeconds={2500} />
-        <Topology ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} nodeLayerWeight={this.nodeLayerWeight} linkAttrs={this.linkAttrs}
-          onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
-          onShowNodeContextMenu={this.onShowNodeContextMenu} />
         <ReactNotification ref={node => this.notification = node} />
+        <AppBar position="absolute" className={clsx(classes.appBar, this.state.isNavOpen && classes.appBarShift)}>
+          <Toolbar className={classes.toolbar}>
+            <IconButton
+              edge="start"
+              color="inherit"
+              aria-label="open drawer"
+              onClick={() => this.openDrawer()}
+              className={clsx(classes.menuButton, this.state.isNavOpen && classes.menuButtonHidden)}>
+              <MenuIcon />
+            </IconButton>
+            <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
+              <img src={logo} alt="logo" />
+            </Typography>
+            <IconButton color="inherit">
+              <Badge badgeContent={4} color="secondary">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+        <Drawer
+          variant="permanent"
+          classes={{
+            paper: clsx(classes.drawerPaper, !this.state.isNavOpen && classes.drawerPaperClose),
+          }}
+          open={this.state.isNavOpen}>
+          <div className={classes.toolbarIcon}>
+            <IconButton onClick={() => this.closeDrawer()}>
+              <ChevronLeftIcon />
+            </IconButton>
+          </div>
+          <Divider />
+          <List>{mainListItems}</List>
+          <Divider />
+          <List>{helpListItems}</List>
+        </Drawer>
+        <main className={classes.content}>
+          <div className={classes.appBarSpacer} />
+          <Container maxWidth="lg" className={classes.container}>
+            <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} nodeLayerWeight={this.nodeLayerWeight} linkAttrs={this.linkAttrs}
+              onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
+              onShowNodeContextMenu={this.onShowNodeContextMenu} />
+          </Container>
+        </main>
       </div>
     )
   }
 }
 
-export default App
+export default withStyles(styles)(App)
