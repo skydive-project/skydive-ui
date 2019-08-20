@@ -24,6 +24,7 @@ import { zoom, zoomIdentity } from 'd3-zoom'
 import { schemeOranges, schemeBlues } from 'd3-scale-chromatic'
 import { scaleOrdinal } from 'd3-scale'
 import { } from 'd3-selection-multi'
+import ResizeObserver from 'react-resize-observer';
 
 import './Topology.css'
 
@@ -67,14 +68,22 @@ export class Topology extends Component {
     componentDidUpdate() {
     }
 
+    onResize(rect) {
+        if (!this.svg) {
+            return
+        }
+        this.svg
+            .attr("width", rect.width)
+            .attr("height", rect.height)
+    }
+
     createSVG() {
         var width = this.svgDiv.clientWidth
         var height = this.svgDiv.clientHeight
-        var margin = 25
 
         this.svg = select(this.svgDiv).append("svg")
-            .attr("width", width - margin)
-            .attr("height", height - margin)
+            .attr("width", width)
+            .attr("height", height)
             .on("click", () => {
                 this.hideNodeContextMenu()
                 this.unselectAllNodes()
@@ -890,7 +899,10 @@ export class Topology extends Component {
 
     render() {
         return (
-            <div ref={node => this.svgDiv = node} style={{ height: "100%" }} />
+            <div className={this.props.className} ref={node => this.svgDiv = node} style={{position: 'relative'}}>
+                <ResizeObserver
+                    onResize={(rect) => { this.onResize(rect) }} />
+            </div>
         )
     }
 }
