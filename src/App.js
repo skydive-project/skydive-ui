@@ -15,11 +15,9 @@
  *
  */
 
-import React, { Component } from 'react'
-import clsx from 'clsx';
+import React, { Component, Button } from 'react'
+import clsx from 'clsx'
 import Websocket from 'react-websocket'
-import ReactNotification from "react-notifications-component"
-import "react-notifications-component/dist/theme.css"
 
 import { withStyles } from '@material-ui/core/styles'
 import CssBaseline from '@material-ui/core/CssBaseline'
@@ -29,15 +27,14 @@ import Toolbar from '@material-ui/core/Toolbar'
 import IconButton from '@material-ui/core/IconButton'
 import MenuIcon from '@material-ui/icons/Menu'
 import Typography from '@material-ui/core/Typography'
-import Badge from '@material-ui/core/Badge'
-import NotificationsIcon from '@material-ui/icons/Notifications'
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
 import Divider from '@material-ui/core/Divider'
 import List from '@material-ui/core/List'
 import Container from '@material-ui/core/Container'
+import { withSnackbar } from 'notistack'
 
 import { Topology } from './Topology'
-import { mainListItems, helpListItems } from './Menu';
+import { mainListItems, helpListItems } from './Menu'
 import './App.css'
 import logo from './Logo.png'
 
@@ -166,6 +163,10 @@ class App extends Component {
       this.tc.setParent(n, this.tc.root, this.nodeLayerWeight)
     }
 
+    if (!data.Edges) {
+      return
+    }
+
     // then add ownership links
     for (let edge of data.Edges) {
       if (edge.Metadata.RelationType === "ownership") {
@@ -269,17 +270,21 @@ class App extends Component {
     var data = JSON.parse(msg)
     switch (data.Type) {
       case "SyncReply":
+        if (!data.Obj.Nodes) {
+          return
+        }
         this.parseTopology(data.Obj)
         this.synced = true
       default:
+        break
     }
   }
 
   onClose() {
     if (this.synced) {
-      this.notify("Connection", "disconnected", "danger")
+      this.notify("Disconnected", "danger")
     } else {
-      this.notify("Connection", "not connected", "danger")
+      this.notify("Not connected", "danger")
     }
 
     this.synced = false
@@ -295,23 +300,20 @@ class App extends Component {
   }
 
   onOpen() {
-    this.notify("Connection", "success", "info")
+    this.notify("Connected", "info")
     this.sync()
-    this.notify("Synchronization", "success", "info")
+    this.notify("Synchronized", "info")
   }
 
-  notify(title, msg, type) {
-    this.notification.addNotification({
-      title: title,
-      message: msg,
-      type: type,
-      insert: "bottom",
-      container: "top-right",
-      animationIn: ["animated", "fadeIn"],
-      animationOut: ["animated", "fadeOut"],
-      dismiss: { duration: 1500 },
-      dismissable: { click: true }
-    });
+  notify(msg, variant) {
+    this.props.enqueueSnackbar(msg, {
+      variant: variant,
+      autoHideDuration: 1000,
+      anchorOrigin: {
+        vertical: 'bottom',
+        horizontal: 'right',
+      }
+    })
   }
 
   openDrawer() {
@@ -323,14 +325,13 @@ class App extends Component {
   }
 
   render() {
-    const { classes } = this.props;
+    const { classes } = this.props
 
     return (
       <div className={classes.root}>
         <CssBaseline />
         <Websocket ref={node => this.websocket = node} url="ws://localhost:8082/ws/subscriber?x-client-type=webui" onOpen={this.onOpen}
           onMessage={this.onMessage} onClose={this.onClose} reconnectIntervalInMilliSeconds={2500} />
-        <ReactNotification ref={node => this.notification = node} />
         <AppBar position="absolute" className={clsx(classes.appBar, this.state.isNavOpen && classes.appBarShift)}>
           <Toolbar className={classes.toolbar}>
             <IconButton
@@ -344,11 +345,6 @@ class App extends Component {
             <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
               <img src={logo} alt="logo" />
             </Typography>
-            <IconButton color="inherit">
-              <Badge badgeContent={4} color="secondary">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
           </Toolbar>
         </AppBar>
         <Drawer
@@ -369,7 +365,7 @@ class App extends Component {
         </Drawer>
         <main className={classes.content}>
           <div className={classes.appBarSpacer} />
-          <Container maxWidth="lg" className={classes.container}>
+          <Container maxWidth="4g" className={classes.container}>
             <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} nodeLayerWeight={this.nodeLayerWeight} linkAttrs={this.linkAttrs}
               onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
               onShowNodeContextMenu={this.onShowNodeContextMenu} />
@@ -380,4 +376,4 @@ class App extends Component {
   }
 }
 
-export default withStyles(styles)(App)
+export default withStyles(styles)(withSnackbar(App))
