@@ -4,12 +4,13 @@ svg {
 
 .layers {
     fill: none;
-    fill-opacity: 0.2;
+    fill-opacity: 0.4;
 }
 
 .layer {
     stroke: #000;
     stroke-dasharray: 5, 10;
+    fill: #efeded;
 }
 
 .links {
@@ -50,6 +51,12 @@ svg {
 .node-circle {
     fill: none;
     stroke-width: 3;
+    stroke: #5097c7;
+}
+
+.node-disc {
+    stroke: none;
+    fill: #5097c7;
 }
 
 .node-highlighted .node-circle {
@@ -57,7 +64,7 @@ svg {
 }
 
 .node-selected .node-circle {
-    fill: #19a2ff;
+    fill: #5097c7;
 }
 
 .node-hexagon {

@@ -15,7 +15,7 @@
  *
  */
 
-import React, { Component, Button } from 'react'
+import React, { Component } from 'react'
 import clsx from 'clsx'
 import Websocket from 'react-websocket'
 
@@ -31,7 +31,10 @@ import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
 import Divider from '@material-ui/core/Divider'
 import List from '@material-ui/core/List'
 import Container from '@material-ui/core/Container'
+import Paper from '@material-ui/core/Paper'
 import { withSnackbar } from 'notistack'
+
+import JSONTree from 'react-json-tree'
 
 import { Topology } from './Topology'
 import { mainListItems, helpListItems } from './Menu'
@@ -41,7 +44,7 @@ import logo from './Logo.png'
 const data = require('./dump.json')
 
 const styles = theme => ({
-  root: {
+  app: {
     display: 'flex',
   },
   toolbar: {
@@ -71,7 +74,7 @@ const styles = theme => ({
     }),
   },
   menuButton: {
-    marginRight: 36,
+    marginRight: 20,
   },
   menuButtonHidden: {
     display: 'none',
@@ -105,7 +108,6 @@ const styles = theme => ({
     flexGrow: 1,
     height: '100vh',
     overflow: 'auto',
-    backgroundColor: 'white',
   },
   container: {
     paddingTop: theme.spacing(0),
@@ -113,14 +115,49 @@ const styles = theme => ({
     paddingLeft: theme.spacing(0),
     paddingRight: theme.spacing(0),
   },
-  paper: {
-    padding: theme.spacing(2),
-    display: 'flex',
-    overflow: 'auto',
-    flexDirection: 'column',
-  },
   topology: {
     height: `calc(100vh - ${80}px)`,
+  },
+  panel: {
+    position: 'absolute',
+    top: 80,
+    right: 15,
+    bottom: 0,
+    maxWidth: 'unset',
+    width: 'unset',
+    paddingTop: theme.spacing(0),
+    paddingBottom: theme.spacing(0),
+    paddingLeft: theme.spacing(0),
+    paddingRight: theme.spacing(0),
+  },
+  panelPaper: {
+    overflow: 'hidden',
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    width: 400,
+    height: `calc(100% - ${20}px)`,
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    })
+  },
+  panelPaperClose: {
+    overflow: 'hidden',
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+    width: theme.spacing(7),
+    [theme.breakpoints.up('sm')]: {
+      width: theme.spacing(0),
+    },
+  },
+  panelPaperFragment: {
+    padding: theme.spacing(2),
+  },
+  jsonTree: {
+    backgroundColor: 'unset'
   }
 })
 
@@ -136,6 +173,8 @@ class App extends Component {
       contextMenuX: 0,
       contextMenuY: 0,
       isNavOpen: false,
+      info: {},
+      overflow: 'hidden' // hack for info panel
     }
 
     this.synced = false
@@ -144,6 +183,7 @@ class App extends Component {
     this.onOpen = this.onOpen.bind(this)
     this.onClose = this.onClose.bind(this)
     this.onMessage = this.onMessage.bind(this)
+    this.onNodeSelected = this.onNodeSelected.bind(this)
   }
 
   componentDidMount() {
@@ -227,8 +267,17 @@ class App extends Component {
     return { class: link.RelationType || "" }
   }
 
-  onNodeSelected(node) {
+  onNodeSelected(node, active) {
+    if (active) {
+      this.setState({ info: { id: node.id, data: node.data } })
 
+      // hack in order to restore overflow of panel after transition
+      setTimeout(() => {
+        this.setState({ overflow: 'auto' })
+      }, 1000)
+    } else {
+      this.setState({ info: {}, overflow: 'hidden' })
+    }
   }
 
   nodeLayerWeight(node) {
@@ -328,7 +377,7 @@ class App extends Component {
     const { classes } = this.props
 
     return (
-      <div className={classes.root}>
+      <div className={classes.app}>
         <CssBaseline />
         <Websocket ref={node => this.websocket = node} url="ws://localhost:8082/ws/subscriber?x-client-type=webui" onOpen={this.onOpen}
           onMessage={this.onMessage} onClose={this.onClose} reconnectIntervalInMilliSeconds={2500} />
@@ -365,10 +414,22 @@ class App extends Component {
         </Drawer>
         <main className={classes.content}>
           <div className={classes.appBarSpacer} />
-          <Container maxWidth="4g" className={classes.container}>
+          <Container maxWidth="xl" className={classes.container}>
             <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} nodeLayerWeight={this.nodeLayerWeight} linkAttrs={this.linkAttrs}
               onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
               onShowNodeContextMenu={this.onShowNodeContextMenu} />
+          </Container>
+          <Container className={classes.panel}>
+            <Paper className={clsx(classes.panelPaper, !this.state.info.id && classes.panelPaperClose)}>
+              <div className={classes.panelPaperFragment} style={{ overflow: this.state.overflow }} >
+                <Typography component="h6" color="primary" gutterBottom>
+                  ID : {this.state.info.id}
+                </Typography>
+                {this.state.info.data &&
+                  <JSONTree className={classes.jsonTree} data={this.state.info.data} theme="bright" invertTheme hideRoot sortObjectKeys />
+                }
+              </div>
+            </Paper>
           </Container>
         </main>
       </div>

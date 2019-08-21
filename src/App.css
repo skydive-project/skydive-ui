@@ -1,8 +1,3 @@
-.app {
-  text-align: center;
-  height: 100%;
-}
-
 .header {
   position: absolute;
   padding: 10px;
@@ -33,8 +28,10 @@
 }
 
 .bridge .node-hexagon, 
-.ovsbrige .node-hexagon {
-  fill: #1A936F;
+.ovsbridge .node-hexagon,
+.port .node-hexagon,
+.ovsport .node-hexagon {
+  fill: #36b791;
 }
 
 .interface .node-hexagon,  
@@ -43,11 +40,6 @@
 .tap .node-hexagon, 
 .veth .node-hexagon {
   fill: #88D498;
-}
-
-.port .node-hexagon,  
-.ovsport .node-hexagon {
-  fill: #1A936F;
 }
 
 .down .node-hexagon {
@@ -63,7 +55,9 @@
 }
 
 .bridge .node-icon, 
-.ovsbrige .node-icon {
+.ovsbridge .node-icon,
+.port .node-icon,  
+.ovsport .node-icon  {
   fill: #eee;
 }
 
@@ -73,11 +67,6 @@
 .tap .node-icon, 
 .veth .node-icon {
   fill: #444;
-}
-
-.port .node-icon,  
-.ovsport .node-icon {
-  fill: #eee;
 }
 
 .down .node-icon {

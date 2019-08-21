@@ -21,15 +21,10 @@ import { select, event } from 'd3-selection'
 import { line, linkVertical, curveCardinalClosed } from 'd3-shape'
 import { } from 'd3-transition'
 import { zoom, zoomIdentity } from 'd3-zoom'
-import { schemeOranges, schemeBlues } from 'd3-scale-chromatic'
-import { scaleOrdinal } from 'd3-scale'
 import { } from 'd3-selection-multi'
 import ResizeObserver from 'react-resize-observer';
 
 import './Topology.css'
-
-var colorOranges = scaleOrdinal(schemeOranges[9])
-var colorBlues = scaleOrdinal(schemeBlues[9])
 
 /**
  * Topology component. Based on a tree enhanced by multiple layers supports.
@@ -391,10 +386,6 @@ export class Topology extends Component {
         .y(d => d.y)
         .curve(curveCardinalClosed.tension(0.7))
 
-    groupColors(d) {
-        return colorOranges(d.data._node.layerWeight)
-    }
-
     visibleLayerLinks(holders) {
         let links = []
 
@@ -694,7 +685,6 @@ export class Topology extends Component {
             .attr("id", d => d.id)
             .attr("class", "layer")
             .style("opacity", 0)
-            .attr("fill", d => colorBlues(d.id))
             .attrs(d => this.nodesRect(root, d.nodes))
         layers.exit().remove()
 
@@ -755,9 +745,9 @@ export class Topology extends Component {
         nodeEnter.append("circle")
             .attr("class", "node-circle")
             .attr("r", hexSize + 16)
-            .attr("stroke", this.groupColors)
 
         nodeEnter.append("circle")
+            .attr("class", "node-disc")
             .attr("r", hexSize + 8)
             .attr("fill", this.groupColors)
 
