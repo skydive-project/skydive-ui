@@ -36,132 +36,13 @@ import { withSnackbar } from 'notistack'
 
 import JSONTree from 'react-json-tree'
 
+import { Styles } from './Styles'
 import { Topology } from './Topology'
 import { mainListItems, helpListItems } from './Menu'
 import './App.css'
 import logo from './Logo.png'
 
 const data = require('./dump.json')
-
-const styles = theme => ({
-  app: {
-    display: 'flex',
-  },
-  toolbar: {
-    paddingRight: 24, // keep right padding when drawer closed
-  },
-  toolbarIcon: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    padding: '0 8px',
-    ...theme.mixins.toolbar,
-  },
-  appBar: {
-    backgroundColor: '#000',
-    zIndex: theme.zIndex.drawer + 1,
-    transition: theme.transitions.create(['width', 'margin'], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-  },
-  appBarShift: {
-    marginLeft: drawerWidth,
-    width: `calc(100% - ${drawerWidth}px)`,
-    transition: theme.transitions.create(['width', 'margin'], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-  },
-  menuButton: {
-    marginRight: 20,
-  },
-  menuButtonHidden: {
-    display: 'none',
-  },
-  title: {
-    textAlign: 'left',
-    flexGrow: 1,
-  },
-  drawerPaper: {
-    position: 'relative',
-    whiteSpace: 'nowrap',
-    width: drawerWidth,
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-  },
-  drawerPaperClose: {
-    overflowX: 'hidden',
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-    width: theme.spacing(7),
-    [theme.breakpoints.up('sm')]: {
-      width: theme.spacing(0),
-    },
-  },
-  appBarSpacer: theme.mixins.toolbar,
-  content: {
-    flexGrow: 1,
-    height: '100vh',
-    overflow: 'auto',
-  },
-  container: {
-    paddingTop: theme.spacing(0),
-    paddingBottom: theme.spacing(0),
-    paddingLeft: theme.spacing(0),
-    paddingRight: theme.spacing(0),
-  },
-  topology: {
-    height: `calc(100vh - ${80}px)`,
-  },
-  panel: {
-    position: 'absolute',
-    top: 80,
-    right: 15,
-    bottom: 0,
-    maxWidth: 'unset',
-    width: 'unset',
-    paddingTop: theme.spacing(0),
-    paddingBottom: theme.spacing(0),
-    paddingLeft: theme.spacing(0),
-    paddingRight: theme.spacing(0),
-  },
-  panelPaper: {
-    overflow: 'hidden',
-    position: 'relative',
-    display: 'flex',
-    flexDirection: 'column',
-    width: 400,
-    height: `calc(100% - ${20}px)`,
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    })
-  },
-  panelPaperClose: {
-    overflow: 'hidden',
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-    width: theme.spacing(7),
-    [theme.breakpoints.up('sm')]: {
-      width: theme.spacing(0),
-    },
-  },
-  panelPaperFragment: {
-    padding: theme.spacing(2),
-  },
-  jsonTree: {
-    backgroundColor: 'unset'
-  }
-})
-
-const drawerWidth = 300
 
 class App extends Component {
 
@@ -437,4 +318,4 @@ class App extends Component {
   }
 }
 
-export default withStyles(styles)(withSnackbar(App))
+export default withStyles(Styles)(withSnackbar(App))
