@@ -141,7 +141,7 @@ export class Topology extends Component {
             .attr("class", "links")
 
         // link overlay group, like highlight
-        this.gLayerLinkOverlayLs = this.g.append("g")
+        this.gLayerLinkOverlays = this.g.append("g")
             .attr("class", "layer-link-overlays")
 
         // non-hiera links group
@@ -819,17 +819,27 @@ export class Topology extends Component {
             .attr("transform", d => `translate(${d.x},${d.y})`)
 
         var layerLinker = linkVertical()
-            .x(d => holders[d.node.id].x)
+            .x(d => holders[d.node.id].x + d.dx)
             .y(d => holders[d.node.id].y + d.dy)
 
-        let holderLink = (d, margin) => holders[d.source.id].y < holders[d.target.id].y ?
-            { source: { node: d.source, dy: margin }, target: { node: d.target, dy: -margin } } : {
-                source: { node: d.target, dy: margin }, target: { node: d.source, dy: -margin }
+        let holderLink = (d, margin) => {
+            if (holders[d.source.id].y === holders[d.target.id].y) {
+                if (holders[d.source.id].x < holders[d.target.id].x) {
+                    return { source: { node: d.source, dx: margin, dy: 0 }, target: { node: d.target, dx: -margin, dy: 0 } }
+                }
+                return { source: { node: d.target, dx: margin, dy: 0 }, target: { node: d.source, dx: -margin, dy: 0 } }
             }
 
-        var layerLinkOverlayL = this.gLayerLinkOverlayLs.selectAll('path.layer-link-overlay')
+            if (holders[d.source.id].y < holders[d.target.id].y) {
+                return { source: { node: d.source, dx: 0, dy: margin }, target: { node: d.target, dx: 0, dy: -margin } }
+            }
+
+            return { source: { node: d.target, dx: 0, dy: margin }, target: { node: d.source, dx: 0, dy: -margin } }
+        }
+
+        var layerLinkOverlay = this.gLayerLinkOverlays.selectAll('path.layer-link-overlay')
             .data(this.visibleLayerLinks(holders), d => d.id)
-        layerLinkOverlayL.enter()
+        layerLinkOverlay.enter()
             .append('path')
             .attr("id", d => "layer-link-overlay-" + d.id)
             .attr("class", "layer-link-overlay")
@@ -845,9 +855,9 @@ export class Topology extends Component {
                     .duration(300)
                     .style("opacity", 0)
             })
-        layerLinkOverlayL.exit().remove()
+        layerLinkOverlay.exit().remove()
 
-        layerLinkOverlayL.transition()
+        layerLinkOverlay.transition()
             .duration(500)
             .attr("d", d => layerLinker(holderLink(d, 55)))
 
@@ -889,7 +899,7 @@ export class Topology extends Component {
 
     render() {
         return (
-            <div className={this.props.className} ref={node => this.svgDiv = node} style={{position: 'relative'}}>
+            <div className={this.props.className} ref={node => this.svgDiv = node} style={{ position: 'relative' }}>
                 <ResizeObserver
                     onResize={(rect) => { this.onResize(rect) }} />
             </div>

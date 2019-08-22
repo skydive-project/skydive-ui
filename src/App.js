@@ -168,6 +168,8 @@ class App extends Component {
       case "bridge":
       case "ovsbridge":
         return 4
+      case "veth":
+        return 7
       case "netns":
         return 8
       default:
