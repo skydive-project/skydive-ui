@@ -576,7 +576,9 @@ export class Topology extends Component {
         if (this.props.onShowNodeContextMenu) {
             var data = this.props.onShowNodeContextMenu(d)
 
-            var x = event.x, y = event.y
+            var bb = this.svgDiv.getBoundingClientRect()
+
+            var x = event.x - bb.left, y = event.y - bb.top
 
             var g = this.gContextMenu.append("g")
                 .style("opacity", 0)
