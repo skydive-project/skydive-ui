@@ -22,7 +22,7 @@ import { line, linkVertical, curveCardinalClosed } from 'd3-shape'
 import { } from 'd3-transition'
 import { zoom, zoomIdentity } from 'd3-zoom'
 import { } from 'd3-selection-multi'
-import ResizeObserver from 'react-resize-observer';
+import ResizeObserver from 'react-resize-observer'
 
 import './Topology.css'
 
@@ -99,25 +99,25 @@ export class Topology extends Component {
 
         var filter = defs.append("filter")
             .attr("id", "drop-shadow")
-            .attr("height", "150%");
+            .attr("height", "150%")
 
         filter.append("feGaussianBlur")
             .attr("in", "SourceGraphic")
             .attr("stdDeviation", 5)
-            .attr("result", "blur");
+            .attr("result", "blur")
 
         filter.append("feOffset")
             .attr("in", "blur")
             .attr("dx", 0)
             .attr("dy", 0)
-            .attr("result", "offsetBlur");
+            .attr("result", "offsetBlur")
 
-        var feMerge = filter.append("feMerge");
+        var feMerge = filter.append("feMerge")
 
         feMerge.append("feMergeNode")
             .attr("in", "offsetBlur")
         feMerge.append("feMergeNode")
-            .attr("in", "SourceGraphic");
+            .attr("in", "SourceGraphic")
 
         this.zoom = zoom()
             .scaleExtent([0.3, 1.5])
@@ -183,6 +183,12 @@ export class Topology extends Component {
         this.nodeStates[this.root.id] = { expanded: true }
 
         this.layerLinks = []
+        this.layerLinkTypes = {}
+    }
+
+    showLayerLinkType(type, active) {
+        this.layerLinkTypes[type] = active
+        this.renderTree()
     }
 
     /**
@@ -244,15 +250,22 @@ export class Topology extends Component {
      * Add a extra link between two node with the given metadata
      * @param {node} node1
      * @param {node} node2
+     * @param {string} type
      * @param {object} data
      */
-    addLayerLink(node1, node2, data) {
+    addLayerLink(node1, node2, type, data) {
         this.layerLinks.push({
             id: node1.id + "-" + node2.id,
+            type: type,
             data: data,
             source: node1,
             target: node2
         })
+
+        if (type && !(type in this.layerLinkTypes)) {
+            console.log(type)
+            this.layerLinkTypes[type] = false
+        }
     }
 
     cloneTree(node, parent) {
@@ -399,6 +412,10 @@ export class Topology extends Component {
         }
 
         this.layerLinks.forEach(link => {
+            if (!this.layerLinkTypes[link.type]) {
+                return
+            }
+
             let source = findVisible(link.source)
             let target = findVisible(link.target)
 
@@ -620,7 +637,7 @@ export class Topology extends Component {
                 dy += paddingY
             }
 
-            var bb = g.node().getBBox()
+            bb = g.node().getBBox()
             rect
                 .attr("x", bb.x - marginX)
                 .attr("y", bb.y - marginY)

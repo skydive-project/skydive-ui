@@ -32,6 +32,9 @@ import Divider from '@material-ui/core/Divider'
 import List from '@material-ui/core/List'
 import Container from '@material-ui/core/Container'
 import Paper from '@material-ui/core/Paper'
+import Checkbox from '@material-ui/core/Checkbox'
+import FormGroup from '@material-ui/core/FormGroup'
+import FormControlLabel from '@material-ui/core/FormControlLabel'
 import { withSnackbar } from 'notistack'
 
 import JSONTree from 'react-json-tree'
@@ -55,6 +58,7 @@ class App extends Component {
       contextMenuY: 0,
       isNavOpen: false,
       info: {},
+      layerTypes: {},
       overflow: 'hidden' // hack for info panel
     }
 
@@ -65,6 +69,7 @@ class App extends Component {
     this.onClose = this.onClose.bind(this)
     this.onMessage = this.onMessage.bind(this)
     this.onNodeSelected = this.onNodeSelected.bind(this)
+    this.onLayerTypeChange = this.onLayerTypeChange.bind(this)
   }
 
   componentDidMount() {
@@ -107,11 +112,14 @@ class App extends Component {
         let parent = this.tc.nodes[edge.Parent]
         let child = this.tc.nodes[edge.Child]
 
-        this.tc.addLayerLink(child, parent, edge.Metadata)
+        this.tc.addLayerLink(child, parent, edge.Metadata.RelationType, edge.Metadata)
       }
     }
 
     this.tc.renderTree()
+
+    // get list of link layer types
+    this.setState({ layerTypes: this.tc.layerLinkTypes })
 
     this.tc.zoomFit()
   }
@@ -207,6 +215,7 @@ class App extends Component {
         }
         this.parseTopology(data.Obj)
         this.synced = true
+        break
       default:
         break
     }
@@ -256,6 +265,11 @@ class App extends Component {
     this.setState({ isNavOpen: false })
   }
 
+  onLayerTypeChange(event) {
+    this.tc.showLayerLinkType(event.target.value, event.target.checked)
+    this.setState({ layerTypes: this.tc.layerLinkTypes })
+  }
+
   render() {
     const { classes } = this.props
 
@@ -302,15 +316,32 @@ class App extends Component {
               onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
               onShowNodeContextMenu={this.onShowNodeContextMenu} />
           </Container>
-          <Container className={classes.panel}>
-            <Paper className={clsx(classes.panelPaper, !this.state.info.id && classes.panelPaperClose)}>
-              <div className={classes.panelPaperFragment} style={{ overflow: this.state.overflow }} >
+          <Container className={classes.rightPanel}>
+            <Paper className={clsx(classes.rightPanelPaper, !this.state.info.id && classes.rightPanelPaperClose)}>
+              <div className={classes.rightPanelPaperContent} style={{ overflow: this.state.overflow }} >
                 <Typography component="h6" color="primary" gutterBottom>
                   ID : {this.state.info.id}
                 </Typography>
                 {this.state.info.data &&
                   <JSONTree className={classes.jsonTree} data={this.state.info.data} theme="bright" invertTheme hideRoot sortObjectKeys />
                 }
+              </div>
+            </Paper>
+          </Container>
+          <Container className={classes.layerPanel}>
+            <Paper className={classes.layerPanelPaper}>
+              <div className={classes.layerPanelPaperFragment}>
+                <Typography component="h6" color="primary" gutterBottom>
+                  Layers
+                </Typography>
+                <FormGroup>
+                  {Object.keys(this.state.layerTypes).map((key) => (
+                    <FormControlLabel key={key} control={
+                      <Checkbox value={key} checked={this.state.layerTypes[key]} color="primary" onChange={this.onLayerTypeChange} />
+                    }
+                      label={key} />
+                  ))}
+                </FormGroup>
               </div>
             </Paper>
           </Container>
