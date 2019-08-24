@@ -35,7 +35,7 @@ export class Topology extends Component {
         super(props)
 
         this.nodeWidth = 110
-        this.nodeHeight = 240
+        this.nodeHeight = 260
 
         this.tree = tree().nodeSize([this.nodeWidth, this.nodeHeight])
 
@@ -88,7 +88,7 @@ export class Topology extends Component {
 
         defs
             .append("marker")
-            .attr("id", "square")
+            .attr("id", "layer-link-marker")
             .attr("viewBox", "-5 -5 10 10")
             .attr("markerWidth", 6)
             .attr("markerHeight", 6)
@@ -96,6 +96,17 @@ export class Topology extends Component {
             .append("path")
             .attr("class", "layer-link-marker")
             .attr("d", "M 0,0 m -5,-5 L 5,-5 L 5,5 L -5,5 Z")
+
+        defs
+            .append("marker")
+            .attr("id", "layer-link-overlay-marker")
+            .attr("viewBox", "-5 -5 10 10")
+            .attr("markerWidth", 1)
+            .attr("markerHeight", 1)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("class", "layer-link-overlay-marker")
+            .attr("d", "M 0,0 m -5,-5 L 5,-5 L 5,5 L -5,5 Z")    
 
         var filter = defs.append("filter")
             .attr("id", "drop-shadow")
@@ -834,13 +845,25 @@ export class Topology extends Component {
                     }
                     word = words.pop()
                 }
+
+                var bb = this.getBBox()
+
+                select(this.parentNode).insert("rect", "text")
+                    .attr("class", "node-name-wrap")
+                    .attr("x", bb.x - 5)
+                    .attr("y", bb.y - 5)
+                    .attr("width", bb.width + 10)
+                    .attr("height", bb.height + 10)
+                    .attr("rx", 10)
+                    .attr("ry", 10)
             })
         }
 
-        nodeEnter.append("text")
+        nodeEnter.append("g")
+            .append("text")
             .attr("class", "node-name")
             .attr("dy", ".35em")
-            .attr("y", 60)
+            .attr("y", 85)
             .text(d => this.props.nodeAttrs(d.data._node).name)
             .call(wrapText, 1.1, this.nodeWidth - 10)
 

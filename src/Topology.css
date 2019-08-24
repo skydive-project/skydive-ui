@@ -23,14 +23,20 @@ svg {
     fill: none;
     stroke: #ffeb3b;
     stroke-width: 30;
+    marker-start: url(#layer-link-overlay-marker);
+    marker-end: url(#layer-link-overlay-marker);
+}
+
+.layer-link-overlay-marker {
+    fill: #ffeb3b;
 }
 
 .layer-links {
     fill: none;
     stroke: #0069bd;
     stroke-width: 3;
-    marker-start: url(#square);
-    marker-end: url(#square);
+    marker-start: url(#layer-link-marker);
+    marker-end: url(#layer-link-marker);
 }
 
 .layer-link-marker {
@@ -84,10 +90,14 @@ svg {
 .node-name {
     font-size: 22px;
     text-anchor: middle;
-    stroke: #fff;
-    stroke-width: 1px;
-    font-weight: bold;
+    font-weight: normal;
     font-family: sans-serif;
+}
+
+.node-name-wrap {
+    fill: #fff;
+    stroke: #666;
+    opacity: 0.7;
 }
 
 .node-exco-circle {
@@ -113,7 +123,6 @@ svg {
     stroke: #333;
     stroke-width: 1px;
 }
-
 
 .context-menu-item rect {
     fill: #eee;
