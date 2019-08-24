@@ -38,9 +38,10 @@ svg {
 }
 
 .layer-link-wraps {
-    stroke: #ffeb3b91;
+    stroke: #000;
     stroke-width: 30;
     opacity: 0;
+    fill: none;
 }
 
 .link {

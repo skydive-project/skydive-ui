@@ -914,6 +914,10 @@ export class Topology extends Component {
                     .style("opacity", 0)
             })
         layerLinkWrap.exit().remove()
+
+        layerLinkWrap.transition()
+            .duration(500)
+            .attr("d", d => layerLinker(holderLink(d, 55)))
     }
 
     render() {
