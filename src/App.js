@@ -242,6 +242,7 @@ class App extends Component {
 
   onOpen() {
     this.notify("Connected", "info")
+    this.tc.resetTree()
     this.sync()
     this.notify("Synchronized", "info")
   }

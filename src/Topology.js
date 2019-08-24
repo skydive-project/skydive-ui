@@ -17,7 +17,7 @@
 
 import React, { Component } from 'react'
 import { hierarchy, tree } from 'd3-hierarchy'
-import { select, event } from 'd3-selection'
+import { select, selectAll, event } from 'd3-selection'
 import { line, linkVertical, curveCardinalClosed } from 'd3-shape'
 import { } from 'd3-transition'
 import { zoom, zoomIdentity } from 'd3-zoom'
@@ -165,6 +165,10 @@ export class Topology extends Component {
         return { expanded: false }
     }
 
+    resetTree() {
+        this.initTree()
+    }
+
     initTree() {
         this.root = {
             id: "root",
@@ -263,7 +267,6 @@ export class Topology extends Component {
         })
 
         if (type && !(type in this.layerLinkTypes)) {
-            console.log(type)
             this.layerLinkTypes[type] = false
         }
     }
@@ -422,6 +425,7 @@ export class Topology extends Component {
             if (source && target && source !== target) {
                 links.push({
                     id: link.id,
+                    type: link.type,
                     source: source,
                     target: target,
                     data: link.data
@@ -679,16 +683,28 @@ export class Topology extends Component {
         this.expand(d)
     }
 
+    neighborLinks(d, links) {
+        var ids = []
+
+        for (let link of links) {
+            if (link.source.id === d.data.id || link.target.id === d.data.id) {
+                ids.push(link.id)
+            }
+        }
+
+        return ids
+    }
+
     /**
      * Invalidate the view and render the tree
      */
     renderTree() {
-        let normRoot = this.normalizeTree(this.root)
+        var normRoot = this.normalizeTree(this.root)
 
-        let root = hierarchy(normRoot)
+        var root = hierarchy(normRoot)
         this.tree(root)
 
-        let holders = {}
+        var holders = {}
         root.each(node => {
             holders[node.data.id] = node
         })
@@ -753,6 +769,19 @@ export class Topology extends Component {
             .on("contextmenu", d => {
                 event.preventDefault()
                 this.showNodeContextMenu(d)
+            })
+            .on("mouseover", d => {
+                var ids = this.neighborLinks(d, this.visibleLayerLinks(holders))
+                for (let id of ids) {
+                    select("#layer-link-overlay-" + id).transition()
+                        .duration(300)
+                        .style("opacity", 1)
+                }
+            })
+            .on("mouseout", d => {
+                selectAll("path.layer-link-overlay").transition()
+                    .duration(300)
+                    .style("opacity", 0)
             })
 
         nodeEnter.transition()
@@ -856,8 +885,10 @@ export class Topology extends Component {
             return { source: { node: d.target, dx: 0, dy: margin }, target: { node: d.source, dx: 0, dy: -margin } }
         }
 
+        var visibleLayerLinks = this.visibleLayerLinks(holders)
+
         var layerLinkOverlay = this.gLayerLinkOverlays.selectAll('path.layer-link-overlay')
-            .data(this.visibleLayerLinks(holders), d => d.id)
+            .data(visibleLayerLinks, d => d.id)
         layerLinkOverlay.enter()
             .append('path')
             .attr("id", d => "layer-link-overlay-" + d.id)
@@ -869,11 +900,6 @@ export class Topology extends Component {
                     .duration(300)
                     .style("opacity", 1)
             })
-            .on("mouseout", function (d, i) {
-                select(this).transition()
-                    .duration(300)
-                    .style("opacity", 0)
-            })
         layerLinkOverlay.exit().remove()
 
         layerLinkOverlay.transition()
@@ -881,7 +907,7 @@ export class Topology extends Component {
             .attr("d", d => layerLinker(holderLink(d, 55)))
 
         var layerLink = this.gLayerLinks.selectAll('path.layer-link')
-            .data(this.visibleLayerLinks(holders), d => d.id)
+            .data(visibleLayerLinks, d => d.id)
         var layerLinkEnter = layerLink.enter()
             .append('path')
             .attr("class", d => "layer-link " + this.props.linkAttrs(d).class)
@@ -898,7 +924,7 @@ export class Topology extends Component {
             .attr("d", d => layerLinker(holderLink(d, 55)))
 
         var layerLinkWrap = this.gLayerLinkWraps.selectAll('path.layer-link-wrap')
-            .data(this.visibleLayerLinks(holders), d => d.id)
+            .data(visibleLayerLinks, d => d.id)
         layerLinkWrap.enter()
             .append('path')
             .attr("class", "layer-link-wrap")
@@ -909,7 +935,7 @@ export class Topology extends Component {
                     .style("opacity", 1)
             })
             .on("mouseout", d => {
-                select("#layer-link-overlay-" + d.id).transition()
+                selectAll("path.layer-link-overlay").transition()
                     .duration(300)
                     .style("opacity", 0)
             })
