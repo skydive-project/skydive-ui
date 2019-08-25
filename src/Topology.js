@@ -546,15 +546,6 @@ export class Topology extends Component {
     }
 
     /**
-     * Highlight the node for the given id
-     * @param {string} id
-     * @param {boolean} active
-     */
-    highlightNode(id, active) {
-        select("#node-" + id).classed("node-highlighted", active)
-    }
-
-    /**
      * Unselect all the nodes
      */
     unselectAllNodes() {
@@ -808,6 +799,9 @@ export class Topology extends Component {
                 this.showNodeContextMenu(d)
             })
             .on("mouseover", d => {
+                select("#node-overlay-" + d.data.id)
+                    .style("opacity", 1)
+
                 var ids = this.neighborLinks(d, this.visibleLinks(holders))
                 for (let id of ids) {
                     select("#link-overlay-" + id)
@@ -815,6 +809,8 @@ export class Topology extends Component {
                 }
             })
             .on("mouseout", d => {
+                selectAll("circle.node-overlay")
+                    .style("opacity", 0)
                 selectAll("path.link-overlay")
                     .style("opacity", 0)
             })
@@ -824,6 +820,12 @@ export class Topology extends Component {
             .style("opacity", 1)
 
         const hexSize = 30
+
+        nodeEnter.append("circle")
+            .attr("id", d => "node-overlay-" + d.data.id)
+            .attr("class", "node-overlay")
+            .attr("r", hexSize + 24)
+            .style("opacity", 0)
 
         nodeEnter.append("circle")
             .attr("class", "node-circle")

@@ -60,13 +60,13 @@ svg {
     stroke: #5097c7;
 }
 
+.node-overlay {
+    fill: #ffeb3b;
+}
+
 .node-disc {
     stroke: none;
     fill: #5097c7;
-}
-
-.node-highlighted .node-circle {
-    fill: gold;
 }
 
 .node-selected .node-circle {
