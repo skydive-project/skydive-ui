@@ -27,7 +27,7 @@ import ResizeObserver from 'react-resize-observer'
 import './Topology.css'
 
 /**
- * Topology component. Based on a tree enhanced by multiple layers supports.
+ * Topology component. Based on a tree enhanced by multiple levels supports.
  */
 export class Topology extends Component {
 
@@ -88,25 +88,25 @@ export class Topology extends Component {
 
         defs
             .append("marker")
-            .attr("id", "layer-link-marker")
+            .attr("id", "link-marker")
             .attr("viewBox", "-5 -5 10 10")
             .attr("markerWidth", 6)
             .attr("markerHeight", 6)
             .attr("orient", "auto")
             .append("path")
-            .attr("class", "layer-link-marker")
+            .attr("class", "link-marker")
             .attr("d", "M 0,0 m -5,-5 L 5,-5 L 5,5 L -5,5 Z")
 
         defs
             .append("marker")
-            .attr("id", "layer-link-overlay-marker")
+            .attr("id", "link-overlay-marker")
             .attr("viewBox", "-5 -5 10 10")
             .attr("markerWidth", 1)
             .attr("markerHeight", 1)
             .attr("orient", "auto")
             .append("path")
-            .attr("class", "layer-link-overlay-marker")
-            .attr("d", "M 0,0 m -5,-5 L 5,-5 L 5,5 L -5,5 Z")    
+            .attr("class", "link-overlay-marker")
+            .attr("d", "M 0,0 m -5,-5 L 5,-5 L 5,5 L -5,5 Z")
 
         var filter = defs.append("filter")
             .attr("id", "drop-shadow")
@@ -143,25 +143,25 @@ export class Topology extends Component {
         this.g = this.svg
             .append("g")
 
-        // layers group
-        this.gLayers = this.g.append("g")
-            .attr("class", "layers")
+        // levels group
+        this.gLevels = this.g.append("g")
+            .attr("class", "levels")
 
         // hiera links group 
         this.gHieraLinks = this.g.append("g")
-            .attr("class", "links")
+            .attr("class", "hiera-links")
 
         // link overlay group, like highlight
-        this.gLayerLinkOverlays = this.g.append("g")
-            .attr("class", "layer-link-overlays")
+        this.gLinkOverlays = this.g.append("g")
+            .attr("class", "link-overlays")
 
         // non-hiera links group
-        this.gLayerLinks = this.g.append("g")
-            .attr("class", "layer-links")
+        this.gLinks = this.g.append("g")
+            .attr("class", "links")
 
         // link wrapper group, used to catch mouse event
-        this.gLayerLinkWraps = this.g.append("g")
-            .attr("class", "layer-link-wraps")
+        this.gLinkWraps = this.g.append("g")
+            .attr("class", "link-wraps")
 
         // nodes group
         this.gNodes = this.g.append("g")
@@ -183,26 +183,40 @@ export class Topology extends Component {
     initTree() {
         this.root = {
             id: "root",
+            layer: "root",
             data: {
                 name: "root"
             },
-            layerWeight: 0,
-            children: []
+            weight: 0,
+            children: [],
+            state: { expanded: true }
         }
-        this.maxLayerWeight = 0
+        this.maxWeight = 0
 
         this.nodes = {}
+        this.layerNodeStates = {}
 
-        // node state
-        this.nodeStates = {}
-        this.nodeStates[this.root.id] = { expanded: true }
-
-        this.layerLinks = []
-        this.layerLinkTypes = {}
+        this.links = []
+        this.layerLinkStates = {}
     }
 
-    showLayerLinkType(type, active) {
-        this.layerLinkTypes[type] = active
+    /**
+     * Active or disable links of given layer
+     * @param {*} layer
+     * @param {*} active
+     */
+    showLinkLayer(layer, active) {
+        this.layerLinkStates[layer] = active
+        this.renderTree()
+    }
+
+    /**
+     * Active or disable nodes of given layer
+     * @param {*} layer
+     * @param {*} active
+     */
+    showNodeLayer(layer, active) {
+        this.layerNodeStates[layer] = active
         this.renderTree()
     }
 
@@ -211,15 +225,19 @@ export class Topology extends Component {
      * @param {string} id
      * @param {object} data
      */
-    addNode(id, data) {
+    addNode(id, layer, data) {
         var node = {
             id: id,
+            layer: layer,
             data: data,
-            children: []
+            children: [],
+            state: this.defaultState()
         }
         this.nodes[id] = node
 
-        this.nodeStates[id] = this.defaultState()
+        if (layer && !(layer in this.layerNodeStates)) {
+            this.layerNodeStates[layer] = false
+        }
 
         return node
     }
@@ -231,9 +249,9 @@ export class Topology extends Component {
     delNode(node) {
         node.parent.children = node.parent.children.filter(c => c.id !== node.id)
 
-        for (let link of this.layerLinks) {
+        for (let link of this.links) {
             if (link.source === node || link.target === node) {
-                this.layerLinks = this.layerLinks.filter(c => c === link)
+                this.links = this.links.filter(c => c === link)
             }
         }
     }
@@ -242,9 +260,9 @@ export class Topology extends Component {
      * Set a node as a child of the given parent with the given weight
      * @param {noe} child
      * @param {node} parent
-     * @param {number} layerWeight
+     * @param {number} weight
      */
-    setParent(child, parent, layerWeight) {
+    setParent(child, parent, weight) {
         // remove from previous parent if needed
         if (child.parent) {
             child.parent.children = child.parent.children.filter(c => c.id !== child.id)
@@ -253,42 +271,50 @@ export class Topology extends Component {
         parent.children.push(child)
         child.parent = parent
 
-        var weight = typeof layerWeight === "function" ? layerWeight(child) : layerWeight
-        if (weight > this.maxLayerWeight) {
-            this.maxLayerWeight = weight
+        weight = typeof weight === "function" ? weight(child) : weight
+        if (weight > this.maxWeight) {
+            this.maxWeight = weight
         }
 
-        child.layerWeight = weight
+        child.weight = weight
     }
 
     /**
      * Add a extra link between two node with the given metadata
      * @param {node} node1
      * @param {node} node2
-     * @param {string} type
+     * @param {string} layer
      * @param {object} data
      */
-    addLayerLink(node1, node2, type, data) {
-        this.layerLinks.push({
+    addLink(node1, node2, layer, data) {
+        this.links.push({
             id: node1.id + "-" + node2.id,
-            type: type,
+            layer: layer,
             data: data,
             source: node1,
             target: node2
         })
 
-        if (type && !(type in this.layerLinkTypes)) {
-            this.layerLinkTypes[type] = false
+        if (layer && !(layer in this.layerLinkStates)) {
+            this.layerLinkStates[layer] = false
         }
     }
 
     cloneTree(node, parent) {
-        let state = this.nodeStates[node.id]
-        let cloned = { id: node.id, _node: node, layerWeight: node.layerWeight, children: [], parent: parent, state: state }
+        // always return root node as it is the base of the tree and thus all the
+        // layers
+        if (node.layer !== "root" && !this.layerNodeStates[node.layer]) {
+            return
+        }
 
-        if (this.nodeStates[node.id].expanded) {
+        let cloned = { id: node.id, _node: node, weight: node.weight, children: [], parent: parent }
+
+        if (node.state.expanded) {
             node.children.forEach(child => {
-                cloned.children.push(this.cloneTree(child, cloned))
+                let subCloned = this.cloneTree(child, cloned)
+                if (subCloned) {
+                    cloned.children.push(subCloned)
+                }
             })
             if (this.props.sortNodesFnc) {
                 cloned.children.sort((a, b) => this.props.sortNodesFnc(a._node, b._node))
@@ -300,14 +326,14 @@ export class Topology extends Component {
 
     normalizeTree(node) {
         // return depth of the given layer
-        let layerHeight = (node, layerWeight, currDepth) => {
-            if (node.layerWeight > layerWeight) {
+        let layerHeight = (node, weight, currDepth) => {
+            if (node.weight > weight) {
                 return 0
             }
 
             var maxDepth = currDepth
             node.children.forEach(child => {
-                let depth = layerHeight(child, layerWeight, currDepth + 1)
+                let depth = layerHeight(child, weight, currDepth + 1)
                 if (depth > maxDepth) {
                     maxDepth = depth
                 }
@@ -316,21 +342,21 @@ export class Topology extends Component {
             return maxDepth
         }
 
-        // re-order tree to add placeholder node in order to separate layers
-        let normalizeTreeHeight = (root, node, layerWeight, currDepth, cache) => {
-            if (node.layerWeight > layerWeight) {
+        // re-order tree to add placeholder node in order to separate levels
+        let normalizeTreeHeight = (root, node, weight, currDepth, cache) => {
+            if (node.weight > weight) {
                 return
             }
 
-            if (node.layerWeight === layerWeight && node.parent && node.parent.layerWeight !== layerWeight) {
-                let parentDepth = layerHeight(root, node.layerWeight - 1, 0)
+            if (node.weight === weight && node.parent && node.parent.weight !== weight) {
+                let parentDepth = layerHeight(root, node.weight - 1, 0)
                 if (currDepth > parentDepth) {
                     return
                 }
 
                 let _parent = node._node.parent
 
-                let pass = node.parent.id + "/" + node.layerWeight
+                let pass = node.parent.id + "/" + node.weight
 
                 let first, last
                 if (cache.chains[pass]) {
@@ -363,12 +389,12 @@ export class Topology extends Component {
             }
 
             node.children.forEach(child => {
-                normalizeTreeHeight(root, child, layerWeight, currDepth + 1, cache)
+                normalizeTreeHeight(root, child, weight, currDepth + 1, cache)
             })
         }
 
         var tree = this.cloneTree(node)
-        for (let i = 0; i <= this.maxLayerWeight; i++) {
+        for (let i = 0; i <= this.maxWeight; i++) {
             normalizeTreeHeight(tree, tree, i, 0, { chains: {} })
         }
         return tree
@@ -382,10 +408,10 @@ export class Topology extends Component {
     }
 
     expand(d) {
-        if (d.data.state.expanded) {
-            this.collapse(d.data)
+        if (d.data._node.state.expanded) {
+            this.collapse(d.data._node)
         } else {
-            d.data.state.expanded = true
+            d.data._node.state.expanded = true
         }
 
         this.renderTree()
@@ -413,7 +439,7 @@ export class Topology extends Component {
         .y(d => d.y)
         .curve(curveCardinalClosed.tension(0.7))
 
-    visibleLayerLinks(holders) {
+    visibleLinks(holders) {
         let links = []
 
         let findVisible = (node) => {
@@ -425,8 +451,8 @@ export class Topology extends Component {
             }
         }
 
-        this.layerLinks.forEach(link => {
-            if (!this.layerLinkTypes[link.type]) {
+        this.links.forEach(link => {
+            if (!this.layerLinkStates[link.layer]) {
                 return
             }
 
@@ -436,7 +462,7 @@ export class Topology extends Component {
             if (source && target && source !== target) {
                 links.push({
                     id: link.id,
-                    type: link.type,
+                    layer: link.layer,
                     source: source,
                     target: target,
                     data: link.data
@@ -492,15 +518,15 @@ export class Topology extends Component {
         }
     }
 
-    _layerNodes(node, nodes) {
+    _levelNodes(node, nodes) {
         if (!nodes) {
             nodes = {}
         }
 
-        if (node.data.layerWeight) {
-            let arr = nodes[node.data.layerWeight]
+        if (node.data.weight) {
+            let arr = nodes[node.data.weight]
             if (!arr) {
-                nodes[node.data.layerWeight] = arr = { id: node.data.layerWeight, nodes: [node] }
+                nodes[node.data.weight] = arr = { id: node.data.weight, nodes: [node] }
             } else {
                 arr.nodes.push(node)
             }
@@ -508,15 +534,15 @@ export class Topology extends Component {
 
         if (node.children) {
             node.children.forEach(child => {
-                this._layerNodes(child, nodes)
+                this._levelNodes(child, nodes)
             })
         }
 
         return nodes
     }
 
-    layerNodes(node) {
-        return Object.values(this._layerNodes(node, {}))
+    levelNodes(node) {
+        return Object.values(this._levelNodes(node, {}))
     }
 
     /**
@@ -724,30 +750,30 @@ export class Topology extends Component {
             .x(d => d.x)
             .y(d => d.y)
 
-        var layers = this.gLayers.selectAll('rect.layer')
-            .data(this.layerNodes(root))
-        var layersEnter = layers.enter()
+        var level = this.gLevels.selectAll('rect.level')
+            .data(this.levelNodes(root))
+        var levelEnter = level.enter()
             .append('rect')
             .attr("id", d => d.id)
-            .attr("class", "layer")
+            .attr("class", "level")
             .style("opacity", 0)
             .attrs(d => this.nodesRect(root, d.nodes))
-        layers.exit().remove()
+        level.exit().remove()
 
-        layersEnter.transition()
+        levelEnter.transition()
             .duration(500)
             .style("opacity", 1)
 
-        layers.transition()
+        level.transition()
             .duration(500)
             .attrs(d => this.nodesRect(root, d.nodes))
 
-        var hieraLink = this.gHieraLinks.selectAll('path.link')
+        var hieraLink = this.gHieraLinks.selectAll('path.hiera-link')
             .data(root.links(), d => d.source.data.id + d.target.data.id)
         var hieraLinkEnter = hieraLink.enter()
             .filter(d => d.source.data._node !== this.root && d.source.data._parent !== this.root)
             .append('path')
-            .attr("class", "link")
+            .attr("class", "hiera-link")
             .style("opacity", 0)
             .attr("d", linker)
         hieraLink.exit().remove()
@@ -782,16 +808,14 @@ export class Topology extends Component {
                 this.showNodeContextMenu(d)
             })
             .on("mouseover", d => {
-                var ids = this.neighborLinks(d, this.visibleLayerLinks(holders))
+                var ids = this.neighborLinks(d, this.visibleLinks(holders))
                 for (let id of ids) {
-                    select("#layer-link-overlay-" + id).transition()
-                        .duration(300)
+                    select("#link-overlay-" + id)
                         .style("opacity", 1)
                 }
             })
             .on("mouseout", d => {
-                selectAll("path.layer-link-overlay").transition()
-                    .duration(300)
+                selectAll("path.link-overlay")
                     .style("opacity", 0)
             })
 
@@ -889,7 +913,7 @@ export class Topology extends Component {
             .style("opacity", 1)
             .attr("transform", d => `translate(${d.x},${d.y})`)
 
-        var layerLinker = linkVertical()
+        var linker = linkVertical()
             .x(d => holders[d.node.id].x + d.dx)
             .y(d => holders[d.node.id].y + d.dy)
 
@@ -908,65 +932,63 @@ export class Topology extends Component {
             return { source: { node: d.target, dx: 0, dy: margin }, target: { node: d.source, dx: 0, dy: -margin } }
         }
 
-        var visibleLayerLinks = this.visibleLayerLinks(holders)
+        var visibleLinks = this.visibleLinks(holders)
 
-        var layerLinkOverlay = this.gLayerLinkOverlays.selectAll('path.layer-link-overlay')
-            .data(visibleLayerLinks, d => d.id)
-        layerLinkOverlay.enter()
+        var linkOverlay = this.gLinkOverlays.selectAll('path.link-overlay')
+            .data(visibleLinks, d => d.id)
+        linkOverlay.enter()
             .append('path')
-            .attr("id", d => "layer-link-overlay-" + d.id)
-            .attr("class", "layer-link-overlay")
+            .attr("id", d => "link-overlay-" + d.id)
+            .attr("class", "link-overlay")
             .style("opacity", 0)
-            .attr("d", d => layerLinker(holderLink(d, 55)))
+            .attr("d", d => linker(holderLink(d, 55)))
             .on("mouseover", function (d, i) {
                 select(this).transition()
                     .duration(300)
                     .style("opacity", 1)
             })
-        layerLinkOverlay.exit().remove()
+        linkOverlay.exit().remove()
 
-        layerLinkOverlay.transition()
+        linkOverlay.transition()
             .duration(500)
-            .attr("d", d => layerLinker(holderLink(d, 55)))
+            .attr("d", d => linker(holderLink(d, 55)))
 
-        var layerLink = this.gLayerLinks.selectAll('path.layer-link')
-            .data(visibleLayerLinks, d => d.id)
-        var layerLinkEnter = layerLink.enter()
+        var link = this.gLinks.selectAll('path.link')
+            .data(visibleLinks, d => d.id)
+        var linkEnter = link.enter()
             .append('path')
-            .attr("class", d => "layer-link " + this.props.linkAttrs(d).class)
+            .attr("class", d => "link " + this.props.linkAttrs(d).class)
             .style("opacity", 0)
-            .attr("d", d => layerLinker(holderLink(d, 55)))
-        layerLink.exit().remove()
+            .attr("d", d => linker(holderLink(d, 55)))
+        link.exit().remove()
 
-        layerLinkEnter.transition()
+        linkEnter.transition()
             .duration(500)
             .style("opacity", 1)
 
-        layerLink.transition()
+        link.transition()
             .duration(500)
-            .attr("d", d => layerLinker(holderLink(d, 55)))
+            .attr("d", d => linker(holderLink(d, 55)))
 
-        var layerLinkWrap = this.gLayerLinkWraps.selectAll('path.layer-link-wrap')
-            .data(visibleLayerLinks, d => d.id)
-        layerLinkWrap.enter()
+        var linkWrap = this.gLinkWraps.selectAll('path.link-wrap')
+            .data(visibleLinks, d => d.id)
+        linkWrap.enter()
             .append('path')
-            .attr("class", "layer-link-wrap")
-            .attr("d", d => layerLinker(holderLink(d, 55)))
+            .attr("class", "link-wrap")
+            .attr("d", d => linker(holderLink(d, 55)))
             .on("mouseover", d => {
-                select("#layer-link-overlay-" + d.id).transition()
-                    .duration(300)
+                select("#link-overlay-" + d.id)
                     .style("opacity", 1)
             })
             .on("mouseout", d => {
-                selectAll("path.layer-link-overlay").transition()
-                    .duration(300)
+                selectAll("path.link-overlay")
                     .style("opacity", 0)
             })
-        layerLinkWrap.exit().remove()
+        linkWrap.exit().remove()
 
-        layerLinkWrap.transition()
+        linkWrap.transition()
             .duration(500)
-            .attr("d", d => layerLinker(holderLink(d, 55)))
+            .attr("d", d => linker(holderLink(d, 55)))
     }
 
     render() {

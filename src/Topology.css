@@ -2,55 +2,55 @@ svg {
     cursor: default;
 }
 
-.layers {
+.levels {
     fill: none;
     fill-opacity: 0.4;
 }
 
-.layer {
+.level {
     stroke: #000;
     stroke-dasharray: 5, 10;
     fill: #efeded;
 }
 
-.links {
+.hiera-links {
     fill: none;
     stroke: #333;
     stroke-width: 2;
 }
 
-.layer-link-overlays {
+.link-overlays {
     fill: none;
     stroke: #ffeb3b;
     stroke-width: 30;
-    marker-start: url(#layer-link-overlay-marker);
-    marker-end: url(#layer-link-overlay-marker);
+    marker-start: url(#link-overlay-marker);
+    marker-end: url(#link-overlay-marker);
 }
 
-.layer-link-overlay-marker {
+.link-overlay-marker {
     fill: #ffeb3b;
 }
 
-.layer-links {
+.links {
     fill: none;
     stroke: #0069bd;
     stroke-width: 3;
-    marker-start: url(#layer-link-marker);
-    marker-end: url(#layer-link-marker);
+    marker-start: url(#link-marker);
+    marker-end: url(#link-marker);
 }
 
-.layer-link-marker {
+.link-marker {
     fill: #003865;
 }
 
-.layer-link-wraps {
+.link-wraps {
     stroke: #000;
     stroke-width: 30;
     opacity: 0;
     fill: none;
 }
 
-.link {
+.hiera-link {
     stroke-dasharray: 5, 10;
 }
 

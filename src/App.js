@@ -58,7 +58,7 @@ class App extends Component {
       contextMenuY: 0,
       isNavOpen: false,
       info: {},
-      layerTypes: {},
+      layerLinkStates: {},
       overflow: 'hidden' // hack for info panel
     }
 
@@ -69,7 +69,7 @@ class App extends Component {
     this.onClose = this.onClose.bind(this)
     this.onMessage = this.onMessage.bind(this)
     this.onNodeSelected = this.onNodeSelected.bind(this)
-    this.onLayerTypeChange = this.onLayerTypeChange.bind(this)
+    this.onLayerLinkStateChange = this.onLayerLinkStateChange.bind(this)
   }
 
   componentDidMount() {
@@ -85,8 +85,8 @@ class App extends Component {
         continue
       }
 
-      let n = this.tc.addNode(node.ID, node.Metadata)
-      this.tc.setParent(n, this.tc.root, this.nodeLayerWeight)
+      let n = this.tc.addNode(node.ID, "infra", node.Metadata)
+      this.tc.setParent(n, this.tc.root, this.nodeWeight)
     }
 
     if (!data.Edges) {
@@ -100,7 +100,7 @@ class App extends Component {
         let child = this.tc.nodes[edge.Child]
 
         if (parent && child) {
-          this.tc.setParent(child, parent, this.nodeLayerWeight)
+          this.tc.setParent(child, parent, this.nodeWeight)
         }
       }
     }
@@ -112,14 +112,15 @@ class App extends Component {
         let parent = this.tc.nodes[edge.Parent]
         let child = this.tc.nodes[edge.Child]
 
-        this.tc.addLayerLink(child, parent, edge.Metadata.RelationType, edge.Metadata)
+        this.tc.addLink(child, parent, edge.Metadata.RelationType, edge.Metadata)
       }
     }
 
-    this.tc.renderTree()
+    // show infra layer
+    this.tc.showNodeLayer("infra", true)
 
     // get list of link layer types
-    this.setState({ layerTypes: this.tc.layerLinkTypes })
+    this.setState({ layerLinkStates: this.tc.layerLinkStates })
 
     this.tc.zoomFit()
   }
@@ -169,7 +170,7 @@ class App extends Component {
     }
   }
 
-  nodeLayerWeight(node) {
+  nodeWeight(node) {
     switch (node.data.Type) {
       case "host":
         return 3
@@ -187,7 +188,7 @@ class App extends Component {
       return 5
     }
 
-    return node.parent ? node.parent.layerWeight : 1
+    return node.parent ? node.parent.weight : 1
   }
 
   sortNodesFnc(a, b) {
@@ -266,9 +267,9 @@ class App extends Component {
     this.setState({ isNavOpen: false })
   }
 
-  onLayerTypeChange(event) {
-    this.tc.showLayerLinkType(event.target.value, event.target.checked)
-    this.setState({ layerTypes: this.tc.layerLinkTypes })
+  onLayerLinkStateChange(event) {
+    this.tc.showLinkLayer(event.target.value, event.target.checked)
+    this.setState({ layerLinkStates: this.tc.layerLinkStates })
   }
 
   render() {
@@ -313,7 +314,7 @@ class App extends Component {
         <main className={classes.content}>
           <div className={classes.appBarSpacer} />
           <Container maxWidth="xl" className={classes.container}>
-            <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} nodeLayerWeight={this.nodeLayerWeight} linkAttrs={this.linkAttrs}
+            <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} nodeWeight={this.nodeWeight} linkAttrs={this.linkAttrs}
               onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
               onShowNodeContextMenu={this.onShowNodeContextMenu} />
           </Container>
@@ -336,9 +337,9 @@ class App extends Component {
                   Layers
                 </Typography>
                 <FormGroup>
-                  {Object.keys(this.state.layerTypes).map((key) => (
+                  {Object.keys(this.state.layerLinkStates).map((key) => (
                     <FormControlLabel key={key} control={
-                      <Checkbox value={key} checked={this.state.layerTypes[key]} color="primary" onChange={this.onLayerTypeChange} />
+                      <Checkbox value={key} checked={this.state.layerLinkStates[key]} color="primary" onChange={this.onLayerLinkStateChange} />
                     }
                       label={key} />
                   ))}
