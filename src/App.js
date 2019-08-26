@@ -35,6 +35,8 @@ import Paper from '@material-ui/core/Paper'
 import Checkbox from '@material-ui/core/Checkbox'
 import FormGroup from '@material-ui/core/FormGroup'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
+import SearchIcon from '@material-ui/icons/Search'
+import InputBase from '@material-ui/core/InputBase'
 import { withSnackbar } from 'notistack'
 
 import JSONTree from 'react-json-tree'
@@ -293,6 +295,19 @@ class App extends Component {
             <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
               <img src={logo} alt="logo" />
             </Typography>
+            <div className={classes.search}>
+              <div className={classes.searchIcon}>
+                <SearchIcon />
+              </div>
+              <InputBase
+                placeholder="Search…"
+                classes={{
+                  root: classes.inputRoot,
+                  input: classes.inputInput,
+                }}
+                inputProps={{ 'aria-label': 'search' }}
+              />
+            </div>
           </Toolbar>
         </AppBar>
         <Drawer
