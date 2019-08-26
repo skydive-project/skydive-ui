@@ -170,6 +170,11 @@ export class Topology extends Component {
         // context menu group
         this.gContextMenu = this.svg.append("g")
             .attr("class", "context-menu")
+
+        this.liner = line()
+            .x(d => d.x)
+            .y(d => d.y)
+            .curve(curveCardinalClosed.tension(0.7))
     }
 
     defaultState() {
@@ -434,10 +439,7 @@ export class Topology extends Component {
         ]
     }
 
-    liner = line()
-        .x(d => d.x)
-        .y(d => d.y)
-        .curve(curveCardinalClosed.tension(0.7))
+
 
     visibleLinks(holders) {
         let links = []

@@ -10,5 +10,5 @@ ReactDOM.render(
   <SnackbarProvider>
     <App />
   </SnackbarProvider>,
-  document.getElementById('root')
+  document.getElementById('index')
 );
