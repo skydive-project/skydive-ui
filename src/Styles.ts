@@ -17,11 +17,12 @@ import { minWidth } from "@material-ui/system";
  *
  */
 
+import { createStyles, Theme } from '@material-ui/core';
 import { fade } from '@material-ui/core/styles'
 
 const drawerWidth = 300
 
-export const Styles = theme => ({
+export const Styles = (theme: Theme) => createStyles({
   app: {
     display: 'flex',
   },

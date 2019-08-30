@@ -15,7 +15,7 @@
  *
  */
 
-import React, { Component } from 'react'
+import * as React from 'react'
 import clsx from 'clsx'
 import Websocket from 'react-websocket'
 
@@ -37,19 +37,39 @@ import FormGroup from '@material-ui/core/FormGroup'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import SearchIcon from '@material-ui/icons/Search'
 import InputBase from '@material-ui/core/InputBase'
-import { withSnackbar } from 'notistack'
+import { withSnackbar, WithSnackbarProps } from 'notistack'
 
 import JSONTree from 'react-json-tree'
 
 import { Styles } from './Styles'
-import { Topology } from './Topology'
+import { Topology, Node } from './Topology'
 import { mainListItems, helpListItems } from './Menu'
 import './App.css'
-import logo from './Logo.png'
+
+import Logo from './Logo.png'
 
 const data = require('./dump.json')
 
-class App extends Component {
+interface Props extends WithSnackbarProps {
+  classes: any
+}
+
+interface State {
+  isContextMenuOn: string
+  contextMenuX: number
+  contextMenuY: number
+  isNavOpen: boolean
+  info: any
+  layerLinkStates: Map<string, boolean>
+  overflow: string
+}
+
+class App extends React.Component<Props, State> {
+
+  tc: Topology | null
+  websocket: Websocket | null
+  synced: boolean
+  state: State
 
   constructor(props) {
     super(props)
@@ -59,9 +79,9 @@ class App extends Component {
       contextMenuX: 0,
       contextMenuY: 0,
       isNavOpen: false,
+      overflow: 'hidden', // hack for info panel
       info: {},
-      layerLinkStates: {},
-      overflow: 'hidden' // hack for info panel
+      layerLinkStates: new Map<string, boolean>()
     }
 
     this.synced = false
@@ -78,7 +98,11 @@ class App extends Component {
     //this.parseTopology(data)
   }
 
-  parseTopology(data) {
+  parseTopology(data: { Nodes: any, Edges: any }) {
+    if (!this.tc) {
+      return
+    }
+
     // first add all the nodes
     for (let node of data.Nodes) {
 
@@ -127,7 +151,7 @@ class App extends Component {
     this.tc.zoomFit()
   }
 
-  nodeAttrs(node) {
+  nodeAttrs(node: Node) {
     var classes = [node.data.Type]
     if (node.data.State) {
       classes.push(node.data.State.toLowerCase())
@@ -209,8 +233,8 @@ class App extends Component {
     ]
   }
 
-  onMessage(msg) {
-    var data = JSON.parse(msg)
+  onMessage(msg: string) {
+    var data: { Type: string, Obj: any } = JSON.parse(msg)
     switch (data.Type) {
       case "SyncReply":
         if (!data.Obj.Nodes) {
@@ -244,6 +268,10 @@ class App extends Component {
   }
 
   onOpen() {
+    if (!this.tc) {
+      return
+    }
+
     this.notify("Connected", "info")
     this.tc.resetTree()
     this.sync()
@@ -270,6 +298,10 @@ class App extends Component {
   }
 
   onLayerLinkStateChange(event) {
+    if (!this.tc) {
+      return
+    }
+
     this.tc.showLinkLayer(event.target.value, event.target.checked)
     this.setState({ layerLinkStates: this.tc.layerLinkStates })
   }
@@ -293,7 +325,7 @@ class App extends Component {
               <MenuIcon />
             </IconButton>
             <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
-              <img src={logo} alt="logo" />
+              <img src={Logo} alt="logo" />
             </Typography>
             <div className={classes.search}>
               <div className={classes.searchIcon}>
@@ -329,7 +361,7 @@ class App extends Component {
         <main className={classes.content}>
           <div className={classes.appBarSpacer} />
           <Container maxWidth="xl" className={classes.container}>
-            <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} nodeWeight={this.nodeWeight} linkAttrs={this.linkAttrs}
+            <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} linkAttrs={this.linkAttrs}
               onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
               onShowNodeContextMenu={this.onShowNodeContextMenu} />
           </Container>
@@ -352,7 +384,7 @@ class App extends Component {
                   Layers
                 </Typography>
                 <FormGroup>
-                  {Object.keys(this.state.layerLinkStates).map((key) => (
+                  {Array.from(this.state.layerLinkStates.keys()).map((key) => (
                     <FormControlLabel key={key} control={
                       <Checkbox value={key} checked={this.state.layerLinkStates[key]} color="primary" onChange={this.onLayerLinkStateChange} />
                     }

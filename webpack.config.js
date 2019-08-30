@@ -20,9 +20,9 @@ module.exports = {
                 use: {
                     loader: 'awesome-typescript-loader'
                 },
-		exclude: /node_modules/
+                exclude: /node_modules/
             },
- { enforce: "pre", test: /\.js$/, loader: "source-map-loader" },
+            { enforce: "pre", test: /\.js$/, loader: "source-map-loader" },
             {
                 test: /\.css$/,
                 use: ["style-loader", "css-loader"]

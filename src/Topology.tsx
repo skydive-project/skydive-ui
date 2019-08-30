@@ -29,7 +29,7 @@ class State {
     expanded: boolean
 }
 
-class Node {
+export class Node {
     id: string
     layer: string
     data: any
@@ -48,7 +48,7 @@ class Node {
     }
 }
 
-class Link {
+export class Link {
     id: string
     layer: string
     source: Node
@@ -86,7 +86,7 @@ class D3Node {
     children: Array<D3Node>
 }
 
-type Props = {
+interface Props {
     sortNodesFnc: (node1: Node, node2: Node) => number
     onShowNodeContextMenu: (node: Node) => any
     onNodeSelected: (node: Node, isSelected: boolean) => any
@@ -100,30 +100,30 @@ type Props = {
  */
 export class Topology extends React.Component<Props, {}> {
 
-    nodeWidth: number
-    nodeHeight: number
-    tree: tree
-    isCtrlPressed: boolean
-    svgDiv: HTMLElement | null
-    svg: Selection<SVGSVGElement, any, null, undefined>
-    g: Selection<SVGGraphicsElement, {}, null, undefined>
-    gLevels: Selection<SVGGraphicsElement, {}, null, undefined>
-    gHieraLinks: Selection<SVGGraphicsElement, {}, null, undefined>
-    gLinkOverlays: Selection<SVGGraphicsElement, {}, null, undefined>
-    gLinks: Selection<SVGGraphicsElement, {}, null, undefined>
-    gLinkWraps: Selection<SVGGraphicsElement, {}, null, undefined>
-    gNodes: Selection<SVGGraphicsElement, {}, null, undefined>
-    gContextMenu: Selection<SVGGraphicsElement, {}, null, undefined>
-    zoom: zoom
-    liner: line
+    private nodeWidth: number
+    private nodeHeight: number
+    private tree: tree
+    private isCtrlPressed: boolean
+    private svgDiv: HTMLElement | null
+    private svg: Selection<SVGSVGElement, any, null, undefined>
+    private g: Selection<SVGGraphicsElement, {}, null, undefined>
+    private gLevels: Selection<SVGGraphicsElement, {}, null, undefined>
+    private gHieraLinks: Selection<SVGGraphicsElement, {}, null, undefined>
+    private gLinkOverlays: Selection<SVGGraphicsElement, {}, null, undefined>
+    private gLinks: Selection<SVGGraphicsElement, {}, null, undefined>
+    private gLinkWraps: Selection<SVGGraphicsElement, {}, null, undefined>
+    private gNodes: Selection<SVGGraphicsElement, {}, null, undefined>
+    private gContextMenu: Selection<SVGGraphicsElement, {}, null, undefined>
+    private zoom: zoom
+    private liner: line
     root: Node
-    maxWeight: number
+    private maxWeight: number
     nodes: Map<string, Node>
     layerNodeStates: Map<string, boolean>
-    links: Array<any>
+    private links: Array<any>
     layerLinkStates: Map<string, boolean>
-    nodeClickID: number
-    wrappers: Map<string, NodeWrapper>
+    private nodeClickedID: number
+    private wrappers: Map<string, NodeWrapper>
 
     constructor(props) {
         super(props)
@@ -157,7 +157,7 @@ export class Topology extends React.Component<Props, {}> {
     componentDidUpdate() {
     }
 
-    onResize(rect: any) {
+    private onResize(rect: any) {
         if (!this.svg) {
             return
         }
@@ -166,7 +166,7 @@ export class Topology extends React.Component<Props, {}> {
             .attr("height", rect.height)
     }
 
-    createSVG() {
+    private createSVG() {
         if (!this.svgDiv) {
             return
         }
@@ -275,7 +275,7 @@ export class Topology extends React.Component<Props, {}> {
             .curve(curveCardinalClosed.tension(0.7))
     }
 
-    defaultState(): State {
+    private defaultState(): State {
         return { expanded: false }
     }
 
@@ -283,7 +283,7 @@ export class Topology extends React.Component<Props, {}> {
         this.initTree()
     }
 
-    initTree() {
+    private initTree() {
         this.root = new Node("root", "root", { name: "root" }, { expanded: true })
 
         this.maxWeight = 0
@@ -350,7 +350,7 @@ export class Topology extends React.Component<Props, {}> {
 
     /**
      * Set a node as a child of the given parent with the given weight
-     * @param {noe} child
+     * @param {node} child
      * @param {node} parent
      * @param {number} weight
      */
@@ -381,13 +381,12 @@ export class Topology extends React.Component<Props, {}> {
     addLink(node1: Node, node2: Node, layer: string, data: any) {
         this.links.push(new Link(node1.id + "_" + node2.id, layer, node1, node2, data))
         if (layer && !this.layerLinkStates.has(layer)) {
-            this.layerLinkStates.set(layer, true)
+            this.layerLinkStates.set(layer, false)
         }
     }
 
-
     // clone using wrapped node
-    cloneTree(node: Node, parent: NodeWrapper | null): NodeWrapper | null {
+    private cloneTree(node: Node, parent: NodeWrapper | null): NodeWrapper | null {
         // always return root node as it is the base of the tree and thus all the
         // layers
         if (node.layer !== "root" && !this.layerNodeStates.get(node.layer)) {
@@ -411,7 +410,7 @@ export class Topology extends React.Component<Props, {}> {
         return cloned
     }
 
-    normalizeTree(node: Node): NodeWrapper | null {
+    private normalizeTree(node: Node): NodeWrapper | null {
         // return depth of the given layer
         let layerHeight = (node: NodeWrapper, weight: number, currDepth: number): number => {
             if (node.wrapped.weight > weight) {
@@ -494,14 +493,14 @@ export class Topology extends React.Component<Props, {}> {
         return tree
     }
 
-    collapse(node: Node) {
+    private collapse(node: Node) {
         if (node.state) {
             node.state.expanded = false
         }
         node.children.forEach((child: Node) => this.collapse(child))
     }
 
-    expand(d: D3Node) {
+    private expand(d: D3Node) {
         if (d.data.wrapped.state.expanded) {
             this.collapse(d.data.wrapped)
         } else {
@@ -511,7 +510,7 @@ export class Topology extends React.Component<Props, {}> {
         this.renderTree()
     }
 
-    hexagon(d: D3Node, size: number) {
+    private hexagon(d: D3Node, size: number) {
         var s32 = (Math.sqrt(3) / 2)
 
         if (!size) {
@@ -528,7 +527,7 @@ export class Topology extends React.Component<Props, {}> {
         ]
     }
 
-    visibleLinks() {
+    private visibleLinks() {
         var links = Array<Link>()
 
         var findVisible = (node: Node | null) => {
@@ -553,12 +552,10 @@ export class Topology extends React.Component<Props, {}> {
             }
         })
 
-        console.log(links)
-
         return links
     }
 
-    limitX(node: D3Node, bb?: Array<number>) {
+    private limitX(node: D3Node, bb?: Array<number>) {
         if (!bb) {
             bb = [node.x, node.x]
         } else {
@@ -579,7 +576,7 @@ export class Topology extends React.Component<Props, {}> {
         return bb
     }
 
-    nodesRect(root: D3Node, nodes: Array<D3Node>): { x: number, y: number, width: number, height: number } | null {
+    private nodesRect(root: D3Node, nodes: Array<D3Node>): { x: number, y: number, width: number, height: number } | null {
         if (!this.svgDiv) {
             return null
         }
@@ -607,7 +604,7 @@ export class Topology extends React.Component<Props, {}> {
         }
     }
 
-    _levelNodes(node: D3Node, nodes?: Map<number, { id: number, nodes: Array<D3Node> }>): Map<number, { id: number, nodes: Array<D3Node> }> {
+    private _levelNodes(node: D3Node, nodes?: Map<number, { id: number, nodes: Array<D3Node> }>): Map<number, { id: number, nodes: Array<D3Node> }> {
         if (!nodes) {
             nodes = new Map<number, { id: number, nodes: Array<D3Node> }>()
         }
@@ -631,7 +628,7 @@ export class Topology extends React.Component<Props, {}> {
         return nodes
     }
 
-    levelNodes(node: D3Node): Array<{ id: number, nodes: Array<D3Node> }> {
+    private levelNodes(node: D3Node): Array<{ id: number, nodes: Array<D3Node> }> {
         var levels = new Array<{ id: number, nodes: Array<D3Node> }>()
 
         this._levelNodes(node).forEach(value => {
@@ -644,7 +641,7 @@ export class Topology extends React.Component<Props, {}> {
     /**
      * Unselect all the nodes
      */
-    unselectAllNodes() {
+    private unselectAllNodes() {
         var self = this
 
         this.gNodes.selectAll(".node-selected").each(function () {
@@ -738,7 +735,7 @@ export class Topology extends React.Component<Props, {}> {
             .call(this.zoom.transform, t)
     }
 
-    showNodeContextMenu(d: D3Node) {
+    private showNodeContextMenu(d: D3Node) {
         if (!this.svgDiv) {
             return
         }
@@ -816,36 +813,36 @@ export class Topology extends React.Component<Props, {}> {
         }
     }
 
-    hideNodeContextMenu() {
+    private hideNodeContextMenu() {
         this.gContextMenu.select("g").remove()
     }
 
-    nodeClick(d: D3Node) {
+    private nodeClicked(d: D3Node) {
         event.stopPropagation()
 
-        if (this.nodeClickID) {
+        if (this.nodeClickedID) {
             return
         }
 
-        this.nodeClickID = window.setTimeout(() => {
-            this.nodeClickID = 0
+        this.nodeClickedID = window.setTimeout(() => {
+            this.nodeClickedID = 0
 
             this.hideNodeContextMenu()
             this.toggleNode(d.data.id)
         }, 200)
     }
 
-    nodeDoubleClick(d: D3Node) {
+    private nodeDoubleClicked(d: D3Node) {
         // it's a dbl click then stop click handler
-        if (this.nodeClickID) {
-            clearTimeout(this.nodeClickID)
-            this.nodeClickID = 0
+        if (this.nodeClickedID) {
+            clearTimeout(this.nodeClickedID)
+            this.nodeClickedID = 0
         }
 
         this.expand(d)
     }
 
-    neighborLinks(d: D3Node, links: Array<Link>): Array<string> {
+    private neighborLinks(d: D3Node, links: Array<Link>): Array<string> {
         var ids = new Array<string>()
 
         for (let link of links) {
@@ -946,8 +943,8 @@ export class Topology extends React.Component<Props, {}> {
             .attr("class", (d: D3Node) => "node " + this.props.nodeAttrs(d.data.wrapped).class)
             .style("opacity", 0)
             .attr("transform", (d: D3Node) => `translate(${d.x},${d.y})`)
-            .on("dblclick", (d: D3Node) => this.nodeDoubleClick(d))
-            .on("click", (d: D3Node) => this.nodeClick(d))
+            .on("dblclick", (d: D3Node) => this.nodeDoubleClicked(d))
+            .on("click", (d: D3Node) => this.nodeClicked(d))
             .on("contextmenu", (d: D3Node) => {
                 event.preventDefault()
                 this.showNodeContextMenu(d)
