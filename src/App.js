@@ -226,9 +226,9 @@ class App extends Component {
 
   onClose() {
     if (this.synced) {
-      this.notify("Disconnected", "danger")
+      this.notify("Disconnected", "error")
     } else {
-      this.notify("Not connected", "danger")
+      this.notify("Not connected", "error")
     }
 
     this.synced = false

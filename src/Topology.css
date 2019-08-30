@@ -4,13 +4,12 @@ svg {
 
 .levels {
     fill: none;
-    fill-opacity: 0.4;
 }
 
 .level {
     stroke: #000;
     stroke-dasharray: 5, 10;
-    fill: #efeded;
+    fill: #f6f6f6;
 }
 
 .hiera-links {
@@ -22,7 +21,7 @@ svg {
 .link-overlays {
     fill: none;
     stroke: #ffeb3b;
-    stroke-width: 30;
+    stroke-width: 20;
     marker-start: url(#link-overlay-marker);
     marker-end: url(#link-overlay-marker);
 }
