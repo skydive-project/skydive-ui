@@ -17,12 +17,12 @@ import { minWidth } from "@material-ui/system";
  *
  */
 
-import { createStyles, Theme } from '@material-ui/core';
+import { createStyles, makeStyles, Theme } from '@material-ui/core';
 import { fade } from '@material-ui/core/styles'
 
 const drawerWidth = 300
 
-export const Styles = (theme: Theme) => createStyles({
+export const AppStyles = (theme: Theme) => createStyles({
   app: {
     display: 'flex',
   },
@@ -159,6 +159,7 @@ export const Styles = (theme: Theme) => createStyles({
     padding: theme.spacing(2)
   },
   search: {
+    padding: theme.spacing(0.2),
     position: 'relative',
     borderRadius: theme.shape.borderRadius,
     backgroundColor: fade(theme.palette.common.white, 0.15),
@@ -172,25 +173,40 @@ export const Styles = (theme: Theme) => createStyles({
       marginLeft: theme.spacing(3),
       width: 'auto',
     },
-  },
-  searchIcon: {
-    width: theme.spacing(7),
-    height: '100%',
-    position: 'absolute',
-    pointerEvents: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inputRoot: {
-    color: 'inherit',
-  },
-  inputInput: {
-    padding: theme.spacing(1, 1, 1, 7),
-    transition: theme.transitions.create('width'),
-    width: '100%',
-    [theme.breakpoints.up('md')]: {
-      width: 200,
-    },
-  },
+  }
 })
+
+export const AutoCompleteStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    root: {
+      flexGrow: 1,
+      height: 250,
+    },
+    container: {
+      flexGrow: 1,
+      position: 'relative',
+    },
+    paper: {
+      position: 'absolute',
+      zIndex: 1,
+      marginTop: theme.spacing(1),
+      left: 0,
+      right: 0,
+    },
+    chip: {
+      margin: theme.spacing(0.5, 0.25),
+    },
+    inputRoot: {
+      flexWrap: 'wrap',
+      color: 'inherit',
+    },
+    inputInput: {
+      //padding: theme.spacing(1, 1, 1, 7),
+      transition: theme.transitions.create('width'),
+      width: '100%',
+      [theme.breakpoints.up('md')]: {
+        width: 200,
+      },
+    },
+  })
+)

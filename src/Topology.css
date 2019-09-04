@@ -82,8 +82,9 @@ svg {
     font-size: 24px;
     alignment-baseline: middle;
     text-anchor: middle;
-    font-family: FontAwesome;
+    font-family: 'Font Awesome 5 Free' !important;
     fill: #444;
+    font-weight: 900;
 }
 
 .node-name {

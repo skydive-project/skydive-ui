@@ -25,7 +25,7 @@ import ResizeObserver from 'react-resize-observer'
 
 import './Topology.css'
 
-class State {
+interface State {
     expanded: boolean
 }
 
@@ -79,11 +79,21 @@ class NodeWrapper {
     }
 }
 
-class D3Node {
+interface D3Node {
     data: NodeWrapper
     x: number
     y: number
     children: Array<D3Node>
+}
+
+export interface NodeAttrs {
+    name: string
+    class: string
+    icon: string
+}
+
+export interface LinkAttrs {
+    class: string
 }
 
 interface Props {
@@ -91,8 +101,8 @@ interface Props {
     onShowNodeContextMenu: (node: Node) => any
     onNodeSelected: (node: Node, isSelected: boolean) => any
     className: string
-    nodeAttrs: (node: Node) => any
-    linkAttrs: (link: Link) => any
+    nodeAttrs: (node: Node) => NodeAttrs
+    linkAttrs: (link: Link) => LinkAttrs
 }
 
 /**
@@ -116,14 +126,15 @@ export class Topology extends React.Component<Props, {}> {
     private gContextMenu: Selection<SVGGraphicsElement, {}, null, undefined>
     private zoom: zoom
     private liner: line
-    root: Node
+    private nodeClickedID: number
+    private d3nodes: Map<string, D3Node>
     private maxWeight: number
+    private links: Array<any>
+
+    root: Node
     nodes: Map<string, Node>
     layerNodeStates: Map<string, boolean>
-    private links: Array<any>
     layerLinkStates: Map<string, boolean>
-    private nodeClickedID: number
-    private wrappers: Map<string, NodeWrapper>
 
     constructor(props) {
         super(props)
@@ -500,11 +511,11 @@ export class Topology extends React.Component<Props, {}> {
         node.children.forEach((child: Node) => this.collapse(child))
     }
 
-    private expand(d: D3Node) {
-        if (d.data.wrapped.state.expanded) {
-            this.collapse(d.data.wrapped)
+    private expand(node: NodeWrapper) {
+        if (node.wrapped.state.expanded) {
+            this.collapse(node.wrapped)
         } else {
-            d.data.wrapped.state.expanded = true
+            node.wrapped.state.expanded = true
         }
 
         this.renderTree()
@@ -532,7 +543,7 @@ export class Topology extends React.Component<Props, {}> {
 
         var findVisible = (node: Node | null) => {
             while (node) {
-                if (this.wrappers[node.id]) {
+                if (this.d3nodes.get(node.id)) {
                     return node
                 }
                 node = node.parent
@@ -839,19 +850,55 @@ export class Topology extends React.Component<Props, {}> {
             this.nodeClickedID = 0
         }
 
-        this.expand(d)
+        this.expand(d.data)
     }
 
-    private neighborLinks(d: D3Node, links: Array<Link>): Array<string> {
+    private neighborLinks(node: NodeWrapper, links: Array<Link>): Array<string> {
         var ids = new Array<string>()
 
         for (let link of links) {
-            if (link.source.id === d.data.wrapped.id || link.target.id === d.data.wrapped.id) {
+            if (link.source.id === node.wrapped.id || link.target.id === node.wrapped.id) {
                 ids.push(link.id)
             }
         }
 
         return ids
+    }
+
+    private showNode(d: D3Node) {
+        var parent = d.data.parent
+        while (parent) {
+            if (!parent.wrapped.state.expanded) {
+                this.expand(parent)
+            }
+            parent = parent.parent
+        }
+    }
+
+    highlightNode(id: string, active: boolean) {
+        var d = this.d3nodes.get(id)
+        if (!d) {
+            return false
+        }
+        this.showNode(d)
+
+        var opacity = active ? 1 : 0
+
+        select("#node-overlay-" + id)
+            .style("opacity", opacity)
+
+        var ids = this.neighborLinks(d.data, this.visibleLinks())
+        for (let id of ids) {
+            select("#link-overlay-" + id)
+                .style("opacity", opacity)
+        }
+    }
+
+    clearHighlighNode() {
+        selectAll("circle.node-overlay")
+            .style("opacity", 0)
+        selectAll("path.link-overlay")
+            .style("opacity", 0)
     }
 
     /**
@@ -865,9 +912,9 @@ export class Topology extends React.Component<Props, {}> {
         var root = hierarchy(normRoot)
         this.tree(root)
 
-        this.wrappers = new Map<string, NodeWrapper>()
+        this.d3nodes = new Map<string, D3Node>()
         root.each(node => {
-            this.wrappers[node.data.id] = node
+            this.d3nodes.set(node.data.id, node)
         })
 
         var linker = linkVertical()
@@ -913,7 +960,7 @@ export class Topology extends React.Component<Props, {}> {
         var hieraLink = this.gHieraLinks.selectAll('path.hiera-link')
             .data(root.links(), (d: any) => d.source.data.id + d.target.data.id)
         var hieraLinkEnter = hieraLink.enter()
-            .filter((d: any) => d.source.data.wrapped !== this.root)
+            .filter((d: any) => d.target.data.parent.wrapped !== this.root)
             .append('path')
             .attr("class", "hiera-link")
             .style("opacity", 0)
@@ -950,20 +997,10 @@ export class Topology extends React.Component<Props, {}> {
                 this.showNodeContextMenu(d)
             })
             .on("mouseover", (d: D3Node) => {
-                select("#node-overlay-" + d.data.id)
-                    .style("opacity", 1)
-
-                var ids = this.neighborLinks(d, this.visibleLinks())
-                for (let id of ids) {
-                    select("#link-overlay-" + id)
-                        .style("opacity", 1)
-                }
+                this.highlightNode(d.data.id, true)
             })
             .on("mouseout", () => {
-                selectAll("circle.node-overlay")
-                    .style("opacity", 0)
-                selectAll("path.link-overlay")
-                    .style("opacity", 0)
+                this.clearHighlighNode()
             })
 
         nodeEnter.transition()
@@ -992,6 +1029,7 @@ export class Topology extends React.Component<Props, {}> {
 
         nodeEnter.append("text")
             .attr("class", "node-icon")
+            .attr("dy", 2)
             .text((d: D3Node) => this.props.nodeAttrs(d.data.wrapped).icon)
 
         let wrapText = (text, lineHeight, width) => {
@@ -1071,18 +1109,31 @@ export class Topology extends React.Component<Props, {}> {
             .attr("transform", (d: D3Node) => `translate(${d.x},${d.y})`)
 
         var linker = linkVertical()
-            .x((d: any) => this.wrappers[d.node.id].x + d.dx)
-            .y((d: any) => this.wrappers[d.node.id].y + d.dy)
+            .x((d: any) => {
+                let node = this.d3nodes.get(d.node.id)
+                return node ? node.x + d.dx : d.dx
+            })
+            .y((d: any) => {
+                let node = this.d3nodes.get(d.node.id)
+                return node ? node.y + d.dy : d.y
+            })
 
         let wrapperLink = (d, margin) => {
-            if (this.wrappers[d.source.id].y === this.wrappers[d.target.id].y) {
-                if (this.wrappers[d.source.id].x < this.wrappers[d.target.id].x) {
+            let dSource = this.d3nodes.get(d.source.id)
+            let dTarget = this.d3nodes.get(d.target.id)
+
+            if (!dSource || !dTarget) {
+                return
+            }
+
+            if (dSource.y === dTarget.y) {
+                if (dSource.x < dTarget.x) {
                     return { source: { node: d.source, dx: margin, dy: 0 }, target: { node: d.target, dx: -margin, dy: 0 } }
                 }
                 return { source: { node: d.target, dx: margin, dy: 0 }, target: { node: d.source, dx: -margin, dy: 0 } }
             }
 
-            if (this.wrappers[d.source.id].y < this.wrappers[d.target.id].y) {
+            if (dSource.y < dTarget.y) {
                 return { source: { node: d.source, dx: 0, dy: margin }, target: { node: d.target, dx: 0, dy: -margin } }
             }
 

@@ -19,7 +19,7 @@ import * as React from 'react'
 import clsx from 'clsx'
 import Websocket from 'react-websocket'
 
-import { withStyles } from '@material-ui/core/styles'
+import { withStyles, makeStyles } from '@material-ui/core/styles'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import Drawer from '@material-ui/core/Drawer'
 import AppBar from '@material-ui/core/AppBar'
@@ -35,15 +35,14 @@ import Paper from '@material-ui/core/Paper'
 import Checkbox from '@material-ui/core/Checkbox'
 import FormGroup from '@material-ui/core/FormGroup'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
-import SearchIcon from '@material-ui/icons/Search'
-import InputBase from '@material-ui/core/InputBase'
 import { withSnackbar, WithSnackbarProps } from 'notistack'
 
 import JSONTree from 'react-json-tree'
 
-import { Styles } from './Styles'
-import { Topology, Node } from './Topology'
+import { AppStyles } from './Styles'
+import { Topology, Node, NodeAttrs, LinkAttrs } from './Topology'
 import { mainListItems, helpListItems } from './Menu'
+import AutoCompleteInput from './AutoComplete'
 import './App.css'
 
 import Logo from './Logo.png'
@@ -54,14 +53,20 @@ interface Props extends WithSnackbarProps {
   classes: any
 }
 
+interface NodeInfo {
+  id: string
+  data: any
+}
+
 interface State {
   isContextMenuOn: string
   contextMenuX: number
   contextMenuY: number
   isNavOpen: boolean
-  info: any
+  nodeInfo: NodeInfo | null
   layerLinkStates: Map<string, boolean>
   overflow: string
+  suggestions: Array<string>
 }
 
 class App extends React.Component<Props, State> {
@@ -80,8 +85,9 @@ class App extends React.Component<Props, State> {
       contextMenuY: 0,
       isNavOpen: false,
       overflow: 'hidden', // hack for info panel
-      info: {},
-      layerLinkStates: new Map<string, boolean>()
+      nodeInfo: null,
+      layerLinkStates: new Map<string, boolean>(),
+      suggestions: new Array<string>()
     }
 
     this.synced = false
@@ -103,6 +109,8 @@ class App extends React.Component<Props, State> {
       return
     }
 
+    var suggestions = new Set<string>()
+
     // first add all the nodes
     for (let node of data.Nodes) {
 
@@ -113,6 +121,17 @@ class App extends React.Component<Props, State> {
 
       let n = this.tc.addNode(node.ID, "infra", node.Metadata)
       this.tc.setParent(n, this.tc.root, this.nodeWeight)
+
+      // fill a bit of suggestion
+      suggestions.add(node.Metadata.Name)
+      if (node.Metadata.MAC) {
+        suggestions.add(node.Metadata.MAC)
+      }
+      if (node.Metadata.IPV4) {
+        for (let ip of node.Metadata.IPV4) {
+          suggestions.add(ip)
+        }
+      }
     }
 
     if (!data.Edges) {
@@ -148,10 +167,12 @@ class App extends React.Component<Props, State> {
     // get list of link layer types
     this.setState({ layerLinkStates: this.tc.layerLinkStates })
 
+    this.setState({ suggestions: Array.from(suggestions) })
+
     this.tc.zoomFit()
   }
 
-  nodeAttrs(node: Node) {
+  nodeAttrs(node: Node): NodeAttrs {
     var classes = [node.data.Type]
     if (node.data.State) {
       classes.push(node.data.State.toLowerCase())
@@ -162,13 +183,19 @@ class App extends React.Component<Props, State> {
         return { class: classes.join(" "), name: node.data.Name, icon: "\uf109" }
       case "bridge":
       case "ovsbridge":
+        return { class: classes.join(" "), name: node.data.Name, icon: "\uf6ff" }
+      case "erspan":
         return { class: classes.join(" "), name: node.data.Name, icon: "\uf1e0" }
+      case "vxlan":
+      case "gre":
+      case "gretap":
+        return { class: classes.join(" "), name: node.data.Name, icon: "\uf55b" }
       case "interface":
       case "device":
       case "veth":
       case "tun":
       case "tap":
-        return { class: classes.join(" "), name: node.data.Name, icon: "\uf120" }
+        return { class: classes.join(" "), name: node.data.Name, icon: "\uf796" }
       case "port":
       case "ovsport":
         return { class: classes.join(" "), name: node.data.Name, icon: "\uf0e8" }
@@ -179,24 +206,24 @@ class App extends React.Component<Props, State> {
     }
   }
 
-  linkAttrs(link) {
+  linkAttrs(link): LinkAttrs {
     return { class: link.RelationType || "" }
   }
 
   onNodeSelected(node, active) {
     if (active) {
-      this.setState({ info: { id: node.id, data: node.data } })
+      this.setState({ nodeInfo: { id: node.id, data: node.data } })
 
       // hack in order to restore overflow of panel after transition
       setTimeout(() => {
         this.setState({ overflow: 'auto' })
       }, 1000)
     } else {
-      this.setState({ info: {}, overflow: 'hidden' })
+      this.setState({ nodeInfo: null, overflow: 'hidden' })
     }
   }
 
-  nodeWeight(node) {
+  nodeWeight(node: Node): number {
     switch (node.data.Type) {
       case "host":
         return 3
@@ -204,6 +231,8 @@ class App extends React.Component<Props, State> {
       case "ovsbridge":
         return 4
       case "veth":
+        if (node.data.IPV4 && node.data.IPV4.length)
+          return 3
         return 7
       case "netns":
         return 8
@@ -328,17 +357,7 @@ class App extends React.Component<Props, State> {
               <img src={Logo} alt="logo" />
             </Typography>
             <div className={classes.search}>
-              <div className={classes.searchIcon}>
-                <SearchIcon />
-              </div>
-              <InputBase
-                placeholder="Search…"
-                classes={{
-                  root: classes.inputRoot,
-                  input: classes.inputInput,
-                }}
-                inputProps={{ 'aria-label': 'search' }}
-              />
+              <AutoCompleteInput placeholder="metadata value" suggestions={this.state.suggestions} />
             </div>
           </Toolbar>
         </AppBar>
@@ -366,13 +385,13 @@ class App extends React.Component<Props, State> {
               onShowNodeContextMenu={this.onShowNodeContextMenu} />
           </Container>
           <Container className={classes.rightPanel}>
-            <Paper className={clsx(classes.rightPanelPaper, !this.state.info.id && classes.rightPanelPaperClose)}>
+            <Paper className={clsx(classes.rightPanelPaper, !this.state.nodeInfo && classes.rightPanelPaperClose)}>
               <div className={classes.rightPanelPaperContent} style={{ overflow: this.state.overflow }} >
                 <Typography component="h6" color="primary" gutterBottom>
-                  ID : {this.state.info.id}
+                  ID : {this.state.nodeInfo ? this.state.nodeInfo.id : ""}
                 </Typography>
-                {this.state.info.data &&
-                  <JSONTree className={classes.jsonTree} data={this.state.info.data} theme="bright" invertTheme hideRoot sortObjectKeys />
+                {this.state.nodeInfo &&
+                  <JSONTree className={classes.jsonTree} data={this.state.nodeInfo ? this.state.nodeInfo.data : {}} theme="bright" invertTheme hideRoot sortObjectKeys />
                 }
               </div>
             </Paper>
@@ -400,4 +419,4 @@ class App extends React.Component<Props, State> {
   }
 }
 
-export default withStyles(Styles)(withSnackbar(App))
+export default withStyles(AppStyles)(withSnackbar(App))
