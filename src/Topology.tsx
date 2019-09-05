@@ -31,16 +31,16 @@ interface State {
 
 export class Node {
     id: string
-    layer: string
+    tags: Array<string>
     data: any
     weight: number
     children: Array<Node>
     state: State
     parent: Node | null
 
-    constructor(id: string, layer: string, data: any, state: State) {
+    constructor(id: string, tags: Array<string>, data: any, state: State) {
         this.id = id
-        this.layer = layer
+        this.tags = tags
         this.data = data
         this.weight = 0
         this.children = new Array<Node>()
@@ -50,14 +50,14 @@ export class Node {
 
 export class Link {
     id: string
-    layer: string
+    tags: Array<string>
     source: Node
     target: Node
     data: any
 
-    constructor(id: string, layer: string, source: Node, target: Node, data: any) {
+    constructor(id: string, tags: Array<string>, source: Node, target: Node, data: any) {
         this.id = id
-        this.layer = layer
+        this.tags = tags
         this.source = source
         this.target = target
     }
@@ -133,8 +133,8 @@ export class Topology extends React.Component<Props, {}> {
 
     root: Node
     nodes: Map<string, Node>
-    layerNodeStates: Map<string, boolean>
-    layerLinkStates: Map<string, boolean>
+    nodeTagStates: Map<string, boolean>
+    linkTagStates: Map<string, boolean>
 
     constructor(props) {
         super(props)
@@ -295,24 +295,24 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     private initTree() {
-        this.root = new Node("root", "root", { name: "root" }, { expanded: true })
+        this.root = new Node("root", ["root"], { name: "root" }, { expanded: true })
 
         this.maxWeight = 0
 
         this.nodes = new Map<string, Node>()
-        this.layerNodeStates = new Map<string, boolean>()
+        this.nodeTagStates = new Map<string, boolean>()
 
         this.links = new Array<Link>()
-        this.layerLinkStates = new Map<string, boolean>()
+        this.linkTagStates = new Map<string, boolean>()
     }
 
     /**
-     * Active or disable links of given layer
-     * @param {*} layer
+     * Active or disable links of given tag
+     * @param {*} tag
      * @param {*} active
      */
-    showLinkLayer(layer: string, active: boolean) {
-        this.layerLinkStates.set(layer, active)
+    showLinkLayer(tag: string, active: boolean) {
+        this.linkTagStates.set(tag, active)
         this.renderTree()
     }
 
@@ -322,23 +322,25 @@ export class Topology extends React.Component<Props, {}> {
      * @param {*} active
      */
     showNodeLayer(layer: string, active: boolean) {
-        this.layerNodeStates.set(layer, active)
+        this.nodeTagStates.set(layer, active)
         this.renderTree()
     }
 
     /**
      * Add a new node to the tree root
      * @param {string} id
-     * @param {string} layer
+     * @param {Array<string>} tags
      * @param {object} data
      */
-    addNode(id: string, layer: string, data: any): Node {
-        var node = new Node(id, layer, data, this.defaultState())
+    addNode(id: string, tags: Array<string>, data: any): Node {
+        var node = new Node(id, tags, data, this.defaultState())
         this.nodes[id] = node
 
-        if (layer && !(layer in this.layerNodeStates)) {
-            this.layerNodeStates.set(layer, false)
-        }
+        tags.forEach(tag => {
+            if (!this.nodeTagStates.has(tag)) {
+                this.nodeTagStates.set(tag, false)
+            }
+        })
 
         return node
     }
@@ -386,21 +388,24 @@ export class Topology extends React.Component<Props, {}> {
      * Add a extra link between two node with the given metadata
      * @param {node} node1
      * @param {node} node2
-     * @param {string} layer
+     * @param {Array<string>} tags
      * @param {object} data
      */
-    addLink(node1: Node, node2: Node, layer: string, data: any) {
-        this.links.push(new Link(node1.id + "_" + node2.id, layer, node1, node2, data))
-        if (layer && !this.layerLinkStates.has(layer)) {
-            this.layerLinkStates.set(layer, false)
-        }
+    addLink(node1: Node, node2: Node, tags: Array<string>, data: any) {
+        this.links.push(new Link(node1.id + "_" + node2.id, tags, node1, node2, data))
+
+        tags.forEach(tag => {
+            if (!this.linkTagStates.has(tag)) {
+                this.linkTagStates.set(tag, false)
+            }
+        })
     }
 
     // clone using wrapped node
     private cloneTree(node: Node, parent: NodeWrapper | null): NodeWrapper | null {
         // always return root node as it is the base of the tree and thus all the
-        // layers
-        if (node.layer !== "root" && !this.layerNodeStates.get(node.layer)) {
+        // nodes
+        if (!node.tags.some(tag => tag === "root" || this.nodeTagStates.get(tag) === true)) {
             return null
         }
 
@@ -551,7 +556,7 @@ export class Topology extends React.Component<Props, {}> {
         }
 
         this.links.forEach((link: Link) => {
-            if (!this.layerLinkStates.get(link.layer)) {
+            if (!(link.tags.some(tag => this.linkTagStates.get(tag) === true))) {
                 return
             }
 
@@ -559,7 +564,7 @@ export class Topology extends React.Component<Props, {}> {
             let target = findVisible(link.target)
 
             if (source && target && source !== target) {
-                links.push(new Link(source.id + "_" + target.id, link.layer, source, target, link.data))
+                links.push(new Link(source.id + "_" + target.id, link.tags, source, target, link.data))
             }
         })
 

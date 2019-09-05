@@ -64,7 +64,7 @@ interface State {
   contextMenuY: number
   isNavOpen: boolean
   nodeInfo: NodeInfo | null
-  layerLinkStates: Map<string, boolean>
+  linkTagStates: Map<string, boolean>
   overflow: string
   suggestions: Array<string>
 }
@@ -86,7 +86,7 @@ class App extends React.Component<Props, State> {
       isNavOpen: false,
       overflow: 'hidden', // hack for info panel
       nodeInfo: null,
-      layerLinkStates: new Map<string, boolean>(),
+      linkTagStates: new Map<string, boolean>(),
       suggestions: new Array<string>()
     }
 
@@ -119,7 +119,7 @@ class App extends React.Component<Props, State> {
         continue
       }
 
-      let n = this.tc.addNode(node.ID, "infra", node.Metadata)
+      let n = this.tc.addNode(node.ID, ["infra"], node.Metadata)
       this.tc.setParent(n, this.tc.root, this.nodeWeight)
 
       // fill a bit of suggestion
@@ -157,7 +157,7 @@ class App extends React.Component<Props, State> {
         let parent = this.tc.nodes[edge.Parent]
         let child = this.tc.nodes[edge.Child]
 
-        this.tc.addLink(child, parent, edge.Metadata.RelationType, edge.Metadata)
+        this.tc.addLink(child, parent, [edge.Metadata.RelationType], edge.Metadata)
       }
     }
 
@@ -165,7 +165,7 @@ class App extends React.Component<Props, State> {
     this.tc.showNodeLayer("infra", true)
 
     // get list of link layer types
-    this.setState({ layerLinkStates: this.tc.layerLinkStates })
+    this.setState({ linkTagStates: this.tc.linkTagStates })
 
     this.setState({ suggestions: Array.from(suggestions) })
 
@@ -332,7 +332,7 @@ class App extends React.Component<Props, State> {
     }
 
     this.tc.showLinkLayer(event.target.value, event.target.checked)
-    this.setState({ layerLinkStates: this.tc.layerLinkStates })
+    this.setState({ linkTagStates: this.tc.linkTagStates })
   }
 
   render() {
@@ -403,9 +403,9 @@ class App extends React.Component<Props, State> {
                   Layers
                 </Typography>
                 <FormGroup>
-                  {Array.from(this.state.layerLinkStates.keys()).map((key) => (
+                  {Array.from(this.state.linkTagStates.keys()).map((key) => (
                     <FormControlLabel key={key} control={
-                      <Checkbox value={key} checked={this.state.layerLinkStates[key]} color="primary" onChange={this.onLayerLinkStateChange} />
+                      <Checkbox value={key} checked={this.state.linkTagStates[key]} color="primary" onChange={this.onLayerLinkStateChange} />
                     }
                       label={key} />
                   ))}
