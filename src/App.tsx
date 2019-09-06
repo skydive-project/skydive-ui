@@ -40,7 +40,7 @@ import { withSnackbar, WithSnackbarProps } from 'notistack'
 import JSONTree from 'react-json-tree'
 
 import { AppStyles } from './Styles'
-import { Topology, Node, NodeAttrs, LinkAttrs } from './Topology'
+import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState } from './Topology'
 import { mainListItems, helpListItems } from './Menu'
 import AutoCompleteInput from './AutoComplete'
 import './App.css'
@@ -64,7 +64,7 @@ interface State {
   contextMenuY: number
   isNavOpen: boolean
   nodeInfo: NodeInfo | null
-  linkTagStates: Map<string, boolean>
+  linkTagStates: Map<string, LinkTagState>
   overflow: string
   suggestions: Array<string>
 }
@@ -86,7 +86,7 @@ class App extends React.Component<Props, State> {
       isNavOpen: false,
       overflow: 'hidden', // hack for info panel
       nodeInfo: null,
-      linkTagStates: new Map<string, boolean>(),
+      linkTagStates: new Map<string, LinkTagState>(),
       suggestions: new Array<string>()
     }
 
@@ -162,7 +162,7 @@ class App extends React.Component<Props, State> {
     }
 
     // show infra layer
-    this.tc.showNodeLayer("infra", true)
+    this.tc.showNodeTag("infra", true)
 
     // get list of link layer types
     this.setState({ linkTagStates: this.tc.linkTagStates })
@@ -331,7 +331,18 @@ class App extends React.Component<Props, State> {
       return
     }
 
-    this.tc.showLinkLayer(event.target.value, event.target.checked)
+    switch (this.tc.linkTagStates.get(event.target.value)) {
+      case LinkTagState.Hidden:
+        this.tc.setLinkTagState(event.target.value, LinkTagState.EventBased)
+        break
+      case LinkTagState.EventBased:
+        this.tc.setLinkTagState(event.target.value, LinkTagState.Visible)
+        break
+      case LinkTagState.Visible:
+        this.tc.setLinkTagState(event.target.value, LinkTagState.Hidden)
+        break
+    }
+
     this.setState({ linkTagStates: this.tc.linkTagStates })
   }
 
@@ -400,12 +411,14 @@ class App extends React.Component<Props, State> {
             <Paper className={classes.layerPanelPaper}>
               <div className={classes.layerPanelPaperFragment}>
                 <Typography component="h6" color="primary" gutterBottom>
-                  Layers
+                  Link types
                 </Typography>
                 <FormGroup>
                   {Array.from(this.state.linkTagStates.keys()).map((key) => (
                     <FormControlLabel key={key} control={
-                      <Checkbox value={key} checked={this.state.linkTagStates[key]} color="primary" onChange={this.onLayerLinkStateChange} />
+                      <Checkbox value={key} color="primary" onChange={this.onLayerLinkStateChange}
+                        checked={this.state.linkTagStates.get(key) === LinkTagState.Visible}
+                        indeterminate={this.state.linkTagStates.get(key) === LinkTagState.EventBased} />
                     }
                       label={key} />
                   ))}

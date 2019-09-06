@@ -25,6 +25,12 @@ import ResizeObserver from 'react-resize-observer'
 
 import './Topology.css'
 
+export enum LinkTagState {
+    Hidden = 1,
+    EventBased,
+    Visible
+}
+
 interface State {
     expanded: boolean
 }
@@ -134,7 +140,7 @@ export class Topology extends React.Component<Props, {}> {
     root: Node
     nodes: Map<string, Node>
     nodeTagStates: Map<string, boolean>
-    linkTagStates: Map<string, boolean>
+    linkTagStates: Map<string, LinkTagState>
 
     constructor(props) {
         super(props)
@@ -303,26 +309,26 @@ export class Topology extends React.Component<Props, {}> {
         this.nodeTagStates = new Map<string, boolean>()
 
         this.links = new Array<Link>()
-        this.linkTagStates = new Map<string, boolean>()
+        this.linkTagStates = new Map<string, LinkTagState>()
     }
 
     /**
-     * Active or disable links of given tag
+     * Set the state of links of given tag
      * @param {*} tag
-     * @param {*} active
+     * @param {*} state
      */
-    showLinkLayer(tag: string, active: boolean) {
-        this.linkTagStates.set(tag, active)
+    setLinkTagState(tag: string, state: LinkTagState) {
+        this.linkTagStates.set(tag, state)
         this.renderTree()
     }
 
     /**
-     * Active or disable nodes of given layer
-     * @param {*} layer
+     * Active or disable nodes of given tag
+     * @param {*} tag
      * @param {*} active
      */
-    showNodeLayer(layer: string, active: boolean) {
-        this.nodeTagStates.set(layer, active)
+    showNodeTag(tag: string, active: boolean) {
+        this.nodeTagStates.set(tag, active)
         this.renderTree()
     }
 
@@ -396,7 +402,7 @@ export class Topology extends React.Component<Props, {}> {
 
         tags.forEach(tag => {
             if (!this.linkTagStates.has(tag)) {
-                this.linkTagStates.set(tag, false)
+                this.linkTagStates.set(tag, LinkTagState.Hidden)
             }
         })
     }
@@ -556,7 +562,7 @@ export class Topology extends React.Component<Props, {}> {
         }
 
         this.links.forEach((link: Link) => {
-            if (!(link.tags.some(tag => this.linkTagStates.get(tag) === true))) {
+            if (!(link.tags.some(tag => this.linkTagStates.get(tag) !== LinkTagState.Hidden))) {
                 return
             }
 
@@ -894,16 +900,29 @@ export class Topology extends React.Component<Props, {}> {
 
         var ids = this.neighborLinks(d.data, this.visibleLinks())
         for (let id of ids) {
+            select("#link-" + id)
+                .style("opacity", opacity)
             select("#link-overlay-" + id)
                 .style("opacity", opacity)
         }
     }
 
     clearHighlighNode() {
+        var self = this
+
         selectAll("circle.node-overlay")
             .style("opacity", 0)
         selectAll("path.link-overlay")
             .style("opacity", 0)
+
+        // un-select non visible links
+        selectAll("path.link").each(function(d: Link) {
+            select(this).style("opacity", self.isLinkVisible(d) ? 1 : 0)
+        })
+    }
+
+    isLinkVisible(link: Link) {
+        return link.tags.some(tag => this.linkTagStates.get(tag) === LinkTagState.Visible)
     }
 
     /**
@@ -922,7 +941,7 @@ export class Topology extends React.Component<Props, {}> {
             this.d3nodes.set(node.data.id, node)
         })
 
-        var linker = linkVertical()
+        const hieraLinker = linkVertical()
             .x(d => d.x)
             .y(d => d.y)
 
@@ -969,7 +988,7 @@ export class Topology extends React.Component<Props, {}> {
             .append('path')
             .attr("class", "hiera-link")
             .style("opacity", 0)
-            .attr("d", linker)
+            .attr("d", hieraLinker)
         hieraLink.exit().remove()
 
         hieraLinkEnter.transition()
@@ -978,7 +997,7 @@ export class Topology extends React.Component<Props, {}> {
 
         hieraLink.transition()
             .duration(500)
-            .attr("d", linker)
+            .attr("d", hieraLinker)
 
         var node = this.gNodes.selectAll('g.node')
             .data(root.descendants(), (d: D3Node) => d.data.id)
@@ -1113,7 +1132,7 @@ export class Topology extends React.Component<Props, {}> {
             .style("opacity", 1)
             .attr("transform", (d: D3Node) => `translate(${d.x},${d.y})`)
 
-        var linker = linkVertical()
+        const vLinker = linkVertical()
             .x((d: any) => {
                 let node = this.d3nodes.get(d.node.id)
                 return node ? node.x + d.dx : d.dx
@@ -1122,6 +1141,7 @@ export class Topology extends React.Component<Props, {}> {
                 let node = this.d3nodes.get(d.node.id)
                 return node ? node.y + d.dy : d.y
             })
+        const linker = (d: Link) => vLinker(wrapperLink(d, 55))
 
         let wrapperLink = (d, margin) => {
             let dSource = this.d3nodes.get(d.source.id)
@@ -1149,54 +1169,54 @@ export class Topology extends React.Component<Props, {}> {
 
         var linkOverlay = this.gLinkOverlays.selectAll('path.link-overlay')
             .data(visibleLinks, (d: Link) => d.id)
-        linkOverlay.enter()
+        var linkOverlayEnter = linkOverlay.enter()
             .append('path')
             .attr("id", (d: Link) => "link-overlay-" + d.id)
             .attr("class", "link-overlay")
             .style("opacity", 0)
-            .attr("d", (d: Link) => linker(wrapperLink(d, 55)))
         linkOverlay.exit().remove()
 
+        linkOverlay = linkOverlay.merge(linkOverlayEnter)
         linkOverlay.transition()
             .duration(500)
-            .attr("d", (d: Link) => linker(wrapperLink(d, 55)))
+            .attr("d", d => linker(d))
 
         var link = this.gLinks.selectAll('path.link')
             .data(visibleLinks, (d: Link) => d.id)
         var linkEnter = link.enter()
             .append('path')
+            .attr("id", (d: Link) => "link-" + d.id)
             .attr("class", (d: Link) => "link " + this.props.linkAttrs(d).class)
             .style("opacity", 0)
-            .attr("d", (d: Link) => linker(wrapperLink(d, 55)))
         link.exit().remove()
 
-        linkEnter.transition()
-            .duration(500)
-            .style("opacity", 1)
-
+        link = link.merge(linkEnter)
         link.transition()
             .duration(500)
-            .attr("d", (d: Link) => linker(wrapperLink(d, 55)))
+            .style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : 0)
+            .attr("d", d => linker(d))
 
         var linkWrap = this.gLinkWraps.selectAll('path.link-wrap')
             .data(visibleLinks, (d: Link) => d.id)
-        linkWrap.enter()
+        var linkWrapEnter = linkWrap.enter()
             .append('path')
             .attr("class", "link-wrap")
-            .attr("d", (d: Link) => linker(wrapperLink(d, 55)))
             .on("mouseover", (d: Link) => {
-                select("#link-overlay-" + d.id)
-                    .style("opacity", 1)
+                if (this.isLinkVisible(d)) {
+                    select("#link-overlay-" + d.id)
+                        .style("opacity", 1)
+                }
             })
-            .on("mouseout", (d: Link) => {
+            .on("mouseout", () => {
                 selectAll("path.link-overlay")
                     .style("opacity", 0)
             })
         linkWrap.exit().remove()
 
+        linkWrap = linkWrap.merge(linkWrapEnter)
         linkWrap.transition()
             .duration(500)
-            .attr("d", (d: Link) => linker(wrapperLink(d, 55)))
+            .attr("d", d => linker(d))
     }
 
     render() {
