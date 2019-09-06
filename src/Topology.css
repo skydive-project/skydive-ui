@@ -63,6 +63,10 @@ svg {
     fill: #ffeb3b;
 }
 
+.node-highlight {
+    fill: rgb(55, 255, 37);
+}
+
 .node-disc {
     stroke: none;
     fill: #5097c7;

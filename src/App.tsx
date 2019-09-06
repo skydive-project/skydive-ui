@@ -98,6 +98,7 @@ class App extends React.Component<Props, State> {
     this.onMessage = this.onMessage.bind(this)
     this.onNodeSelected = this.onNodeSelected.bind(this)
     this.onLayerLinkStateChange = this.onLayerLinkStateChange.bind(this)
+    this.onSearchChange = this.onSearchChange.bind(this)
   }
 
   componentDidMount() {
@@ -141,8 +142,8 @@ class App extends React.Component<Props, State> {
     // then add ownership links
     for (let edge of data.Edges) {
       if (edge.Metadata.RelationType === "ownership") {
-        let parent = this.tc.nodes[edge.Parent]
-        let child = this.tc.nodes[edge.Child]
+        let parent = this.tc.nodes.get(edge.Parent)
+        let child = this.tc.nodes.get(edge.Child)
 
         if (parent && child) {
           this.tc.setParent(child, parent, this.nodeWeight)
@@ -154,10 +155,12 @@ class App extends React.Component<Props, State> {
     // then add ownership links
     for (let edge of data.Edges) {
       if (edge.Metadata.RelationType !== "ownership") {
-        let parent = this.tc.nodes[edge.Parent]
-        let child = this.tc.nodes[edge.Child]
+        let parent = this.tc.nodes.get(edge.Parent)
+        let child = this.tc.nodes.get(edge.Child)
 
-        this.tc.addLink(child, parent, [edge.Metadata.RelationType], edge.Metadata)
+        if (parent && child) {
+          this.tc.addLink(child, parent, [edge.Metadata.RelationType], edge.Metadata)
+        }
       }
     }
 
@@ -346,6 +349,19 @@ class App extends React.Component<Props, State> {
     this.setState({ linkTagStates: this.tc.linkTagStates })
   }
 
+  onSearchChange(selected: Array<string>) {
+    if (!this.tc) {
+      return
+    }
+
+    this.tc.clearHighlightNodes()
+    this.tc.searchNodes(selected).forEach(node => {
+      if (this.tc) {
+        this.tc.highlightNode(node, true)
+      }
+    })
+  }
+
   render() {
     const { classes } = this.props
 
@@ -368,7 +384,7 @@ class App extends React.Component<Props, State> {
               <img src={Logo} alt="logo" />
             </Typography>
             <div className={classes.search}>
-              <AutoCompleteInput placeholder="metadata value" suggestions={this.state.suggestions} />
+              <AutoCompleteInput placeholder="metadata value" suggestions={this.state.suggestions} onChange={this.onSearchChange} />
             </div>
           </Toolbar>
         </AppBar>

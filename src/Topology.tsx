@@ -340,7 +340,7 @@ export class Topology extends React.Component<Props, {}> {
      */
     addNode(id: string, tags: Array<string>, data: any): Node {
         var node = new Node(id, tags, data, this.defaultState())
-        this.nodes[id] = node
+        this.nodes.set(id, node)
 
         tags.forEach(tag => {
             if (!this.nodeTagStates.has(tag)) {
@@ -402,7 +402,7 @@ export class Topology extends React.Component<Props, {}> {
 
         tags.forEach(tag => {
             if (!this.linkTagStates.has(tag)) {
-                this.linkTagStates.set(tag, LinkTagState.Hidden)
+                this.linkTagStates.set(tag, LinkTagState.EventBased)
             }
         })
     }
@@ -679,7 +679,10 @@ export class Topology extends React.Component<Props, {}> {
                     id = id.replace(/^node-/, '')
                 }
 
-                self.props.onNodeSelected(self.nodes[id], false)
+                let n = self.nodes.get(id)
+                if (n) {
+                    self.props.onNodeSelected(n, false)
+                }
             }
         })
     }
@@ -696,7 +699,10 @@ export class Topology extends React.Component<Props, {}> {
         select("#node-" + id).classed("node-selected", active)
 
         if (this.props.onNodeSelected) {
-            this.props.onNodeSelected(this.nodes[id], active)
+            let n = this.nodes.get(id)
+            if (n) {
+                this.props.onNodeSelected(n, active)
+            }
         }
     }
 
@@ -876,22 +882,40 @@ export class Topology extends React.Component<Props, {}> {
         return ids
     }
 
-    private showNode(d: D3Node) {
-        var parent = d.data.parent
+    private showNode(node: Node) {
+        var parent = node.parent
         while (parent) {
-            if (!parent.wrapped.state.expanded) {
-                this.expand(parent)
+            if (!parent.state.expanded) {
+                var d = this.d3nodes.get(parent.id)
+                if (d) {
+                    this.expand(d.data)
+                }
             }
             parent = parent.parent
         }
     }
 
-    highlightNode(id: string, active: boolean) {
+    highlightNode(node: Node, active) {
+        this.showNode(node)
+
+        var d = this.d3nodes.get(node.id)
+        if (!d) {
+            return false
+        }
+
+        select("#node-highlight-" + node.id)
+            .style("opacity", active ? 1 : 0)
+    }
+
+    clearHighlightNodes() {
+        selectAll("circle.node-highlight").style("opacity", 0)
+    }
+
+    private overNode(id: string, active: boolean) {
         var d = this.d3nodes.get(id)
         if (!d) {
             return false
         }
-        this.showNode(d)
 
         var opacity = active ? 1 : 0
 
@@ -907,7 +931,7 @@ export class Topology extends React.Component<Props, {}> {
         }
     }
 
-    clearHighlighNode() {
+    private outNode() {
         var self = this
 
         selectAll("circle.node-overlay")
@@ -916,13 +940,53 @@ export class Topology extends React.Component<Props, {}> {
             .style("opacity", 0)
 
         // un-select non visible links
-        selectAll("path.link").each(function(d: Link) {
+        selectAll("path.link").each(function (d: Link) {
             select(this).style("opacity", self.isLinkVisible(d) ? 1 : 0)
         })
     }
 
-    isLinkVisible(link: Link) {
+    private isLinkVisible(link: Link) {
         return link.tags.some(tag => this.linkTagStates.get(tag) === LinkTagState.Visible)
+    }
+
+    private searchMetadata(data: any, values: Map<any, boolean>, remaining: number): boolean {
+        for (let key in data) {
+            if (typeof data[key] === "object") {
+                if (this.searchMetadata(data[key], values, remaining)) {
+                    return true
+                }
+            } else {
+                let expected = data[key]
+                for (const [key, value] of values.entries()) {
+                    if (key === expected && !value) {
+                        values.set(key, true)
+                        remaining--
+                    }
+
+                    if (!remaining) {
+                        return true
+                    }
+                }
+            }
+        }
+
+        return false
+    }
+
+    searchNodes(values: Array<any>): Array<Node> {
+        var vm = new Map<any, boolean>()
+
+        var nodes = new Array<Node>()
+        Array.from(this.nodes.values()).forEach(node => {
+            // reset state of each value
+            values.forEach(value => vm.set(value, false))
+
+            if (this.searchMetadata(node.data, vm, values.length)) {
+                nodes.push(node)
+            }
+        })
+
+        return nodes
     }
 
     /**
@@ -1021,10 +1085,10 @@ export class Topology extends React.Component<Props, {}> {
                 this.showNodeContextMenu(d)
             })
             .on("mouseover", (d: D3Node) => {
-                this.highlightNode(d.data.id, true)
+                this.overNode(d.data.id, true)
             })
             .on("mouseout", () => {
-                this.clearHighlighNode()
+                this.outNode()
             })
 
         nodeEnter.transition()
@@ -1036,6 +1100,12 @@ export class Topology extends React.Component<Props, {}> {
         nodeEnter.append("circle")
             .attr("id", (d: D3Node) => "node-overlay-" + d.data.id)
             .attr("class", "node-overlay")
+            .attr("r", hexSize + 16)
+            .style("opacity", 0)
+
+        nodeEnter.append("circle")
+            .attr("id", (d: D3Node) => "node-highlight-" + d.data.id)
+            .attr("class", "node-highlight")
             .attr("r", hexSize + 16)
             .style("opacity", 0)
 
