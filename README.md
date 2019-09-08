@@ -4,5 +4,6 @@ Next gen Skydive WebUI
 
 
 ```
-npm run star
+npm install
+npm run start
 ```
