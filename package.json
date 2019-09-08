@@ -43,7 +43,7 @@
     "webpack-dev-server": "^3.8.0"
   },
   "scripts": {
-    "start": "webpack-dev-server --mode development --open",
+    "start": "webpack-dev-server --mode development --host 0.0.0.0 --open",
     "build": "webpack --mode production"
   }
 }
