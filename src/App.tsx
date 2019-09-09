@@ -69,6 +69,15 @@ interface State {
   suggestions: Array<string>
 }
 
+const weightTitles = new Map<number, string>([
+  [0, "Fabric"],
+  [3, "Physical"],
+  [4, "Bridges"],
+  [5, "Ports"],
+  [7, "Virtual"],
+  [8, "Namespaces"]
+])
+
 class App extends React.Component<Props, State> {
 
   tc: Topology | null
@@ -409,7 +418,7 @@ class App extends React.Component<Props, State> {
           <Container maxWidth="xl" className={classes.container}>
             <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} linkAttrs={this.linkAttrs}
               onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
-              onShowNodeContextMenu={this.onShowNodeContextMenu} />
+              onShowNodeContextMenu={this.onShowNodeContextMenu} weightTitles={weightTitles}/>
           </Container>
           <Container className={classes.rightPanel}>
             <Paper className={clsx(classes.rightPanelPaper, !this.state.nodeInfo && classes.rightPanelPaperClose)}>

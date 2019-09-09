@@ -6,10 +6,19 @@ svg {
     fill: none;
 }
 
-.level {
+.level-zone {
     stroke: #000;
     stroke-dasharray: 5, 10;
     fill: #f6f6f6;
+}
+
+.level-label rect {
+    fill: #e4e4e4;
+}
+
+.level-label text {
+    fill:#333;
+    font-weight: 500;
 }
 
 .hiera-links {
