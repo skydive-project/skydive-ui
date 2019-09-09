@@ -741,7 +741,7 @@ export class Topology extends React.Component<Props, {}> {
             return
         }
 
-        var fullWidth = parent.clientWidth, fullHeight = parent.clientHeight
+        var fullWidth = parent.clientWidth || parent.parentNode.clientWidth, fullHeight = parent.clientHeight || parent.parentNode.clientHeight
         var width = bounds.width, height = bounds.height
         if (width === 0 || height === 0) {
             return
@@ -1123,7 +1123,7 @@ export class Topology extends React.Component<Props, {}> {
 
         nodeEnter.append("text")
             .attr("class", "node-icon")
-            .attr("dy", 2)
+            .attr("dy", 9)
             .text((d: D3Node) => this.props.nodeAttrs(d.data.wrapped).icon)
 
         let wrapText = (text, lineHeight, width) => {
