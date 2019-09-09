@@ -99,6 +99,14 @@ svg {
     font-weight: 900;
 }
 
+.node-highlight text {
+    font-size: 30px;
+    text-anchor: middle;
+    font-family: 'Font Awesome 5 Free' !important;
+    fill: #444;
+    font-weight: 900;
+}
+
 .node-name {
     font-size: 22px;
     text-anchor: middle;

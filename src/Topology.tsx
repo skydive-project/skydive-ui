@@ -925,7 +925,7 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     clearHighlightNodes() {
-        selectAll("circle.node-highlight").style("opacity", 0)
+        selectAll("g.node-highlight").style("opacity", 0)
     }
 
     private overNode(id: string, active: boolean) {
@@ -1189,11 +1189,15 @@ export class Topology extends React.Component<Props, {}> {
             .attr("r", hexSize + 16)
             .style("opacity", 0)
 
-        nodeEnter.append("circle")
+        var highlight = nodeEnter.append("g")
             .attr("id", (d: D3Node) => "node-highlight-" + d.data.id)
             .attr("class", "node-highlight")
-            .attr("r", hexSize + 16)
             .style("opacity", 0)
+        highlight.append("circle")
+            .attr("r", hexSize + 16)
+        highlight.append("text")
+            .text("\uf0a7")
+            .attr("dy", -55)
 
         nodeEnter.append("circle")
             .attr("class", "node-circle")
