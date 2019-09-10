@@ -116,7 +116,7 @@ export const AppStyles = (theme: Theme) => createStyles({
     position: 'relative',
     display: 'flex',
     flexDirection: 'column',
-    width: 500,
+    width: 550,
     height: `calc(100% - ${20}px)`,
     transition: theme.transitions.create('width', {
       easing: theme.transitions.easing.sharp,

@@ -66,7 +66,6 @@ interface State {
   contextMenuX: number
   contextMenuY: number
   isNavOpen: boolean
-  nodeInfo: NodeInfo | null
   linkTagStates: Map<string, LinkTagState>
   overflow: string
   suggestions: Array<string>
@@ -99,7 +98,6 @@ class App extends React.Component<Props, State> {
       contextMenuY: 0,
       isNavOpen: false,
       overflow: 'hidden', // hack for info panel
-      nodeInfo: null,
       linkTagStates: new Map<string, LinkTagState>(),
       suggestions: new Array<string>(),
       tab: 0,
@@ -230,17 +228,37 @@ class App extends React.Component<Props, State> {
     return { class: link.RelationType || "" }
   }
 
-  onNodeSelected(node, active) {
+  onNodeSelected(node: Node, active: boolean) {
+    var nodes = this.state.nodeSelected.filter(d => node.id !== d.id)
     if (active) {
-      this.setState({ nodeInfo: { id: node.id, data: node.data } })
-
-      // hack in order to restore overflow of panel after transition
-      setTimeout(() => {
-        this.setState({ overflow: 'auto' })
-      }, 1000)
-    } else {
-      this.setState({ nodeInfo: null, overflow: 'hidden' })
+      nodes.push(node)
     }
+    var tab = this.state.tab
+    if (tab >= nodes.length) {
+      tab = nodes.length - 1
+    }
+    if (tab < 0) {
+      tab = 0
+    }
+
+    this.setState({ nodeSelected: nodes, tab: tab })
+  }
+
+  renderTabs() {
+    return this.state.nodeSelected.map((d: Node, i: number) => (
+      <Tab key={"tab-" + i} label={d.id.split("-", 2)[0] + "-..."} {...a11yProps(i)} />
+    ))
+  }
+
+  renderTabPanels(classes: any) {
+    return this.state.nodeSelected.map((node: Node, i: number) => (
+      <TabPanel key={"tabpanel-" + i} value={this.state.tab} index={i}>
+        <Typography component="h6" color="primary" gutterBottom>
+          {node.id}
+        </Typography>
+        <JSONTree className={classes.jsonTree} data={node.data} theme="bright" invertTheme hideRoot sortObjectKeys />
+      </TabPanel>
+    ))
   }
 
   nodeWeight(node: Node): number {
@@ -433,7 +451,7 @@ class App extends React.Component<Props, State> {
               onShowNodeContextMenu={this.onShowNodeContextMenu} weightTitles={weightTitles} />
           </Container>
           <Container className={classes.rightPanel}>
-            <Paper className={clsx(classes.rightPanelPaper, !this.state.nodeInfo && classes.rightPanelPaperClose)}>
+            <Paper className={clsx(classes.rightPanelPaper, !this.state.nodeSelected.length && classes.rightPanelPaperClose)}>
               <div className={classes.tabs}>
                 <Tabs
                   orientation="vertical"
@@ -442,22 +460,11 @@ class App extends React.Component<Props, State> {
                   onChange={this.onTabChange}
                   aria-label="Vertical tabs example"
                   className={classes.tab}>
-                  <Tab label="Item One" {...a11yProps(0)} />
-                  <Tab label="Item Two" {...a11yProps(1)} />
+                  {this.renderTabs()}
                 </Tabs>
-                <TabPanel value={this.state.tab} index={0}>
-                  <div className={classes.rightPanelPaperContent} style={{ overflow: this.state.overflow }} >
-                    <Typography component="h6" color="primary" gutterBottom>
-                      ID : {this.state.nodeInfo ? this.state.nodeInfo.id : ""}
-                    </Typography>
-                    {this.state.nodeInfo &&
-                      <JSONTree className={classes.jsonTree} data={this.state.nodeInfo ? this.state.nodeInfo.data : {}} theme="bright" invertTheme hideRoot sortObjectKeys />
-                    }
-                  </div>
-                </TabPanel>
-                <TabPanel value={this.state.tab} index={1}>
-                  Item Two
-                </TabPanel>
+                <div className={classes.rightPanelPaperContent} style={{ overflow: this.state.overflow }} >
+                  {this.renderTabPanels(classes)}
+                </div>
               </div>
             </Paper>
           </Container>

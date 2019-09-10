@@ -1201,8 +1201,8 @@ export class Topology extends React.Component<Props, {}> {
         highlight.append("circle")
             .attr("r", hexSize + 16)
         highlight.append("text")
-            .text("\uf0a7")
-            .attr("dy", -55)
+            .text("\uf3c5")
+            .attr("dy", -60)
 
         nodeEnter.append("circle")
             .attr("class", "node-circle")
