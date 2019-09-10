@@ -18,7 +18,7 @@
 import * as React from "react"
 import { hierarchy, tree } from 'd3-hierarchy'
 import { Selection, select, selectAll, event } from 'd3-selection'
-import { line, linkVertical, curveCardinalClosed } from 'd3-shape'
+import { line, linkVertical, curveCatmullRom, curveCardinalClosed } from 'd3-shape'
 import { } from 'd3-transition'
 import { zoom, zoomIdentity } from 'd3-zoom'
 import ResizeObserver from 'react-resize-observer'
@@ -1235,7 +1235,7 @@ export class Topology extends React.Component<Props, {}> {
             .attr("dy", 9)
             .text((d: D3Node) => this.props.nodeAttrs(d.data.wrapped).icon)
 
-        let wrapText = (text, lineHeight, width) => {
+        var wrapText = (text, lineHeight, width) => {
             text.each(function () {
                 var text = select(this)
                 var y = text.attr("y")
@@ -1320,9 +1320,39 @@ export class Topology extends React.Component<Props, {}> {
                 let node = this.d3nodes.get(d.node.id)
                 return node ? node.y + d.dy : d.y
             })
-        const linker = (d: Link) => vLinker(wrapperLink(d, 55))
 
-        let wrapperLink = (d, margin) => {
+        const hLinker = (d: any) => {
+            let source = this.d3nodes.get(d.source.node.id)
+            let target = this.d3nodes.get(d.target.node.id)
+
+            if (!source || !target) {
+                return []
+            }
+
+            let x1 = source.x + d.source.dx
+            let x2 = target.x + d.target.dx
+            let y = source.y + d.source.dy
+
+            let delta = 0
+            if (Math.abs(x1 - x2) > this.nodeWidth) {
+                delta = 30
+            }
+
+            var points = [
+                { x: x1, y: y },
+                { x: (x1 + x2) / 2, y: y + delta },
+                { x: x2, y: y }
+            ]
+
+            const liner = line()
+                .x(d => d.x)
+                .y(d => d.y)
+                .curve(curveCatmullRom.alpha(0.5))
+
+            return liner(points)
+        }
+
+        var wrapperLink = (d, margin) => {
             let dSource = this.d3nodes.get(d.source.id)
             let dTarget = this.d3nodes.get(d.target.id)
 
@@ -1332,17 +1362,18 @@ export class Topology extends React.Component<Props, {}> {
 
             if (dSource.y === dTarget.y) {
                 if (dSource.x < dTarget.x) {
-                    return { source: { node: d.source, dx: margin, dy: 0 }, target: { node: d.target, dx: -margin, dy: 0 } }
+                    return hLinker({ source: { node: d.source, dx: margin, dy: 0 }, target: { node: d.target, dx: -margin, dy: 0 } })
                 }
-                return { source: { node: d.target, dx: margin, dy: 0 }, target: { node: d.source, dx: -margin, dy: 0 } }
+                return hLinker({ source: { node: d.target, dx: margin, dy: 0 }, target: { node: d.source, dx: -margin, dy: 0 } })
             }
 
             if (dSource.y < dTarget.y) {
-                return { source: { node: d.source, dx: 0, dy: margin }, target: { node: d.target, dx: 0, dy: -margin } }
+                return vLinker({ source: { node: d.source, dx: 0, dy: margin }, target: { node: d.target, dx: 0, dy: -margin } })
             }
 
-            return { source: { node: d.target, dx: 0, dy: margin }, target: { node: d.source, dx: 0, dy: -margin } }
+            return vLinker({ source: { node: d.target, dx: 0, dy: margin }, target: { node: d.source, dx: 0, dy: -margin } })
         }
+        const linker = (d: Link) => wrapperLink(d, 55)
 
         var visibleLinks = this.visibleLinks()
 
