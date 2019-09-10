@@ -60,12 +60,14 @@ export class Link {
     source: Node
     target: Node
     data: any
+    directed: boolean
 
-    constructor(id: string, tags: Array<string>, source: Node, target: Node, data: any) {
+    constructor(id: string, tags: Array<string>, source: Node, target: Node, data: any, directed: boolean) {
         this.id = id
         this.tags = tags
         this.source = source
         this.target = target
+        this.directed = directed
     }
 }
 
@@ -227,6 +229,17 @@ export class Topology extends React.Component<Props, {}> {
             .append("path")
             .attr("class", "link-marker")
             .attr("d", "M 0,0 m -5,-5 L 5,-5 L 5,5 L -5,5 Z")
+
+        defs
+            .append("marker")
+            .attr("id", "link-directed-marker")
+            .attr("viewBox", "-5 -5 10 10")
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("class", "link-marker link-directed-marker")
+            .attr("d", "M 0,0 m -5,-5 L 5,0 L -5,5 Z")
 
         defs
             .append("marker")
@@ -427,9 +440,10 @@ export class Topology extends React.Component<Props, {}> {
      * @param {node} node2
      * @param {Array<string>} tags
      * @param {object} data
+     * @param {directed} boolean
      */
-    addLink(node1: Node, node2: Node, tags: Array<string>, data: any) {
-        this.links.push(new Link(node1.id + "_" + node2.id, tags, node1, node2, data))
+    addLink(node1: Node, node2: Node, tags: Array<string>, data: any, directed: boolean) {
+        this.links.push(new Link(node1.id + "_" + node2.id, tags, node1, node2, data, directed))
 
         tags.forEach(tag => {
             if (!this.linkTagStates.has(tag)) {
@@ -601,7 +615,7 @@ export class Topology extends React.Component<Props, {}> {
             let target = findVisible(link.target)
 
             if (source && target && source !== target) {
-                links.push(new Link(source.id + "_" + target.id, link.tags, source, target, link.data))
+                links.push(new Link(source.id + "_" + target.id, link.tags, source, target, link.data, link.directed))
             }
         })
 
@@ -1353,7 +1367,7 @@ export class Topology extends React.Component<Props, {}> {
         var linkEnter = link.enter()
             .append('path')
             .attr("id", (d: Link) => "link-" + d.id)
-            .attr("class", (d: Link) => "link " + this.props.linkAttrs(d).class)
+            .attr("class", (d: Link) => "link " + this.props.linkAttrs(d).class + d.directed ? " directed" : "")
             .style("opacity", 0)
         link.exit().remove()
 

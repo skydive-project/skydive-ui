@@ -47,6 +47,11 @@ svg {
     marker-end: url(#link-marker);
 }
 
+.links .directed {
+    marker-start: url(#link-directed-marker);
+    marker-end: url(#link-directed-marker);
+}
+
 .link-marker {
     fill: #003865;
 }

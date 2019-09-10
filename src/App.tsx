@@ -174,7 +174,7 @@ class App extends React.Component<Props, State> {
         let child = this.tc.nodes.get(edge.Child)
 
         if (parent && child) {
-          this.tc.addLink(child, parent, [edge.Metadata.RelationType], edge.Metadata)
+          this.tc.addLink(child, parent, [edge.Metadata.RelationType], edge.Metadata, edge.Metadata.Directed)
         }
       }
     }
@@ -196,31 +196,36 @@ class App extends React.Component<Props, State> {
       classes.push(node.data.State.toLowerCase())
     }
 
+    var name = node.data.Name
+    if (name.length > 8) {
+      name = node.data.Name.substring(0, 12) + "."
+    }
+
     switch (node.data.Type) {
       case "host":
-        return { class: classes.join(" "), name: node.data.Name, icon: "\uf109" }
+        return { class: classes.join(" "), name: name, icon: "\uf109" }
       case "bridge":
       case "ovsbridge":
-        return { class: classes.join(" "), name: node.data.Name, icon: "\uf6ff" }
+        return { class: classes.join(" "), name: name, icon: "\uf6ff" }
       case "erspan":
-        return { class: classes.join(" "), name: node.data.Name, icon: "\uf1e0" }
+        return { class: classes.join(" "), name: name, icon: "\uf1e0" }
       case "vxlan":
       case "gre":
       case "gretap":
-        return { class: classes.join(" "), name: node.data.Name, icon: "\uf55b" }
+        return { class: classes.join(" "), name: name, icon: "\uf55b" }
       case "interface":
       case "device":
       case "veth":
       case "tun":
       case "tap":
-        return { class: classes.join(" "), name: node.data.Name, icon: "\uf796" }
+        return { class: classes.join(" "), name: name, icon: "\uf796" }
       case "port":
       case "ovsport":
-        return { class: classes.join(" "), name: node.data.Name, icon: "\uf0e8" }
+        return { class: classes.join(" "), name: name, icon: "\uf0e8" }
       case "netns":
-        return { class: classes.join(" "), name: node.data.Name, icon: "\uf24d" }
+        return { class: classes.join(" "), name: name, icon: "\uf24d" }
       default:
-        return { class: classes.join(" "), name: node.data.Name, icon: "\uf192" }
+        return { class: classes.join(" "), name: name, icon: "\uf192" }
     }
   }
 
