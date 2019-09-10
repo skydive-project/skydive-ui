@@ -50,6 +50,8 @@ import './App.css'
 
 import Logo from './Logo.png'
 
+declare var config: any
+
 const data = require('./dump.json')
 
 interface Props extends WithSnackbarProps {
@@ -191,42 +193,14 @@ class App extends React.Component<Props, State> {
   }
 
   nodeAttrs(node: Node): NodeAttrs {
-    var classes = [node.data.Type]
+
+
+    var attrs = config.nodeAttrs(node)
     if (node.data.State) {
-      classes.push(node.data.State.toLowerCase())
+      attrs.classes.push(node.data.State.toLowerCase())
     }
 
-    var name = node.data.Name
-    if (name.length > 8) {
-      name = node.data.Name.substring(0, 12) + "."
-    }
-
-    switch (node.data.Type) {
-      case "host":
-        return { class: classes.join(" "), name: name, icon: "\uf109" }
-      case "bridge":
-      case "ovsbridge":
-        return { class: classes.join(" "), name: name, icon: "\uf6ff" }
-      case "erspan":
-        return { class: classes.join(" "), name: name, icon: "\uf1e0" }
-      case "vxlan":
-      case "gre":
-      case "gretap":
-        return { class: classes.join(" "), name: name, icon: "\uf55b" }
-      case "interface":
-      case "device":
-      case "veth":
-      case "tun":
-      case "tap":
-        return { class: classes.join(" "), name: name, icon: "\uf796" }
-      case "port":
-      case "ovsport":
-        return { class: classes.join(" "), name: name, icon: "\uf0e8" }
-      case "netns":
-        return { class: classes.join(" "), name: name, icon: "\uf24d" }
-      default:
-        return { class: classes.join(" "), name: name, icon: "\uf192" }
-    }
+    return attrs
   }
 
   linkAttrs(link): LinkAttrs {
@@ -267,26 +241,7 @@ class App extends React.Component<Props, State> {
   }
 
   nodeWeight(node: Node): number {
-    switch (node.data.Type) {
-      case "host":
-        return 3
-      case "bridge":
-      case "ovsbridge":
-        return 4
-      case "veth":
-        if (node.data.IPV4 && node.data.IPV4.length)
-          return 3
-        return 7
-      case "netns":
-        return 8
-      default:
-    }
-
-    if (node.data.OfPort) {
-      return 5
-    }
-
-    return node.parent ? node.parent.weight : 1
+    return config.nodeWeight(node)
   }
 
   sortNodesFnc(a, b) {
