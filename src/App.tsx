@@ -36,6 +36,8 @@ import Checkbox from '@material-ui/core/Checkbox'
 import FormGroup from '@material-ui/core/FormGroup'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import { withSnackbar, WithSnackbarProps } from 'notistack'
+import Tabs from '@material-ui/core/Tabs'
+import Tab from '@material-ui/core/Tab'
 
 import JSONTree from 'react-json-tree'
 
@@ -43,6 +45,7 @@ import { AppStyles } from './Styles'
 import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState } from './Topology'
 import { mainListItems, helpListItems } from './Menu'
 import AutoCompleteInput from './AutoComplete'
+import { a11yProps, TabPanel } from './Tabs'
 import './App.css'
 
 import Logo from './Logo.png'
@@ -67,6 +70,8 @@ interface State {
   linkTagStates: Map<string, LinkTagState>
   overflow: string
   suggestions: Array<string>
+  tab: number
+  nodeSelected: Array<Node>
 }
 
 const weightTitles = new Map<number, string>([
@@ -96,7 +101,9 @@ class App extends React.Component<Props, State> {
       overflow: 'hidden', // hack for info panel
       nodeInfo: null,
       linkTagStates: new Map<string, LinkTagState>(),
-      suggestions: new Array<string>()
+      suggestions: new Array<string>(),
+      tab: 0,
+      nodeSelected: new Array<Node>()
     }
 
     this.synced = false
@@ -108,6 +115,7 @@ class App extends React.Component<Props, State> {
     this.onNodeSelected = this.onNodeSelected.bind(this)
     this.onLayerLinkStateChange = this.onLayerLinkStateChange.bind(this)
     this.onSearchChange = this.onSearchChange.bind(this)
+    this.onTabChange = this.onTabChange.bind(this)
   }
 
   componentDidMount() {
@@ -371,6 +379,10 @@ class App extends React.Component<Props, State> {
     })
   }
 
+  onTabChange(event: React.ChangeEvent<{}>, value: number) {
+    this.setState({ tab: value })
+  }
+
   render() {
     const { classes } = this.props
 
@@ -418,23 +430,40 @@ class App extends React.Component<Props, State> {
           <Container maxWidth="xl" className={classes.container}>
             <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} linkAttrs={this.linkAttrs}
               onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
-              onShowNodeContextMenu={this.onShowNodeContextMenu} weightTitles={weightTitles}/>
+              onShowNodeContextMenu={this.onShowNodeContextMenu} weightTitles={weightTitles} />
           </Container>
           <Container className={classes.rightPanel}>
             <Paper className={clsx(classes.rightPanelPaper, !this.state.nodeInfo && classes.rightPanelPaperClose)}>
-              <div className={classes.rightPanelPaperContent} style={{ overflow: this.state.overflow }} >
-                <Typography component="h6" color="primary" gutterBottom>
-                  ID : {this.state.nodeInfo ? this.state.nodeInfo.id : ""}
-                </Typography>
-                {this.state.nodeInfo &&
-                  <JSONTree className={classes.jsonTree} data={this.state.nodeInfo ? this.state.nodeInfo.data : {}} theme="bright" invertTheme hideRoot sortObjectKeys />
-                }
+              <div className={classes.tabs}>
+                <Tabs
+                  orientation="vertical"
+                  variant="scrollable"
+                  value={this.state.tab}
+                  onChange={this.onTabChange}
+                  aria-label="Vertical tabs example"
+                  className={classes.tab}>
+                  <Tab label="Item One" {...a11yProps(0)} />
+                  <Tab label="Item Two" {...a11yProps(1)} />
+                </Tabs>
+                <TabPanel value={this.state.tab} index={0}>
+                  <div className={classes.rightPanelPaperContent} style={{ overflow: this.state.overflow }} >
+                    <Typography component="h6" color="primary" gutterBottom>
+                      ID : {this.state.nodeInfo ? this.state.nodeInfo.id : ""}
+                    </Typography>
+                    {this.state.nodeInfo &&
+                      <JSONTree className={classes.jsonTree} data={this.state.nodeInfo ? this.state.nodeInfo.data : {}} theme="bright" invertTheme hideRoot sortObjectKeys />
+                    }
+                  </div>
+                </TabPanel>
+                <TabPanel value={this.state.tab} index={1}>
+                  Item Two
+                </TabPanel>
               </div>
             </Paper>
           </Container>
-          <Container className={classes.layerPanel}>
-            <Paper className={classes.layerPanelPaper}>
-              <div className={classes.layerPanelPaperFragment}>
+          <Container className={classes.nodeTagsPanel}>
+            <Paper className={classes.nodeTagsPanelPaper}>
+              <div className={classes.nodeTagsPanelPaperFragment}>
                 <Typography component="h6" color="primary" gutterBottom>
                   Link types
                 </Typography>

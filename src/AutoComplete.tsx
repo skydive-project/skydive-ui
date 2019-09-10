@@ -154,7 +154,7 @@ export default function Autocomplete(props: AutocompleteProps) {
         selectedItem: selectedItem2,
         highlightedIndex,
       }) => {
-        const { onBlur, onChange, onFocus, ...inputProps } = getInputProps({
+        const { onChange, ...inputProps } = getInputProps({
           onKeyDown: handleKeyDown,
           placeholder: placeholder,
         })
@@ -181,12 +181,10 @@ export default function Autocomplete(props: AutocompleteProps) {
                     }
                   </InputAdornment>
                 ),
-                onBlur,
                 onChange: event => {
                   handleInputChange(event)
                   onChange!(event as React.ChangeEvent<HTMLInputElement>)
-                },
-                onFocus,
+                }
               },
               inputProps,
             })}

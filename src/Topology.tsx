@@ -15,7 +15,7 @@
  *
  */
 
-import * as React from "react";
+import * as React from "react"
 import { hierarchy, tree } from 'd3-hierarchy'
 import { Selection, select, selectAll, event } from 'd3-selection'
 import { line, linkVertical, curveCardinalClosed } from 'd3-shape'
@@ -1034,6 +1034,7 @@ export class Topology extends React.Component<Props, {}> {
     hideAllLevelLabels() {
         this.gLevelLabels.selectAll('g.level-label')
             .style("opacity", 0)
+            .interrupt()
     }
 
     showAllLevelLabels() {
@@ -1065,6 +1066,7 @@ export class Topology extends React.Component<Props, {}> {
         this.hideAllLevelLabels()
 
         var levelLabel = this.gLevelLabels.selectAll('g.level-label')
+            .interrupt()
             .data(this.levelNodes(), (d: LevelNodes) => "level-label-" + d.weight)
         levelLabel.enter()
             .append("g")
@@ -1092,6 +1094,7 @@ export class Topology extends React.Component<Props, {}> {
 
         var level = this.gLevels.selectAll('g.level')
             .data(this.levelNodes(), (d: LevelNodes) => "level-" + d.weight)
+            .interrupt()
         var levelEnter = level.enter()
             .append('g')
             .attr("id", (d: LevelNodes) => "level-" + d.weight)
@@ -1133,6 +1136,7 @@ export class Topology extends React.Component<Props, {}> {
 
         var hieraLink = this.gHieraLinks.selectAll('path.hiera-link')
             .data(root.links(), (d: any) => d.source.data.id + d.target.data.id)
+            .interrupt()
         var hieraLinkEnter = hieraLink.enter()
             .filter((d: any) => d.target.data.parent.wrapped !== this.root)
             .append('path')
@@ -1150,6 +1154,7 @@ export class Topology extends React.Component<Props, {}> {
             .attr("d", hieraLinker)
 
         var node = this.gNodes.selectAll('g.node')
+            .interrupt()
             .data(root.descendants(), (d: D3Node) => d.data.id)
 
         node.exit()
@@ -1328,6 +1333,7 @@ export class Topology extends React.Component<Props, {}> {
         var visibleLinks = this.visibleLinks()
 
         var linkOverlay = this.gLinkOverlays.selectAll('path.link-overlay')
+            .interrupt()
             .data(visibleLinks, (d: Link) => d.id)
         var linkOverlayEnter = linkOverlay.enter()
             .append('path')
@@ -1342,6 +1348,7 @@ export class Topology extends React.Component<Props, {}> {
             .attr("d", d => linker(d))
 
         var link = this.gLinks.selectAll('path.link')
+            .interrupt()
             .data(visibleLinks, (d: Link) => d.id)
         var linkEnter = link.enter()
             .append('path')
@@ -1357,6 +1364,7 @@ export class Topology extends React.Component<Props, {}> {
             .attr("d", d => linker(d))
 
         var linkWrap = this.gLinkWraps.selectAll('path.link-wrap')
+            .interrupt()
             .data(visibleLinks, (d: Link) => d.id)
         var linkWrapEnter = linkWrap.enter()
             .append('path')

@@ -116,7 +116,7 @@ export const AppStyles = (theme: Theme) => createStyles({
     position: 'relative',
     display: 'flex',
     flexDirection: 'column',
-    width: 400,
+    width: 500,
     height: `calc(100% - ${20}px)`,
     transition: theme.transitions.create('width', {
       easing: theme.transitions.easing.sharp,
@@ -140,7 +140,7 @@ export const AppStyles = (theme: Theme) => createStyles({
   jsonTree: {
     backgroundColor: 'unset'
   },
-  layerPanel: {
+  nodeTagsPanel: {
     position: 'absolute',
     left: 20,
     bottom: 20,
@@ -151,7 +151,7 @@ export const AppStyles = (theme: Theme) => createStyles({
     paddingLeft: theme.spacing(0),
     paddingRight: theme.spacing(0),
   },
-  layerPanelPaper: {
+  nodeTagsPanelPaper: {
     position: 'relative',
     display: 'flex',
     flexDirection: 'column',
@@ -173,7 +173,16 @@ export const AppStyles = (theme: Theme) => createStyles({
       marginLeft: theme.spacing(3),
       width: 'auto',
     },
-  }
+  },
+  tabs: {
+    flexGrow: 1,
+    backgroundColor: theme.palette.background.paper,
+    display: 'flex',
+    height: 224,
+  },
+  tab: {
+    borderRight: `1px solid ${theme.palette.divider}`,
+  },
 })
 
 export const AutoCompleteStyles = makeStyles((theme: Theme) =>
