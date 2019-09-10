@@ -1367,7 +1367,7 @@ export class Topology extends React.Component<Props, {}> {
         var linkEnter = link.enter()
             .append('path')
             .attr("id", (d: Link) => "link-" + d.id)
-            .attr("class", (d: Link) => "link " + this.props.linkAttrs(d).class + d.directed ? " directed" : "")
+            .attr("class", (d: Link) => "link " + this.props.linkAttrs(d).class + (d.directed ? " directed" : ""))
             .style("opacity", 0)
         link.exit().remove()
 
