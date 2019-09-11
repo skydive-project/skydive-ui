@@ -66,5 +66,9 @@ var config = {
         5: "Ports",
         7: "Virtual",
         8: "Namespaces"
-    }
+    },
+    "suggestions": [
+        "data.IPV4",
+        "data.MAC"
+    ]
 }

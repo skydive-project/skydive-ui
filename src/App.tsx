@@ -113,6 +113,21 @@ class App extends React.Component<Props, State> {
     //this.parseTopology(data)
   }
 
+  fillSuggestions(node: Node, suggestions: Set<string>) {
+    for (let key of config.suggestions) {
+      try {
+        var value = eval("node." + key)
+        if (Array.isArray(value)) {
+          for (let v of value) {
+            suggestions.add(v)
+          }
+        } else if (typeof value === "string") {
+          suggestions.add(value)
+        }
+      } catch (e) { }
+    }
+  }
+
   parseTopology(data: { Nodes: any, Edges: any }) {
     if (!this.tc) {
       return
@@ -131,16 +146,7 @@ class App extends React.Component<Props, State> {
       let n = this.tc.addNode(node.ID, ["infra"], node.Metadata)
       this.tc.setParent(n, this.tc.root, config.nodeAttrs(n).weight)
 
-      // fill a bit of suggestion
-      suggestions.add(node.Metadata.Name)
-      if (node.Metadata.MAC) {
-        suggestions.add(node.Metadata.MAC)
-      }
-      if (node.Metadata.IPV4) {
-        for (let ip of node.Metadata.IPV4) {
-          suggestions.add(ip)
-        }
-      }
+      this.fillSuggestions(n, suggestions)
     }
 
     if (!data.Edges) {
@@ -234,8 +240,8 @@ class App extends React.Component<Props, State> {
   weightTitles(): Map<number, string> {
     var map = new Map<number, string>()
     Object.keys(config.weightTitles).forEach(key => {
-        var index = parseInt(key)
-        map.set(index, config.weightTitles[index]);
+      var index = parseInt(key)
+      map.set(index, config.weightTitles[index]);
     })
     return map
   }

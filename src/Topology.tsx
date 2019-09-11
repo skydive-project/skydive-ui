@@ -749,12 +749,25 @@ export class Topology extends React.Component<Props, {}> {
         }
     }
 
+    /*viewSize(): {width: number, height: number} {
+        var element = this.g.node()
+        if (!element) {
+            return {width: 0, height: 0}
+        }
+        var parent = element.parentElement
+        if (!parent) {
+            return
+        }
+
+        var fullWidth = parent.clientWidth || parent.parentNode.clientWidth, fullHeight = parent.clientHeight || parent.parentNode.clientHeight
+    
+        
+    }*/
+
     /**
      * Zoom until all the nodes are displayed
      */
     zoomFit() {
-        //return
-
         if (!this.gNodes) {
             return
         }
@@ -940,6 +953,8 @@ export class Topology extends React.Component<Props, {}> {
 
         select("#node-highlight-" + node.id)
             .style("opacity", active ? 1 : 0)
+
+        //var fullWidth = parent.clientWidth || parent.parentNode.clientWidth, fullHeight = parent.clientHeight || parent.parentNode.clientHeight
     }
 
     clearHighlightNodes() {
@@ -1375,7 +1390,7 @@ export class Topology extends React.Component<Props, {}> {
                 return vLinker({ source: { node: d.source, dx: 0, dy: margin }, target: { node: d.target, dx: 0, dy: -margin } })
             }
 
-            return vLinker({ source: { node: d.target, dx: 0, dy: margin }, target: { node: d.source, dx: 0, dy: -margin } })
+            return vLinker({ source: { node: d.source, dx: 0, dy: -margin }, target: { node: d.target, dx: 0, dy: margin } })
         }
         const linker = (d: Link) => wrapperLink(d, 55)
 
