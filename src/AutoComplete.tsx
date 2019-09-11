@@ -122,7 +122,7 @@ export default function Autocomplete(props: AutocompleteProps) {
 
   function handleChange(item: string) {
     let newSelectedItem = [...selectedItem]
-    if (newSelectedItem.indexOf(item) === -1) {
+    if (item && newSelectedItem.indexOf(item) === -1) {
       newSelectedItem = [...newSelectedItem, item]
     }
     setInputValue('')
