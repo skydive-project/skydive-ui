@@ -427,6 +427,10 @@ export class Topology extends React.Component<Props, {}> {
         child.parent = parent
 
         weight = typeof weight === "function" ? weight(child) : weight
+        if (!weight) {
+            weight = child.parent ? child.parent.weight : 1
+        }
+
         if (weight > this.maxWeight) {
             this.maxWeight = weight
         }

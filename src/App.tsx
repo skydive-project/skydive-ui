@@ -138,7 +138,7 @@ class App extends React.Component<Props, State> {
       }
 
       let n = this.tc.addNode(node.ID, ["infra"], node.Metadata)
-      this.tc.setParent(n, this.tc.root, this.nodeWeight)
+      this.tc.setParent(n, this.tc.root, config.nodeAttrs(n).weight)
 
       // fill a bit of suggestion
       suggestions.add(node.Metadata.Name)
@@ -163,7 +163,7 @@ class App extends React.Component<Props, State> {
         let child = this.tc.nodes.get(edge.Child)
 
         if (parent && child) {
-          this.tc.setParent(child, parent, this.nodeWeight)
+          this.tc.setParent(child, parent, config.nodeAttrs(child).weight)
         }
       }
     }
@@ -240,14 +240,7 @@ class App extends React.Component<Props, State> {
     ))
   }
 
-  nodeWeight(node: Node): number {
-    return config.nodeWeight(node)
-  }
-
   sortNodesFnc(a, b) {
-    if (!a.data.Name) {
-      console.log(a.data)
-    }
     return a.data.Name.localeCompare(b.data.Name)
   }
 
