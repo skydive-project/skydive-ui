@@ -76,6 +76,14 @@ interface LevelNodes {
     nodes: Array<D3Node>
 }
 
+interface LevelRect {
+    weight: number
+    x: number
+    y: number
+    width: number
+    height: number
+}
+
 class NodeWrapper {
     id: string
     wrapped: Node
@@ -101,7 +109,7 @@ interface D3Node {
 
 export interface NodeAttrs {
     name: string
-    class: string
+    classes: string
     icon: string
 }
 
@@ -644,15 +652,15 @@ export class Topology extends React.Component<Props, {}> {
         return bb
     }
 
-    private nodesRect(nodes: Array<D3Node>): { x: number, y: number, width: number, height: number } | null {
+    private levelRect(levelNodes: LevelNodes): LevelRect | null {
         if (!this.svgDiv) {
             return null
         }
 
-        var node0 = nodes[0]
+        var node0 = levelNodes.nodes[0]
         var nBB = [node0.y, node0.y]
 
-        for (let node of nodes) {
+        for (let node of levelNodes.nodes) {
             if (nBB[0] > node.y) {
                 nBB[0] = node.y
             }
@@ -667,11 +675,28 @@ export class Topology extends React.Component<Props, {}> {
         var width = this.svgDiv.clientWidth * 10
 
         return {
+            weight: levelNodes.weight,
             x: gBB[0] - width,
             y: nBB[0] - margin,
             width: (gBB[1] - gBB[0]) + width * 2,
             height: nBB[1] - nBB[0] + margin * 2
         }
+    }
+
+    private levelRects(levels: Array<LevelNodes>): Array<LevelRect> {
+        var levelRects = new Array<LevelRect>()
+
+        var prevY = 0
+        levels.reverse().forEach(levelNodes => {
+            var rect = this.levelRect(levelNodes)
+            if (rect) {
+                if (prevY && rect.y + rect.height > prevY) {
+                    rect.height = prevY - rect.y
+                }
+                levelRects.push(rect)
+            }
+        })
+        return levelRects
     }
 
     private levelNodes(): Array<LevelNodes> {
@@ -688,7 +713,12 @@ export class Topology extends React.Component<Props, {}> {
             }
         })
 
-        return Array.from(levelNodes.values())
+        var levels = Array.from(levelNodes.values())
+        levels.sort(function (a: LevelNodes, b: LevelNodes) {
+            return a.weight - b.weight
+        })
+
+        return levels
     }
 
     /**
@@ -1039,24 +1069,19 @@ export class Topology extends React.Component<Props, {}> {
         return nodes
     }
 
-    showLevelLabel(d: LevelNodes) {
-        var bb = this.nodesRect(d.nodes)
-        if (!bb) {
-            return
-        }
-
+    showLevelLabel(d: LevelRect) {
         var label = select("#level-label-" + d.weight)
         label
-            .attr("transform", (d: LevelNodes) => bb ? `translate(${-this.absTransformX},${bb.y + 2})` : ``)
+            .attr("transform", `translate(${-this.absTransformX},${d.y + 2})`)
             .select("rect")
-            .attr("height", bb.height - 4)
+            .attr("height", d.height - 4)
 
         var text = label.select("text")
             .attr("style", "")
         var element = text.node()
         if (element) {
             text
-                .attr("dy", (bb.height - element.getComputedTextLength()) / 2)
+                .attr("dy", (d.height - element.getComputedTextLength()) / 2)
                 .attr("style", "writing-mode: tb; glyph-orientation-vertical: 0")
         }
         label.transition()
@@ -1071,7 +1096,7 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     showAllLevelLabels() {
-        selectAll("g.level-label").each((d: LevelNodes) => this.showLevelLabel(d))
+        selectAll("g.level-label").each((d: LevelRect) => this.showLevelLabel(d))
     }
 
     /**
@@ -1098,54 +1123,41 @@ export class Topology extends React.Component<Props, {}> {
         // levels
         this.hideAllLevelLabels()
 
+        var levelRects = this.levelRects(this.levelNodes())
+
         var levelLabel = this.gLevelLabels.selectAll('g.level-label')
             .interrupt()
-            .data(this.levelNodes(), (d: LevelNodes) => "level-label-" + d.weight)
-        levelLabel.enter()
+            .data(levelRects, (d: LevelRect) => "level-label-" + d.weight)
+        var levelLabelEnter = levelLabel.enter()
             .append("g")
-            .attr("id", (d: LevelNodes) => "level-label-" + d.weight)
+            .attr("id", (d: LevelRect) => "level-label-" + d.weight)
             .attr("class", "level-label")
             .style("opacity", 0)
-            .each(function (d) {
-                var bb = self.nodesRect(d.nodes)
-                if (!bb) {
-                    return
-                }
-                var label = select(this)
-                    .attr("transform", (d: LevelNodes) => bb ? `translate(${-self.absTransformX},${bb.y})` : ``)
-
-                label.append("rect")
-                    .attr("width", 40)
-                    .attr("height", bb.height)
-
-                label.append("text")
-                    .attr("font-size", 26)
-                    .attr("dx", 18)
-                    .text((d: LevelNodes) => self.weightTitles.get(d.weight) || 'Level ' + d.weight)
-            })
+            .attr("transform", (d: LevelRect) => `translate(${-self.absTransformX},${d.y})`)
+        levelLabelEnter.append("rect")
+            .attr("width", 40)
+            .attr("height", (d: LevelRect) => d.height)
+        levelLabelEnter.append("text")
+            .attr("font-size", 26)
+            .attr("dx", 18)
+            .text((d: LevelRect) => self.weightTitles.get(d.weight) || 'Level ' + d.weight)
         levelLabel.exit().remove()
 
         var level = this.gLevels.selectAll('g.level')
-            .data(this.levelNodes(), (d: LevelNodes) => "level-" + d.weight)
+            .data(levelRects, (d: LevelRect) => "level-" + d.weight)
             .interrupt()
         var levelEnter = level.enter()
             .append('g')
-            .attr("id", (d: LevelNodes) => "level-" + d.weight)
+            .attr("id", (d: LevelRect) => "level-" + d.weight)
             .attr("class", "level")
             .style("opacity", 0)
-            .each(function (d: LevelNodes) {
-                var bb = self.nodesRect(d.nodes)
-                if (!bb) {
-                    return
-                }
-                select(this)
-                    .attr("transform", (d: LevelNodes) => bb ? `translate(${bb.x},${bb.y})` : ``)
-                    .append("rect")
-                    .attr("id", (d: LevelNodes) => "level-zone-" + d.weight)
-                    .attr("class", "level-zone")
-                    .attr("width", bb.width)
-                    .attr("height", bb.height)
-            })
+            .attr("transform", (d: LevelRect) => `translate(${d.x},${d.y})`)
+
+        levelEnter.append("rect")
+            .attr("id", (d: LevelRect) => "level-zone-" + d.weight)
+            .attr("class", "level-zone")
+            .attr("width", (d: LevelRect) => d.width)
+            .attr("height", (d: LevelRect) => d.height)
         level.exit().remove()
 
         levelEnter.transition()
@@ -1155,17 +1167,10 @@ export class Topology extends React.Component<Props, {}> {
 
         level.transition()
             .duration(500)
-            .each(function (d: LevelNodes) {
-                var bb = self.nodesRect(d.nodes)
-                if (!bb) {
-                    return
-                }
-                select(this)
-                    .attr("transform", (d: D3Node) => bb ? `translate(${bb.x},${bb.y})` : ``)
-                    .select('rect.level-zone')
-                    .attr("height", bb.height)
-            })
             .on('end', d => this.showLevelLabel(d))
+            .attr("transform", (d: LevelRect) => `translate(${d.x},${d.y})`)
+            .select('rect.level-zone')
+            .attr("height", (d: LevelRect) => d.height)
 
         var hieraLink = this.gHieraLinks.selectAll('path.hiera-link')
             .data(root.links(), (d: any) => d.source.data.id + d.target.data.id)
@@ -1199,7 +1204,7 @@ export class Topology extends React.Component<Props, {}> {
             .filter((d: D3Node) => !d.data.isPlaceholder && d.data.wrapped !== this.root)
             .append("g")
             .attr("id", (d: D3Node) => "node-" + d.data.id)
-            .attr("class", (d: D3Node) => "node " + this.props.nodeAttrs(d.data.wrapped).class)
+            .attr("class", (d: D3Node) => "node " + this.props.nodeAttrs(d.data.wrapped).classes)
             .style("opacity", 0)
             .attr("transform", (d: D3Node) => `translate(${d.x},${d.y})`)
             .on("dblclick", (d: D3Node) => this.nodeDoubleClicked(d))
@@ -1352,16 +1357,18 @@ export class Topology extends React.Component<Props, {}> {
             let x2 = target.x + d.target.dx
             let y = source.y + d.source.dy
 
-            let delta = 0
             if (Math.abs(x1 - x2) > this.nodeWidth) {
-                delta = 30
+                var points = [
+                    { x: x1, y: y + 10 },
+                    { x: (x1 + x2) / 2, y: y + 40 },
+                    { x: x2, y: y + 10 }
+                ]
+            } else {
+                var points = [
+                    { x: x1, y: y },
+                    { x: x2, y: y }
+                ]
             }
-
-            var points = [
-                { x: x1, y: y },
-                { x: (x1 + x2) / 2, y: y + delta },
-                { x: x2, y: y }
-            ]
 
             const liner = line()
                 .x(d => d.x)
