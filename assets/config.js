@@ -58,5 +58,13 @@ var config = {
         }
 
         return attrs
+    },
+    "weightTitles": {
+        0: "Fabric",
+        3: "Physical",
+        4: "Bridges",
+        5: "Ports",
+        7: "Virtual",
+        8: "Namespaces"
     }
 }

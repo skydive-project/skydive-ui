@@ -75,15 +75,6 @@ interface State {
   nodeSelected: Array<Node>
 }
 
-const weightTitles = new Map<number, string>([
-  [0, "Fabric"],
-  [3, "Physical"],
-  [4, "Bridges"],
-  [5, "Ports"],
-  [7, "Virtual"],
-  [8, "Namespaces"]
-])
-
 class App extends React.Component<Props, State> {
 
   tc: Topology | null
@@ -238,6 +229,15 @@ class App extends React.Component<Props, State> {
         <JSONTree className={classes.jsonTree} data={node.data} theme="bright" invertTheme hideRoot sortObjectKeys />
       </TabPanel>
     ))
+  }
+
+  weightTitles(): Map<number, string> {
+    var map = new Map<number, string>()
+    Object.keys(config.weightTitles).forEach(key => {
+        var index = parseInt(key)
+        map.set(index, config.weightTitles[index]);
+    })
+    return map
   }
 
   sortNodesFnc(a, b) {
@@ -401,7 +401,7 @@ class App extends React.Component<Props, State> {
           <Container maxWidth="xl" className={classes.container}>
             <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} linkAttrs={this.linkAttrs}
               onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
-              onShowNodeContextMenu={this.onShowNodeContextMenu} weightTitles={weightTitles} />
+              onShowNodeContextMenu={this.onShowNodeContextMenu} weightTitles={this.weightTitles()} />
           </Container>
           <Container className={classes.rightPanel}>
             <Paper className={clsx(classes.rightPanelPaper, !this.state.nodeSelected.length && classes.rightPanelPaperClose)}>
