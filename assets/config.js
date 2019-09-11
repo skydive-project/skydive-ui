@@ -69,6 +69,7 @@ var config = {
     },
     "suggestions": [
         "data.IPV4",
-        "data.MAC"
+        "data.MAC",
+        "data.Name"
     ]
 }

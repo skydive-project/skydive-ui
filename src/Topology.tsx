@@ -779,20 +779,18 @@ export class Topology extends React.Component<Props, {}> {
         }
     }
 
-    /*viewSize(): {width: number, height: number} {
+    viewSize(): { width: number, height: number } {
         var element = this.g.node()
         if (!element) {
-            return {width: 0, height: 0}
+            return { width: 0, height: 0 }
         }
         var parent = element.parentElement
         if (!parent) {
-            return
+            return { width: 0, height: 0 }
         }
 
-        var fullWidth = parent.clientWidth || parent.parentNode.clientWidth, fullHeight = parent.clientHeight || parent.parentNode.clientHeight
-    
-        
-    }*/
+        return { width: parent.clientWidth || parent.parentNode.clientWidth, height: parent.clientHeight || parent.parentNode.clientHeight }
+    }
 
     /**
      * Zoom until all the nodes are displayed
@@ -808,29 +806,21 @@ export class Topology extends React.Component<Props, {}> {
         }
         var bounds = element.getBBox()
 
-        element = this.g.node()
-        if (!element) {
-            return
-        }
-        var parent = element.parentElement
-        if (!parent) {
-            return
-        }
+        var viewSize = this.viewSize()
 
-        var fullWidth = parent.clientWidth || parent.parentNode.clientWidth, fullHeight = parent.clientHeight || parent.parentNode.clientHeight
         var width = bounds.width, height = bounds.height
         if (width === 0 || height === 0) {
             return
         }
         var midX = bounds.x + width / 2, midY = bounds.y + height / 2
 
-        var scale = 0.65 / Math.max(width / fullWidth, height / fullHeight)
+        var scale = 0.65 / Math.max(width / viewSize.width, height / viewSize.height)
         if (scale > 1) {
             scale = 1
         }
 
-        this.absTransformX = fullWidth / 2 - midX * scale
-        this.absTransformY = fullHeight / 2 - midY * scale
+        this.absTransformX = viewSize.width / 2 - midX * scale
+        this.absTransformY = viewSize.height / 2 - midY * scale
 
         var t = zoomIdentity
             .translate(this.absTransformX, this.absTransformY)
@@ -961,16 +951,22 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     private showNode(node: Node) {
+        var nodes = new Array<Node>()
+
         var parent = node.parent
         while (parent) {
             if (!parent.state.expanded) {
-                var d = this.d3nodes.get(parent.id)
-                if (d) {
-                    this.expand(d.data)
-                }
+                nodes.push(parent)
             }
             parent = parent.parent
         }
+
+        nodes.reverse().forEach(node => {
+            var d = this.d3nodes.get(node.id)
+            if (d) {
+                this.expand(d.data)
+            }
+        })
     }
 
     highlightNode(node: Node, active) {
@@ -984,7 +980,16 @@ export class Topology extends React.Component<Props, {}> {
         select("#node-highlight-" + node.id)
             .style("opacity", active ? 1 : 0)
 
-        //var fullWidth = parent.clientWidth || parent.parentNode.clientWidth, fullHeight = parent.clientHeight || parent.parentNode.clientHeight
+        var scale = 1.1
+        var viewSize = this.viewSize()
+
+        var t = zoomIdentity
+            .translate(viewSize.width / 2 - scale * d.x, viewSize.height / 2 - scale * d.y)
+            .scale(scale)
+        this.svg
+            .transition()
+            .duration(500)
+            .call(this.zoom.transform, t)
     }
 
     clearHighlightNodes() {
@@ -1190,6 +1195,7 @@ export class Topology extends React.Component<Props, {}> {
         hieraLink.transition()
             .duration(500)
             .attr("d", hieraLinker)
+            .style("opacity", 1)
 
         var node = this.gNodes.selectAll('g.node')
             .interrupt()
