@@ -157,7 +157,7 @@ export class Topology extends React.Component<Props, {}> {
     constructor(props) {
         super(props)
 
-        this.nodeWidth = 110
+        this.nodeWidth = 140
         this.nodeHeight = 260
 
         if (this.props.weightTitles) {
@@ -1383,7 +1383,7 @@ export class Topology extends React.Component<Props, {}> {
                 if (dSource.x < dTarget.x) {
                     return hLinker({ source: { node: d.source, dx: margin, dy: 0 }, target: { node: d.target, dx: -margin, dy: 0 } })
                 }
-                return hLinker({ source: { node: d.target, dx: margin, dy: 0 }, target: { node: d.source, dx: -margin, dy: 0 } })
+                return hLinker({ source: { node: d.source, dx: -margin, dy: 0 }, target: { node: d.target, dx: margin, dy: 0 } })
             }
 
             if (dSource.y < dTarget.y) {

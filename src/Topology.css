@@ -48,7 +48,7 @@ svg {
 }
 
 .links .directed {
-    marker-start: url(#link-directed-marker);
+    marker-start: unset;
     marker-end: url(#link-directed-marker);
 }
 

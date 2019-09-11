@@ -173,7 +173,7 @@ class App extends React.Component<Props, State> {
         let child = this.tc.nodes.get(edge.Child)
 
         if (parent && child) {
-          this.tc.addLink(child, parent, [edge.Metadata.RelationType], edge.Metadata, edge.Metadata.Directed)
+          this.tc.addLink(parent, child, [edge.Metadata.RelationType], edge.Metadata, edge.Metadata.Directed)
         }
       }
     }
