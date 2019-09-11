@@ -19,7 +19,7 @@ import * as React from 'react'
 import clsx from 'clsx'
 import Websocket from 'react-websocket'
 
-import { withStyles, makeStyles } from '@material-ui/core/styles'
+import { withStyles } from '@material-ui/core/styles'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import Drawer from '@material-ui/core/Drawer'
 import AppBar from '@material-ui/core/AppBar'
@@ -46,6 +46,7 @@ import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState } from './Topology'
 import { mainListItems, helpListItems } from './Menu'
 import AutoCompleteInput from './AutoComplete'
 import { a11yProps, TabPanel } from './Tabs'
+import { TableDataViewer } from './TableDataViewer'
 import './App.css'
 
 import Logo from './Logo.png'
@@ -190,8 +191,6 @@ class App extends React.Component<Props, State> {
   }
 
   nodeAttrs(node: Node): NodeAttrs {
-
-
     var attrs = config.nodeAttrs(node)
     if (node.data.State) {
       attrs.classes.push(node.data.State.toLowerCase())
@@ -218,6 +217,11 @@ class App extends React.Component<Props, State> {
     }
 
     this.setState({ nodeSelected: nodes, tab: tab })
+
+    // hack in order to restore overflow of panel after transition
+    setTimeout(() => {
+      this.setState({ overflow: 'auto' })
+    }, 1000)
   }
 
   renderTabs() {

@@ -136,6 +136,7 @@ export const AppStyles = (theme: Theme) => createStyles({
   },
   rightPanelPaperContent: {
     padding: theme.spacing(2),
+    flex: "auto"
   },
   jsonTree: {
     backgroundColor: 'unset'
