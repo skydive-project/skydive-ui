@@ -226,19 +226,37 @@ class App extends React.Component<Props, State> {
 
   renderTabs() {
     return this.state.nodeSelected.map((d: Node, i: number) => (
-      <Tab key={"tab-" + i} label={d.id.split("-", 2)[0] + "-..."} {...a11yProps(i)} />
+      <Tab className="tab" key={"tab-" + i} label={d.id.split("-", 2)[0] + "-..."} {...a11yProps(i)} />
     ))
   }
 
   renderTabPanels(classes: any) {
-    return this.state.nodeSelected.map((node: Node, i: number) => (
-      <TabPanel key={"tabpanel-" + i} value={this.state.tab} index={i}>
-        <Typography component="h6" color="primary" gutterBottom>
-          {node.id}
-        </Typography>
-        <JSONTree className={classes.jsonTree} data={node.data} theme="bright" invertTheme hideRoot sortObjectKeys />
-      </TabPanel>
-    ))
+    return this.state.nodeSelected.map((node: Node, i: number) => {
+      var data = JSON.parse(JSON.stringify(node.data))
+
+      var features = data.Features
+      delete data.Features
+
+      const columns = ["Feature", "Active"]
+
+      var featureData = new Array<Array<any>>()
+      for (let key in features) {
+        featureData.push([key, features[key] ? "true" : "false"])
+      }
+
+      return (
+        <TabPanel key={"tabpanel-" + i} value={this.state.tab} index={i}>
+          <Typography component="h6" color="primary" gutterBottom>
+            {node.id}
+          </Typography>
+          <JSONTree className={classes.jsonTree} data={data} theme="bright" invertTheme hideRoot sortObjectKeys />
+          {
+            features && <TableDataViewer title="Features" columns={columns} data={featureData} />
+          }
+
+        </TabPanel>
+      )
+    })
   }
 
   weightTitles(): Map<number, string> {

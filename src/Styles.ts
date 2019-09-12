@@ -116,7 +116,7 @@ export const AppStyles = (theme: Theme) => createStyles({
     position: 'relative',
     display: 'flex',
     flexDirection: 'column',
-    width: 550,
+    width: 600,
     height: `calc(100% - ${20}px)`,
     transition: theme.transitions.create('width', {
       easing: theme.transitions.easing.sharp,
@@ -182,7 +182,7 @@ export const AppStyles = (theme: Theme) => createStyles({
     height: 224,
   },
   tab: {
-    borderRight: `1px solid ${theme.palette.divider}`,
+    borderRight: `1px solid ${theme.palette.divider}`
   },
 })
 
