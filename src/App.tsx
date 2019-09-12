@@ -106,7 +106,7 @@ class App extends React.Component<Props, State> {
     this.onSearchChange = this.onSearchChange.bind(this)
     this.onTabChange = this.onTabChange.bind(this)
 
-    this.refreshTopology = debounce(this._refreshTopology.bind(this), 200)
+    this.refreshTopology = debounce(this._refreshTopology.bind(this), 300)
   }
 
   componentDidMount() {
@@ -142,11 +142,26 @@ class App extends React.Component<Props, State> {
       return false
     }
 
-    let n = this.tc.addNode(node.ID, tags, node.Metadata)
-    this.tc.setParent(n, this.tc.root, config.nodeAttrs(n).weight)
+    let n = this.tc.addNode(node.ID, tags, node.Metadata, (nn: Node): number => config.nodeAttrs(nn).weight)
+    this.tc.setParent(n, this.tc.root)
 
     this.fillSuggestions(n, this.state.suggestions)
     this.setState({ suggestions: this.state.suggestions })
+
+    return true
+  }
+
+  updatedNode(node: any): boolean {
+    if (!this.tc) {
+      return false
+    }
+
+    // ignore Type ofrule
+    if (node.Metadata.Type === "ofrule") {
+      return false
+    }
+
+    this.tc.updateNode(node.ID, node.Metadata)
 
     return true
   }
@@ -171,11 +186,21 @@ class App extends React.Component<Props, State> {
 
     if (parent && child) {
       if (edge.Metadata.RelationType === "ownership") {
-        this.tc.setParent(child, parent, config.nodeAttrs(child).weight)
+        this.tc.setParent(child, parent)
       } else {
         this.tc.addLink(edge.ID, parent, child, [edge.Metadata.RelationType], edge.Metadata, edge.Metadata.Directed)
       }
     }
+
+    return true
+  }
+
+  updatedEdge(edge: any): boolean {
+    if (!this.tc) {
+      return false
+    }
+
+    this.tc.updateLink(edge.ID, edge.Metadata)
 
     return true
   }
@@ -321,7 +346,6 @@ class App extends React.Component<Props, State> {
   }
 
   _refreshTopology() {
-    // TODO add debounce
     if (this.tc) {
       this.tc.renderTree()
     }
@@ -345,6 +369,15 @@ class App extends React.Component<Props, State> {
           this.refreshTopology()
         }
         break
+      case "NodeUpdated":
+        if (!this.synced) {
+          return
+        }
+
+        if (this.updatedNode(data.Obj)) {
+          this.refreshTopology()
+        }
+        break
       case "NodeDeleted":
         if (!this.synced) {
           return
@@ -363,6 +396,15 @@ class App extends React.Component<Props, State> {
           if (this.tc) {
             this.setState({ linkTagStates: this.tc.linkTagStates })
           }
+        }
+        break
+      case "EdgeUpdated":
+        if (!this.synced) {
+          return
+        }
+
+        if (this.updatedEdge(data.Obj)) {
+          this.refreshTopology()
         }
         break
       case "EdgeDeleted":

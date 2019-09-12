@@ -39,18 +39,26 @@ export class Node {
     id: string
     tags: Array<string>
     data: any
-    weight: number
+    weight: number | ((node: Node) => number)
     children: Array<Node>
     state: State
     parent: Node | null
 
-    constructor(id: string, tags: Array<string>, data: any, state: State) {
+    constructor(id: string, tags: Array<string>, data: any, state: State,  weight: number | ((node: Node) => number)) {
         this.id = id
         this.tags = tags
         this.data = data
-        this.weight = 0
+        this.weight = weight
         this.children = new Array<Node>()
         this.state = state
+    }
+
+    getWeight(): number {
+        var weight = typeof this.weight === "function" ? this.weight(this) : this.weight
+        if (!weight) {
+            weight = this.parent ? this.parent.getWeight() : 1
+        }
+        return weight
     }
 }
 
@@ -127,6 +135,8 @@ interface Props {
     weightTitles?: Map<number, string>
 }
 
+const maxWeight = 15
+
 /**
  * Topology component. Based on a tree enhanced by multiple levels supports.
  */
@@ -151,7 +161,6 @@ export class Topology extends React.Component<Props, {}> {
     private liner: line
     private nodeClickedID: number
     private d3nodes: Map<string, D3Node>
-    private maxWeight: number
     private links: Array<Link>
     private absTransformX: number
     private absTransformY: number
@@ -355,9 +364,7 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     private initTree() {
-        this.root = new Node("root", ["root"], { name: "root" }, { expanded: true })
-
-        this.maxWeight = 0
+        this.root = new Node("root", ["root"], { name: "root" }, { expanded: true }, 0)
 
         this.nodes = new Map<string, Node>()
         this.nodeTagStates = new Map<string, boolean>()
@@ -369,34 +376,18 @@ export class Topology extends React.Component<Props, {}> {
         this.linkTagCount = new Map<string, number>()
     }
 
-    /**
-     * Set the state of links of given tag
-     * @param {*} tag
-     * @param {*} state
-     */
     setLinkTagState(tag: string, state: LinkTagState) {
         this.linkTagStates.set(tag, state)
         this.renderTree()
     }
 
-    /**
-     * Active or disable nodes of given tag
-     * @param {*} tag
-     * @param {*} active
-     */
     showNodeTag(tag: string, active: boolean) {
         this.nodeTagStates.set(tag, active)
         this.renderTree()
     }
 
-    /**
-     * Add a new node to the tree root
-     * @param {string} id
-     * @param {Array<string>} tags
-     * @param {object} data
-     */
-    addNode(id: string, tags: Array<string>, data: any): Node {
-        var node = new Node(id, tags, data, this.defaultState())
+    addNode(id: string, tags: Array<string>, data: any, weight: number | ((node: Node) => number)): Node {
+        var node = new Node(id, tags, data, this.defaultState(), weight)
         this.nodes.set(id, node)
 
         tags.forEach(tag => {
@@ -411,10 +402,14 @@ export class Topology extends React.Component<Props, {}> {
         return node
     }
 
-    /**
-     * Remove a node from the tree
-     * @param {id} string
-     */
+    updateNode(id: string, data: any) {
+        var node = this.nodes.get(id)
+        if (!node) {
+            return
+        }
+        node.data = data
+    }
+
     delNode(id: string) {
         var node = this.nodes.get(id)
         if (!node) {
@@ -445,13 +440,7 @@ export class Topology extends React.Component<Props, {}> {
         this.nodes.delete(node.id)
     }
 
-    /**
-     * Set a node as a child of the given parent with the given weight
-     * @param {node} child
-     * @param {node} parent
-     * @param {number} weight
-     */
-    setParent(child: Node, parent: Node, weight: number | ((Node) => number)) {
+    setParent(child: Node, parent: Node) {
         // remove from previous parent if needed
         if (child.parent) {
             child.parent.children = child.parent.children.filter(c => c.id !== child.id)
@@ -459,27 +448,8 @@ export class Topology extends React.Component<Props, {}> {
 
         parent.children.push(child)
         child.parent = parent
-
-        weight = typeof weight === "function" ? weight(child) : weight
-        if (!weight) {
-            weight = child.parent ? child.parent.weight : 1
-        }
-
-        if (weight > this.maxWeight) {
-            this.maxWeight = weight
-        }
-
-        child.weight = weight
     }
 
-    /**
-     * Add a extra link between two node with the given metadata
-     * @param {node} node1
-     * @param {node} node2
-     * @param {Array<string>} tags
-     * @param {object} data
-     * @param {directed} boolean
-     */
     addLink(id: string, node1: Node, node2: Node, tags: Array<string>, data: any, directed: boolean) {
         this.links.push(new Link(id, tags, node1, node2, data, directed))
 
@@ -493,10 +463,16 @@ export class Topology extends React.Component<Props, {}> {
         })
     }
 
-    /**
-     * Remove a link from the tree
-     * @param {id} string
-     */
+    updateLink(id: string, data: any) {
+        this.links.some(link => {
+            if (link.id === id) {
+                link.data = data
+                return true
+            }
+            return false
+        })
+    }
+
     delLink(id: string) {
         this.links = this.links.filter(link => {
             if (link.id !== id) {
@@ -546,7 +522,7 @@ export class Topology extends React.Component<Props, {}> {
     private normalizeTree(node: Node): NodeWrapper | null {
         // return depth of the given layer
         let layerHeight = (node: NodeWrapper, weight: number, currDepth: number): number => {
-            if (node.wrapped.weight > weight) {
+            if (node.wrapped.getWeight() > weight) {
                 return 0
             }
 
@@ -563,17 +539,17 @@ export class Topology extends React.Component<Props, {}> {
 
         // re-order tree to add placeholder node in order to separate levels
         let normalizeTreeHeight = (root: NodeWrapper, node: NodeWrapper, weight: number, currDepth: number, cache: { chains: Map<string, { first: NodeWrapper, last: NodeWrapper }> }) => {
-            if (node.wrapped.weight > weight) {
+            var nodeWeight = node.wrapped.getWeight()
+            if (nodeWeight > weight) {
                 return
             }
 
-            if (node.wrapped.weight === weight && node.parent && node.parent.wrapped.weight !== weight) {
-                let parentDepth = layerHeight(root, node.wrapped.weight - 1, 0)
+            if (nodeWeight === weight && node.parent && node.parent.wrapped.getWeight() !== weight) {
+                let parentDepth = layerHeight(root, node.wrapped.getWeight() - 1, 0)
                 if (currDepth > parentDepth) {
                     return
                 }
-
-                let path = node.parent.wrapped.id + "/" + node.wrapped.weight
+                let path = node.parent.wrapped.id + "/" + nodeWeight
 
                 let first: NodeWrapper, last: NodeWrapper
                 let chain = cache.chains.get(path)
@@ -618,7 +594,7 @@ export class Topology extends React.Component<Props, {}> {
             return null
         }
 
-        for (let i = 0; i <= this.maxWeight; i++) {
+        for (let i = 0; i <= maxWeight; i++) {
             let cache = { chains: new Map<string, { first: NodeWrapper, last: NodeWrapper }>() }
             normalizeTreeHeight(tree, tree, i, 0, cache)
         }
@@ -744,10 +720,13 @@ export class Topology extends React.Component<Props, {}> {
         levels.reverse().forEach(levelNodes => {
             var rect = this.levelRect(levelNodes)
             if (rect) {
+                // ensure there is no overlap between no zone
                 if (prevY && rect.y + rect.height > prevY) {
                     rect.height = prevY - rect.y
                 }
                 levelRects.push(rect)
+
+                prevY = rect.y
             }
         })
         return levelRects
@@ -757,10 +736,10 @@ export class Topology extends React.Component<Props, {}> {
         var levelNodes = new Map<number, LevelNodes>()
         Array.from(this.d3nodes.values()).forEach(node => {
             if (node.data.wrapped !== this.root && !node.data.isPlaceholder) {
-                var arr = levelNodes.get(node.data.wrapped.weight)
+                var arr = levelNodes.get(node.data.wrapped.getWeight())
                 if (!arr) {
-                    arr = { weight: node.data.wrapped.weight, nodes: [node] }
-                    levelNodes.set(node.data.wrapped.weight, arr)
+                    arr = { weight: node.data.wrapped.getWeight(), nodes: [node] }
+                    levelNodes.set(node.data.wrapped.getWeight(), arr)
                 } else {
                     arr.nodes.push(node)
                 }
@@ -775,9 +754,6 @@ export class Topology extends React.Component<Props, {}> {
         return levels
     }
 
-    /**
-     * Unselect all the nodes
-     */
     private unselectAllNodes() {
         var self = this
 
@@ -1128,7 +1104,7 @@ export class Topology extends React.Component<Props, {}> {
         return nodes
     }
 
-    showLevelLabel(d: LevelRect) {
+    private showLevelLabel(d: LevelRect) {
         var label = select("#level-label-" + d.weight)
         label
             .attr("transform", `translate(${-this.absTransformX},${d.y + 2})`)
@@ -1148,13 +1124,13 @@ export class Topology extends React.Component<Props, {}> {
             .style("opacity", 1)
     }
 
-    hideAllLevelLabels() {
+    private hideAllLevelLabels() {
         this.gLevelLabels.selectAll('g.level-label')
             .style("opacity", 0)
             .interrupt()
     }
 
-    showAllLevelLabels() {
+    private showAllLevelLabels() {
         selectAll("g.level-label").each((d: LevelRect) => this.showLevelLabel(d))
     }
 
@@ -1178,10 +1154,7 @@ export class Topology extends React.Component<Props, {}> {
             .x(d => d.x)
             .y(d => d.y)
 
-        // hide labels while moving as we can move properly labels with
-        // levels
-        this.hideAllLevelLabels()
-
+        // TODO make a cache of this, use a version number to detect real update
         var levelRects = this.levelRects(this.levelNodes())
 
         var levelLabel = this.gLevelLabels.selectAll('g.level-label')
@@ -1255,16 +1228,13 @@ export class Topology extends React.Component<Props, {}> {
             .interrupt()
             .data(root.descendants(), (d: D3Node) => d.data.id)
 
-        node.exit()
-            .transition()
-            .duration(500).style("opacity", 0)
-            .remove()
+        const nodeClass = (d: D3Node) => "node " + this.props.nodeAttrs(d.data.wrapped).classes.join(" ")
 
         var nodeEnter = node.enter()
             .filter((d: D3Node) => !d.data.isPlaceholder && d.data.wrapped !== this.root)
             .append("g")
             .attr("id", (d: D3Node) => "node-" + d.data.id)
-            .attr("class", (d: D3Node) => "node " + this.props.nodeAttrs(d.data.wrapped).classes.join(" "))
+            .attr("class", nodeClass)
             .style("opacity", 0)
             .attr("transform", (d: D3Node) => `translate(${d.x},${d.y})`)
             .on("dblclick", (d: D3Node) => this.nodeDoubleClicked(d))
@@ -1279,6 +1249,10 @@ export class Topology extends React.Component<Props, {}> {
             .on("mouseout", () => {
                 this.outNode()
             })
+        node.exit()
+            .transition()
+            .duration(500).style("opacity", 0)
+            .remove()
 
         nodeEnter.transition()
             .duration(500)
@@ -1394,6 +1368,7 @@ export class Topology extends React.Component<Props, {}> {
             .duration(500)
             .style("opacity", 1)
             .attr("transform", (d: D3Node) => `translate(${d.x},${d.y})`)
+            .attr("class", nodeClass)
 
         const vLinker = linkVertical()
             .x((d: any) => {
