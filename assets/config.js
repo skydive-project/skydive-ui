@@ -12,6 +12,7 @@ var config = {
         }
 
         switch (node.data.Type) {
+            case "device":
             case "host":
                 attrs.icon = "\uf109"
                 attrs.weight = 3
@@ -30,7 +31,6 @@ var config = {
                 attrs.icon = "\uf55b"
                 break
             case "interface":
-            case "device":
             case "tun":
             case "tap":
                 attrs.icon = "\uf796"

@@ -18,6 +18,7 @@
 import * as React from 'react'
 import clsx from 'clsx'
 import Websocket from 'react-websocket'
+import { debounce } from 'ts-debounce';
 
 import { withStyles } from '@material-ui/core/styles'
 import CssBaseline from '@material-ui/core/CssBaseline'
@@ -59,11 +60,6 @@ interface Props extends WithSnackbarProps {
   classes: any
 }
 
-interface NodeInfo {
-  id: string
-  data: any
-}
-
 interface State {
   isContextMenuOn: string
   contextMenuX: number
@@ -82,6 +78,7 @@ class App extends React.Component<Props, State> {
   websocket: Websocket | null
   synced: boolean
   state: State
+  refreshTopology: any
 
   constructor(props) {
     super(props)
@@ -108,25 +105,89 @@ class App extends React.Component<Props, State> {
     this.onLayerLinkStateChange = this.onLayerLinkStateChange.bind(this)
     this.onSearchChange = this.onSearchChange.bind(this)
     this.onTabChange = this.onTabChange.bind(this)
+
+    this.refreshTopology = debounce(this._refreshTopology.bind(this), 200)
   }
 
   componentDidMount() {
     //this.parseTopology(data)
   }
 
-  fillSuggestions(node: Node, suggestions: Set<string>) {
+  fillSuggestions(node: Node, suggestions: Array<string>) {
     for (let key of config.suggestions) {
       try {
         var value = eval("node." + key)
         if (Array.isArray(value)) {
           for (let v of value) {
-            suggestions.add(v)
+            if (!suggestions.includes(v)) {
+              suggestions.push(v)
+            }
           }
         } else if (typeof value === "string") {
-          suggestions.add(value)
+          if (!suggestions.includes(value)) {
+            suggestions.push(value)
+          }
         }
       } catch (e) { }
     }
+  }
+
+  addNode(node: any, tags: Array<string>): boolean {
+    if (!this.tc) {
+      return false
+    }
+
+    // ignore Type ofrule
+    if (node.Metadata.Type === "ofrule") {
+      return false
+    }
+
+    let n = this.tc.addNode(node.ID, tags, node.Metadata)
+    this.tc.setParent(n, this.tc.root, config.nodeAttrs(n).weight)
+
+    this.fillSuggestions(n, this.state.suggestions)
+    this.setState({ suggestions: this.state.suggestions })
+
+    return true
+  }
+
+  delNode(node: any): boolean {
+    if (!this.tc) {
+      return false
+    }
+
+    this.tc.delNode(node.ID)
+
+    return true
+  }
+
+  addEdge(edge: any): boolean {
+    if (!this.tc) {
+      return false
+    }
+
+    let parent = this.tc.nodes.get(edge.Parent)
+    let child = this.tc.nodes.get(edge.Child)
+
+    if (parent && child) {
+      if (edge.Metadata.RelationType === "ownership") {
+        this.tc.setParent(child, parent, config.nodeAttrs(child).weight)
+      } else {
+        this.tc.addLink(edge.ID, parent, child, [edge.Metadata.RelationType], edge.Metadata, edge.Metadata.Directed)
+      }
+    }
+
+    return true
+  }
+
+  delEdge(edge: any): boolean {
+    if (!this.tc) {
+      return false
+    }
+
+    this.tc.delLink(edge.ID)
+
+    return true
   }
 
   parseTopology(data: { Nodes: any, Edges: any }) {
@@ -134,20 +195,9 @@ class App extends React.Component<Props, State> {
       return
     }
 
-    var suggestions = new Set<string>()
-
     // first add all the nodes
     for (let node of data.Nodes) {
-
-      // ignore Type ofrule
-      if (node.Metadata.Type === "ofrule") {
-        continue
-      }
-
-      let n = this.tc.addNode(node.ID, ["infra"], node.Metadata)
-      this.tc.setParent(n, this.tc.root, config.nodeAttrs(n).weight)
-
-      this.fillSuggestions(n, suggestions)
+      this.addNode(node, ["infra"])
     }
 
     if (!data.Edges) {
@@ -157,12 +207,7 @@ class App extends React.Component<Props, State> {
     // then add ownership links
     for (let edge of data.Edges) {
       if (edge.Metadata.RelationType === "ownership") {
-        let parent = this.tc.nodes.get(edge.Parent)
-        let child = this.tc.nodes.get(edge.Child)
-
-        if (parent && child) {
-          this.tc.setParent(child, parent, config.nodeAttrs(child).weight)
-        }
+        this.addEdge(edge)
       }
     }
 
@@ -170,22 +215,13 @@ class App extends React.Component<Props, State> {
     // then add ownership links
     for (let edge of data.Edges) {
       if (edge.Metadata.RelationType !== "ownership") {
-        let parent = this.tc.nodes.get(edge.Parent)
-        let child = this.tc.nodes.get(edge.Child)
-
-        if (parent && child) {
-          this.tc.addLink(parent, child, [edge.Metadata.RelationType], edge.Metadata, edge.Metadata.Directed)
-        }
+        this.addEdge(edge)
       }
     }
 
-    // show infra layer
     this.tc.showNodeTag("infra", true)
 
-    // get list of link layer types
     this.setState({ linkTagStates: this.tc.linkTagStates })
-
-    this.setState({ suggestions: Array.from(suggestions) })
 
     this.tc.zoomFit()
   }
@@ -200,7 +236,10 @@ class App extends React.Component<Props, State> {
   }
 
   linkAttrs(link): LinkAttrs {
-    return { class: link.RelationType || "" }
+    if (link.RelationType) {
+      return { classes: [link.RelationType] }
+    }
+    return { classes: [] }
   }
 
   onNodeSelected(node: Node, active: boolean) {
@@ -281,6 +320,13 @@ class App extends React.Component<Props, State> {
     ]
   }
 
+  _refreshTopology() {
+    // TODO add debounce
+    if (this.tc) {
+      this.tc.renderTree()
+    }
+  }
+
   onMessage(msg: string) {
     var data: { Type: string, Obj: any } = JSON.parse(msg)
     switch (data.Type) {
@@ -290,6 +336,42 @@ class App extends React.Component<Props, State> {
         }
         this.parseTopology(data.Obj)
         this.synced = true
+        break
+      case "NodeAdded":
+        if (!this.synced) {
+          return
+        }
+        if (this.addNode(data.Obj, ["infra"])) {
+          this.refreshTopology()
+        }
+        break
+      case "NodeDeleted":
+        if (!this.synced) {
+          return
+        }
+        if (this.delNode(data.Obj)) {
+          this.refreshTopology()
+        }
+        break
+      case "EdgeAdded":
+        if (!this.synced) {
+          return
+        }
+        if (this.addEdge(data.Obj)) {
+          this.refreshTopology()
+
+          if (this.tc) {
+            this.setState({ linkTagStates: this.tc.linkTagStates })
+          }
+        }
+        break
+      case "EdgeDeleted":
+        if (!this.synced) {
+          return
+        }
+        if (this.delEdge(data.Obj)) {
+          this.refreshTopology()
+        }
         break
       default:
         break

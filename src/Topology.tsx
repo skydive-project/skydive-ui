@@ -109,12 +109,12 @@ interface D3Node {
 
 export interface NodeAttrs {
     name: string
-    classes: string
+    classes: Array<string>
     icon: string
 }
 
 export interface LinkAttrs {
-    class: string
+    classes: Array<string>
 }
 
 interface Props {
@@ -152,9 +152,11 @@ export class Topology extends React.Component<Props, {}> {
     private nodeClickedID: number
     private d3nodes: Map<string, D3Node>
     private maxWeight: number
-    private links: Array<any>
+    private links: Array<Link>
     private absTransformX: number
     private absTransformY: number
+    private nodeTagCount: Map<string, number>
+    private linkTagCount: Map<string, number>
 
     root: Node
     nodes: Map<string, Node>
@@ -362,6 +364,9 @@ export class Topology extends React.Component<Props, {}> {
 
         this.links = new Array<Link>()
         this.linkTagStates = new Map<string, LinkTagState>()
+
+        this.nodeTagCount = new Map<string, number>()
+        this.linkTagCount = new Map<string, number>()
     }
 
     /**
@@ -395,6 +400,9 @@ export class Topology extends React.Component<Props, {}> {
         this.nodes.set(id, node)
 
         tags.forEach(tag => {
+            var count = this.nodeTagCount.get(tag) || 0
+            this.nodeTagCount.set(tag, count + 1)
+
             if (!this.nodeTagStates.has(tag)) {
                 this.nodeTagStates.set(tag, false)
             }
@@ -405,11 +413,16 @@ export class Topology extends React.Component<Props, {}> {
 
     /**
      * Remove a node from the tree
-     * @param {node} node
+     * @param {id} string
      */
-    delNode(node: Node) {
+    delNode(id: string) {
+        var node = this.nodes.get(id)
+        if (!node) {
+            return
+        }
+
         if (node.parent) {
-            node.parent.children = node.parent.children.filter(c => c.id !== node.id)
+            node.parent.children = node.parent.children.filter(c => node && c.id !== node.id)
         }
 
         for (let link of this.links) {
@@ -417,6 +430,19 @@ export class Topology extends React.Component<Props, {}> {
                 this.links = this.links.filter(c => c === link)
             }
         }
+
+        // remove tags if needed
+        node.tags.forEach(tag => {
+            var count = this.nodeTagCount.get(tag) || 0
+            if (!count) {
+                this.nodeTagCount.delete(tag)
+                this.nodeTagStates.delete(tag)
+            } else {
+                this.nodeTagCount.set(tag, count - 1)
+            }
+        })
+
+        this.nodes.delete(node.id)
     }
 
     /**
@@ -454,13 +480,41 @@ export class Topology extends React.Component<Props, {}> {
      * @param {object} data
      * @param {directed} boolean
      */
-    addLink(node1: Node, node2: Node, tags: Array<string>, data: any, directed: boolean) {
-        this.links.push(new Link(node1.id + "_" + node2.id, tags, node1, node2, data, directed))
+    addLink(id: string, node1: Node, node2: Node, tags: Array<string>, data: any, directed: boolean) {
+        this.links.push(new Link(id, tags, node1, node2, data, directed))
 
         tags.forEach(tag => {
+            var count = this.linkTagCount.get(tag) || 0
+            this.linkTagCount.set(tag, count + 1)
+
             if (!this.linkTagStates.has(tag)) {
                 this.linkTagStates.set(tag, LinkTagState.EventBased)
             }
+        })
+    }
+
+    /**
+     * Remove a link from the tree
+     * @param {id} string
+     */
+    delLink(id: string) {
+        this.links = this.links.filter(link => {
+            if (link.id !== id) {
+                return true
+            }
+
+            // remove tags if needed
+            link.tags.forEach(tag => {
+                var count = this.nodeTagCount.get(tag) || 0
+                if (!count) {
+                    this.nodeTagCount.delete(tag)
+                    this.nodeTagStates.delete(tag)
+                } else {
+                    this.nodeTagCount.set(tag, count - 1)
+                }
+            })
+
+            return false
         })
     }
 
@@ -1210,7 +1264,7 @@ export class Topology extends React.Component<Props, {}> {
             .filter((d: D3Node) => !d.data.isPlaceholder && d.data.wrapped !== this.root)
             .append("g")
             .attr("id", (d: D3Node) => "node-" + d.data.id)
-            .attr("class", (d: D3Node) => "node " + this.props.nodeAttrs(d.data.wrapped).classes)
+            .attr("class", (d: D3Node) => "node " + this.props.nodeAttrs(d.data.wrapped).classes.join(" "))
             .style("opacity", 0)
             .attr("transform", (d: D3Node) => `translate(${d.x},${d.y})`)
             .on("dblclick", (d: D3Node) => this.nodeDoubleClicked(d))
@@ -1430,7 +1484,7 @@ export class Topology extends React.Component<Props, {}> {
         var linkEnter = link.enter()
             .append('path')
             .attr("id", (d: Link) => "link-" + d.id)
-            .attr("class", (d: Link) => "link " + this.props.linkAttrs(d).class + (d.directed ? " directed" : ""))
+            .attr("class", (d: Link) => "link " + this.props.linkAttrs(d).classes.join(" ") + (d.directed ? " directed" : ""))
             .style("opacity", 0)
         link.exit().remove()
 
