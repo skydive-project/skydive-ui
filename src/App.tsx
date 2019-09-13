@@ -142,7 +142,7 @@ class App extends React.Component<Props, State> {
       return false
     }
 
-    let n = this.tc.addNode(node.ID, tags, node.Metadata, (nn: Node): number => config.nodeAttrs(nn).weight)
+    let n = this.tc.addNode(node.ID, tags, node.Metadata, (n: Node): number => config.nodeAttrs(n).weight)
     this.tc.setParent(n, this.tc.root)
 
     this.fillSuggestions(n, this.state.suggestions)
@@ -288,9 +288,10 @@ class App extends React.Component<Props, State> {
     }, 1000)
   }
 
-  renderTabs() {
+  renderTabs(classes: any) {
     return this.state.nodeSelected.map((d: Node, i: number) => (
-      <Tab className="tab" key={"tab-" + i} label={d.id.split("-", 2)[0] + "-..."} {...a11yProps(i)} />
+      <Tab className="tab" icon={<span className={classes.tabIcon}>{config.nodeAttrs(d).icon}</span>}
+        key={"tab-" + i} label={d.id.split("-", 2)[0] + "-..."} {...a11yProps(i)} />
     ))
   }
 
@@ -556,16 +557,17 @@ class App extends React.Component<Props, State> {
               onShowNodeContextMenu={this.onShowNodeContextMenu} weightTitles={this.weightTitles()} />
           </Container>
           <Container className={classes.rightPanel}>
-            <Paper className={clsx(classes.rightPanelPaper, !this.state.nodeSelected.length && classes.rightPanelPaperClose)}>
+            <Paper className={clsx(classes.rightPanelPaper, !this.state.nodeSelected.length && classes.rightPanelPaperClose)}
+              square={true}>
               <div className={classes.tabs}>
                 <Tabs
-                  orientation="vertical"
+                  orientation="horizontal"
                   variant="scrollable"
                   value={this.state.tab}
                   onChange={this.onTabChange}
-                  aria-label="Vertical tabs example"
-                  className={classes.tab}>
-                  {this.renderTabs()}
+                  aria-label="Metadata"
+                  indicatorColor="primary">
+                  {this.renderTabs(classes)}
                 </Tabs>
                 <div className={classes.rightPanelPaperContent} style={{ overflow: this.state.overflow }} >
                   {this.renderTabPanels(classes)}

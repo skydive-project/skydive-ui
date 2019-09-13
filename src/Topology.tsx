@@ -61,7 +61,7 @@ export class Node {
         if (!weight || weight < parentWeight) {
             weight = parentWeight
         }
-        
+
         return weight
     }
 }
@@ -1044,7 +1044,7 @@ export class Topology extends React.Component<Props, {}> {
         select("#node-highlight-" + node.id)
             .style("opacity", active ? 1 : 0)
 
-        var scale = 1.1
+        var scale = 0.8
         var viewSize = this.viewSize()
 
         var t = zoomIdentity
@@ -1052,7 +1052,7 @@ export class Topology extends React.Component<Props, {}> {
             .scale(scale)
         this.svg
             .transition()
-            .duration(500)
+            .duration(800)
             .call(this.zoom.transform, t)
     }
 
@@ -1418,16 +1418,16 @@ export class Topology extends React.Component<Props, {}> {
             })
 
         const hLinker = (d: any) => {
-            let source = this.d3nodes.get(d.source.node.id)
-            let target = this.d3nodes.get(d.target.node.id)
+            var source = this.d3nodes.get(d.source.node.id)
+            var target = this.d3nodes.get(d.target.node.id)
 
             if (!source || !target) {
                 return []
             }
 
-            let x1 = source.x + d.source.dx
-            let x2 = target.x + d.target.dx
-            let y = source.y + d.source.dy
+            var x1 = source.x + d.source.dx
+            var x2 = target.x + d.target.dx
+            var y = source.y + d.source.dy
 
             if (Math.abs(x1 - x2) > this.nodeWidth) {
                 var points = [
@@ -1451,8 +1451,8 @@ export class Topology extends React.Component<Props, {}> {
         }
 
         var wrapperLink = (d, margin) => {
-            let dSource = this.d3nodes.get(d.source.id)
-            let dTarget = this.d3nodes.get(d.target.id)
+            var dSource = this.d3nodes.get(d.source.id)
+            var dTarget = this.d3nodes.get(d.target.id)
 
             if (!dSource || !dTarget) {
                 return

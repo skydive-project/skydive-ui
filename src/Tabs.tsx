@@ -32,17 +32,17 @@ export function TabPanel(props: TabPanelProps) {
             component="div"
             role="tabpanel"
             hidden={value !== index}
-            id={`vertical-tabpanel-${index}`}
-            aria-labelledby={`vertical-tab-${index}`}
+            id={`tabpanel-${index}`}
+            aria-labelledby={`tab-${index}`}
             {...other}>
-            <div style={{ padding: 5 }}>{children}</div>
+            <div style={{ padding: 5, paddingBottom: 100 }}>{children}</div>
         </Typography>
     )
 }
 
 export function a11yProps(index: any) {
     return {
-        id: `vertical-tab-${index}`,
-        'aria-controls': `vertical-tabpanel-${index}`,
+        id: `tab-${index}`,
+        'aria-controls': `tabpanel-${index}`,
     };
 }

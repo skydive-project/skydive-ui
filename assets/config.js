@@ -53,6 +53,11 @@ var config = {
                 break
         }
 
+        if (node.data.Manager === "docker") {
+            attrs.icon = "\uf395"
+            attrs.classes.push('font-brands')
+        }
+
         if (node.data.IPV4 && node.data.IPV4.length) {
             attrs.weight = 3
         }

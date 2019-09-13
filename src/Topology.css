@@ -104,6 +104,10 @@ svg {
     font-weight: 900;
 }
 
+.font-brands .node-icon {
+    font-family: 'Font Awesome 5 Brands' !important;
+}
+
 .node-highlight text {
     font-size: 30px;
     text-anchor: middle;
