@@ -33,6 +33,7 @@ export enum LinkTagState {
 
 interface State {
     expanded: boolean
+    selected: boolean
 }
 
 export class Node {
@@ -44,7 +45,7 @@ export class Node {
     state: State
     parent: Node | null
 
-    constructor(id: string, tags: Array<string>, data: any, state: State,  weight: number | ((node: Node) => number)) {
+    constructor(id: string, tags: Array<string>, data: any, state: State, weight: number | ((node: Node) => number)) {
         this.id = id
         this.tags = tags
         this.data = data
@@ -166,6 +167,8 @@ export class Topology extends React.Component<Props, {}> {
     private absTransformY: number
     private nodeTagCount: Map<string, number>
     private linkTagCount: Map<string, number>
+    private invalidated: boolean
+    private levelRects: Array<LevelRect>
 
     root: Node
     nodes: Map<string, Node>
@@ -356,7 +359,7 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     private defaultState(): State {
-        return { expanded: false }
+        return { expanded: false, selected: false }
     }
 
     resetTree() {
@@ -364,7 +367,7 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     private initTree() {
-        this.root = new Node("root", ["root"], { name: "root" }, { expanded: true }, 0)
+        this.root = new Node("root", ["root"], { name: "root" }, { expanded: true, selected: false }, 0)
 
         this.nodes = new Map<string, Node>()
         this.nodeTagStates = new Map<string, boolean>()
@@ -374,6 +377,10 @@ export class Topology extends React.Component<Props, {}> {
 
         this.nodeTagCount = new Map<string, number>()
         this.linkTagCount = new Map<string, number>()
+
+        this.levelRects = new Array<LevelRect>()
+
+        this.invalidated = true
     }
 
     setLinkTagState(tag: string, state: LinkTagState) {
@@ -399,6 +406,8 @@ export class Topology extends React.Component<Props, {}> {
             }
         })
 
+        this.invalidated = true
+
         return node
     }
 
@@ -407,7 +416,14 @@ export class Topology extends React.Component<Props, {}> {
         if (!node) {
             return
         }
+        var prevWeight = node.getWeight()
         node.data = data
+
+        // check whether the new data have change the weight
+        // in order to trigger a recalculation
+        if (prevWeight !== node.getWeight()) {
+            this.invalidated = true
+        }
     }
 
     delNode(id: string) {
@@ -438,6 +454,8 @@ export class Topology extends React.Component<Props, {}> {
         })
 
         this.nodes.delete(node.id)
+
+        this.invalidated = true
     }
 
     setParent(child: Node, parent: Node) {
@@ -448,6 +466,8 @@ export class Topology extends React.Component<Props, {}> {
 
         parent.children.push(child)
         child.parent = parent
+
+        this.invalidated = true
     }
 
     addLink(id: string, node1: Node, node2: Node, tags: Array<string>, data: any, directed: boolean) {
@@ -616,6 +636,8 @@ export class Topology extends React.Component<Props, {}> {
             node.wrapped.state.expanded = true
         }
 
+        this.invalidated = true
+
         this.renderTree()
     }
 
@@ -713,8 +735,8 @@ export class Topology extends React.Component<Props, {}> {
         }
     }
 
-    private levelRects(levels: Array<LevelNodes>): Array<LevelRect> {
-        var levelRects = new Array<LevelRect>()
+    private updateLevelRects(levels: Array<LevelNodes>) {
+        this.levelRects = new Array<LevelRect>()
 
         var prevY = 0
         levels.reverse().forEach(levelNodes => {
@@ -724,12 +746,11 @@ export class Topology extends React.Component<Props, {}> {
                 if (prevY && rect.y + rect.height > prevY) {
                     rect.height = prevY - rect.y
                 }
-                levelRects.push(rect)
+                this.levelRects.push(rect)
 
                 prevY = rect.y
             }
         })
-        return levelRects
     }
 
     private levelNodes(): Array<LevelNodes> {
@@ -764,16 +785,20 @@ export class Topology extends React.Component<Props, {}> {
             }
             node.classed("node-selected", false)
 
-            if (self.props.onNodeSelected) {
-                var id = node.attr("id")
-                if (id) {
-                    id = id.replace(/^node-/, '')
-                }
+            var id = node.attr("id")
+            if (!id) {
+                return
+            }
+            id = id.replace(/^node-/, '')
 
-                let n = self.nodes.get(id)
-                if (n) {
-                    self.props.onNodeSelected(n, false)
-                }
+            let n = self.nodes.get(id)
+            if (!n) {
+                return
+            }
+            n.state.selected = false
+
+            if (self.props.onNodeSelected) {
+                self.props.onNodeSelected(n, false)
             }
         })
     }
@@ -787,6 +812,12 @@ export class Topology extends React.Component<Props, {}> {
         if (!this.isCtrlPressed) {
             this.unselectAllNodes()
         }
+        let n = this.nodes.get(id)
+        if (!n) {
+            return
+        }
+        n.state.selected = active
+
         select("#node-" + id).classed("node-selected", active)
 
         if (this.props.onNodeSelected) {
@@ -1154,12 +1185,13 @@ export class Topology extends React.Component<Props, {}> {
             .x(d => d.x)
             .y(d => d.y)
 
-        // TODO make a cache of this, use a version number to detect real update
-        var levelRects = this.levelRects(this.levelNodes())
+        if (this.invalidated) {
+            this.updateLevelRects(this.levelNodes())
+        }
 
         var levelLabel = this.gLevelLabels.selectAll('g.level-label')
             .interrupt()
-            .data(levelRects, (d: LevelRect) => "level-label-" + d.weight)
+            .data(this.levelRects, (d: LevelRect) => "level-label-" + d.weight)
         var levelLabelEnter = levelLabel.enter()
             .append("g")
             .attr("id", (d: LevelRect) => "level-label-" + d.weight)
@@ -1176,7 +1208,7 @@ export class Topology extends React.Component<Props, {}> {
         levelLabel.exit().remove()
 
         var level = this.gLevels.selectAll('g.level')
-            .data(levelRects, (d: LevelRect) => "level-" + d.weight)
+            .data(this.levelRects, (d: LevelRect) => "level-" + d.weight)
             .interrupt()
         var levelEnter = level.enter()
             .append('g')
@@ -1228,7 +1260,9 @@ export class Topology extends React.Component<Props, {}> {
             .interrupt()
             .data(root.descendants(), (d: D3Node) => d.data.id)
 
-        const nodeClass = (d: D3Node) => "node " + this.props.nodeAttrs(d.data.wrapped).classes.join(" ")
+        const nodeClass = (d: D3Node) => new Array<string>().concat("node",
+            this.props.nodeAttrs(d.data.wrapped).classes,
+            d.data.wrapped.state.selected ? "node-selected" : "").join(" ")
 
         var nodeEnter = node.enter()
             .filter((d: D3Node) => !d.data.isPlaceholder && d.data.wrapped !== this.root)
@@ -1491,6 +1525,8 @@ export class Topology extends React.Component<Props, {}> {
         linkWrap.transition()
             .duration(500)
             .attr("d", d => linker(d))
+
+        this.invalidated = false
     }
 
     render() {
