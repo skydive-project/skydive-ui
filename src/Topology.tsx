@@ -56,9 +56,12 @@ export class Node {
 
     getWeight(): number {
         var weight = typeof this.weight === "function" ? this.weight(this) : this.weight
-        if (!weight) {
-            weight = this.parent ? this.parent.getWeight() : 1
+        var parentWeight = this.parent ? this.parent.getWeight() : 0
+        
+        if (!weight || weight < parentWeight) {
+            weight = parentWeight
         }
+        
         return weight
     }
 }
