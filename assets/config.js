@@ -17,6 +17,9 @@ var config = {
                 attrs.icon = "\uf109"
                 attrs.weight = 3
                 break
+            case "switch":
+                attrs.icon = "\uf6ff"
+                break
             case "bridge":
             case "ovsbridge":
                 attrs.icon = "\uf6ff"
@@ -30,6 +33,7 @@ var config = {
             case "gretap":
                 attrs.icon = "\uf55b"
                 break
+            case "internal":
             case "interface":
             case "tun":
             case "tap":
@@ -40,6 +44,9 @@ var config = {
                 attrs.icon = "\uf4d7"
                 attrs.weight = 7
                 break
+            case "switchport":
+                attrs.icon = "\uf0e8"
+                break
             case "port":
             case "ovsport":
                 attrs.icon = "\uf0e8"
@@ -47,6 +54,10 @@ var config = {
             case "netns":
                 attrs.icon = "\uf24d"
                 attrs.weight = 8
+                break
+            case "libvirt":
+                attrs.icon = "\uf109"
+                attrs.weight = 9
                 break
             default:
                 attrs.icon = "\uf192"
@@ -70,7 +81,8 @@ var config = {
         4: "Bridges",
         5: "Ports",
         7: "Virtual",
-        8: "Namespaces"
+        8: "Namespaces",
+        9: "VMs"
     },
     "suggestions": [
         "data.IPV4",
