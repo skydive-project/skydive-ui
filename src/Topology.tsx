@@ -302,7 +302,7 @@ export class Topology extends React.Component<Props, {}> {
         this.absTransformX = this.absTransformY = 0
 
         this.zoom = zoom()
-            .scaleExtent([0.3, 1.5])
+            .scaleExtent([0.1, 1.5])
             .on("zoom", () => {
                 this.hideAllLevelLabels()
                 this.hideNodeContextMenu()

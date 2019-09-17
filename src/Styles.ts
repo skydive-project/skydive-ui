@@ -179,9 +179,12 @@ export const AppStyles = (theme: Theme) => createStyles({
   tabs: {
     height: `100%`
   },
-  tabIcon: {
+  tabIconFree: {
     fontFamily: `"Font Awesome 5 Free" !important`,
     fontWeight: 900
+  },
+  tabIconBrands: {
+    fontFamily: `"Font Awesome 5 Brands" !important`,
   }
 })
 

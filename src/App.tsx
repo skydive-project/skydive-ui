@@ -289,10 +289,16 @@ class App extends React.Component<Props, State> {
   }
 
   renderTabs(classes: any) {
-    return this.state.nodeSelected.map((d: Node, i: number) => (
-      <Tab className="tab" icon={<span className={classes.tabIcon}>{config.nodeAttrs(d).icon}</span>}
-        key={"tab-" + i} label={d.id.split("-", 2)[0] + "-..."} {...a11yProps(i)} />
-    ))
+    return this.state.nodeSelected.map((d: Node, i: number) => {
+      var className = classes.tabIconFree
+      if (config.nodeAttrs(d).classes.includes("font-brands")) {
+        className = classes.tabIconBrands
+      }
+      return (
+        <Tab className="tab" icon={<span className={className}>{config.nodeAttrs(d).icon}</span>}
+          key={"tab-" + i} label={d.id.split("-", 2)[0] + "-..."} {...a11yProps(i)} />
+      )
+    })
   }
 
   renderTabPanels(classes: any) {
