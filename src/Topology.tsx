@@ -1082,6 +1082,10 @@ export class Topology extends React.Component<Props, {}> {
         return link.source.state.selected || link.target.state.selected
     }
 
+    private isLinkNodeMouseOver(link: Link): boolean {
+        return link.source.state.mouseover || link.target.state.mouseover
+    }
+
     private highlightNeighborLinks(d: D3Node, active: boolean) {
         var opacity = active ? 1 : 0
 
@@ -1510,7 +1514,7 @@ export class Topology extends React.Component<Props, {}> {
         linkOverlay = linkOverlay.merge(linkOverlayEnter)
         linkOverlay.transition()
             .duration(500)
-            .style("opacity", (d: Link) => this.isLinkNodeSelected(d) ? 1 : 0)
+            .style("opacity", (d: Link) => this.isLinkNodeSelected(d) || this.isLinkNodeMouseOver(d) ? 1 : 0)
             .attr("d", (d: Link) => linker(d))
 
         var link = this.gLinks.selectAll('path.link')
