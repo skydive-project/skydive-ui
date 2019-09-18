@@ -34,6 +34,7 @@ export enum LinkTagState {
 interface State {
     expanded: boolean
     selected: boolean
+    mouseover: boolean
 }
 
 export class Node {
@@ -57,7 +58,7 @@ export class Node {
     getWeight(): number {
         var weight = typeof this.weight === "function" ? this.weight(this) : this.weight
         var parentWeight = this.parent ? this.parent.getWeight() : 0
-        
+
         if (!weight || weight < parentWeight) {
             weight = parentWeight
         }
@@ -362,7 +363,7 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     private defaultState(): State {
-        return { expanded: false, selected: false }
+        return { expanded: false, selected: false, mouseover: false }
     }
 
     resetTree() {
@@ -370,7 +371,7 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     private initTree() {
-        this.root = new Node("root", ["root"], { name: "root" }, { expanded: true, selected: false }, 0)
+        this.root = new Node("root", ["root"], { name: "root" }, { expanded: true, selected: false, mouseover: false }, 0)
 
         this.nodes = new Map<string, Node>()
         this.nodeTagStates = new Map<string, boolean>()
@@ -804,6 +805,18 @@ export class Topology extends React.Component<Props, {}> {
                 self.props.onNodeSelected(n, false)
             }
         })
+        this.unHighlightNeighborLinks()
+    }
+
+    private unHighlightNeighborLinks() {
+        var self = this
+
+        selectAll("path.link-overlay")
+            .style("opacity", 0)
+
+        selectAll("path.link").each(function (d: Link) {
+            select(this).style("opacity", self.isLinkVisible(d) ? 1 : 0)
+        })
     }
 
     /**
@@ -822,6 +835,11 @@ export class Topology extends React.Component<Props, {}> {
         n.state.selected = active
 
         select("#node-" + id).classed("node-selected", active)
+
+        var d = this.d3nodes.get(id)
+        if (d) {
+            this.highlightNeighborLinks(d, active)
+        }
 
         if (this.props.onNodeSelected) {
             let n = this.nodes.get(id)
@@ -1002,16 +1020,16 @@ export class Topology extends React.Component<Props, {}> {
         this.expand(d.data)
     }
 
-    private neighborLinks(node: NodeWrapper, links: Array<Link>): Array<string> {
-        var ids = new Array<string>()
+    private neighborLinks(node: NodeWrapper, links: Array<Link>): Array<Link> {
+        var neighbors = new Array<Link>()
 
         for (let link of links) {
             if (link.source.id === node.wrapped.id || link.target.id === node.wrapped.id) {
-                ids.push(link.id)
+                neighbors.push(link)
             }
         }
 
-        return ids
+        return neighbors
     }
 
     private showNode(node: Node) {
@@ -1060,42 +1078,46 @@ export class Topology extends React.Component<Props, {}> {
         selectAll("g.node-highlight").style("opacity", 0)
     }
 
+    private isLinkNodeSelected(link: Link): boolean {
+        return link.source.state.selected || link.target.state.selected
+    }
+
+    private highlightNeighborLinks(d: D3Node, active: boolean) {
+        var opacity = active ? 1 : 0
+
+        var links = this.neighborLinks(d.data, this.visibleLinks())
+        for (let link of links) {
+            if (active || !this.isLinkNodeSelected(link)) {
+                select("#link-" + link.id)
+                    .style("opacity", opacity)
+                select("#link-overlay-" + link.id)
+                    .style("opacity", opacity)
+            }
+        }
+    }
+
     private overNode(id: string, active: boolean) {
         var d = this.d3nodes.get(id)
         if (!d) {
             return false
         }
+        d.data.wrapped.state.mouseover = active
 
         var opacity = active ? 1 : 0
 
         select("#node-overlay-" + id)
             .style("opacity", opacity)
 
-        var ids = this.neighborLinks(d.data, this.visibleLinks())
-        for (let id of ids) {
-            select("#link-" + id)
-                .style("opacity", opacity)
-            select("#link-overlay-" + id)
-                .style("opacity", opacity)
+        if (!d.data.wrapped.state.selected) {
+            this.highlightNeighborLinks(d, active)
         }
     }
 
-    private outNode() {
-        var self = this
-
-        selectAll("circle.node-overlay")
-            .style("opacity", 0)
-        selectAll("path.link-overlay")
-            .style("opacity", 0)
-
-        // un-select non visible links
-        selectAll("path.link").each(function (d: Link) {
-            select(this).style("opacity", self.isLinkVisible(d) ? 1 : 0)
-        })
-    }
-
     private isLinkVisible(link: Link) {
-        return link.tags.some(tag => this.linkTagStates.get(tag) === LinkTagState.Visible)
+        return link.tags.some(tag => (this.linkTagStates.get(tag) === LinkTagState.Visible) ||
+            this.linkTagStates.get(tag) === LinkTagState.EventBased &&
+            (link.source.state.selected || link.target.state.selected ||
+                link.source.state.mouseover || link.target.state.mouseover))
     }
 
     private searchMetadata(data: any, values: Map<any, boolean>, remaining: number): boolean {
@@ -1283,8 +1305,8 @@ export class Topology extends React.Component<Props, {}> {
             .on("mouseover", (d: D3Node) => {
                 this.overNode(d.data.id, true)
             })
-            .on("mouseout", () => {
-                this.outNode()
+            .on("mouseout", (d: D3Node) => {
+                this.overNode(d.data.id, false)
             })
         node.exit()
             .transition()
@@ -1488,7 +1510,8 @@ export class Topology extends React.Component<Props, {}> {
         linkOverlay = linkOverlay.merge(linkOverlayEnter)
         linkOverlay.transition()
             .duration(500)
-            .attr("d", d => linker(d))
+            .style("opacity", (d: Link) => this.isLinkNodeSelected(d) ? 1 : 0)
+            .attr("d", (d: Link) => linker(d))
 
         var link = this.gLinks.selectAll('path.link')
             .interrupt()
@@ -1518,9 +1541,11 @@ export class Topology extends React.Component<Props, {}> {
                         .style("opacity", 1)
                 }
             })
-            .on("mouseout", () => {
-                selectAll("path.link-overlay")
-                    .style("opacity", 0)
+            .on("mouseout", (d: Link) => {
+                if (!d.source.state.selected && !d.target.state.selected) {
+                    select("#link-overlay-" + d.id)
+                        .style("opacity", 0)
+                }
             })
         linkWrap.exit().remove()
 
