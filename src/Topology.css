@@ -77,7 +77,7 @@ svg {
     fill: #ffeb3b;
 }
 
-.node-highlight {
+.node-pinned {
     fill: rgb(55, 255, 37);
 }
 
@@ -108,7 +108,7 @@ svg {
     font-family: 'Font Awesome 5 Brands' !important;
 }
 
-.node-highlight text {
+.node-pinned text {
     font-size: 30px;
     text-anchor: middle;
     font-family: 'Font Awesome 5 Free' !important;

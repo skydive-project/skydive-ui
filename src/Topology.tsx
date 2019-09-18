@@ -1051,7 +1051,7 @@ export class Topology extends React.Component<Props, {}> {
         })
     }
 
-    highlightNode(node: Node, active) {
+    pinNode(node: Node, active) {
         this.showNode(node)
 
         var d = this.d3nodes.get(node.id)
@@ -1059,7 +1059,7 @@ export class Topology extends React.Component<Props, {}> {
             return false
         }
 
-        select("#node-highlight-" + node.id)
+        select("#node-pinned-" + node.id)
             .style("opacity", active ? 1 : 0)
 
         var scale = 0.8
@@ -1074,8 +1074,8 @@ export class Topology extends React.Component<Props, {}> {
             .call(this.zoom.transform, t)
     }
 
-    clearHighlightNodes() {
-        selectAll("g.node-highlight").style("opacity", 0)
+    unpinNodes() {
+        selectAll("g.node-pinned").style("opacity", 0)
     }
 
     private isLinkNodeSelected(link: Link): boolean {
@@ -1326,8 +1326,8 @@ export class Topology extends React.Component<Props, {}> {
             .style("opacity", 0)
 
         var highlight = nodeEnter.append("g")
-            .attr("id", (d: D3Node) => "node-highlight-" + d.data.id)
-            .attr("class", "node-highlight")
+            .attr("id", (d: D3Node) => "node-pinned-" + d.data.id)
+            .attr("class", "node-pinned")
             .style("opacity", 0)
         highlight.append("circle")
             .attr("r", hexSize + 16)

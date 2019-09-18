@@ -501,10 +501,10 @@ class App extends React.Component<Props, State> {
       return
     }
 
-    this.tc.clearHighlightNodes()
+    this.tc.unpinNodes()
     this.tc.searchNodes(selected).forEach(node => {
       if (this.tc) {
-        this.tc.highlightNode(node, true)
+        this.tc.pinNode(node, true)
       }
     })
   }
