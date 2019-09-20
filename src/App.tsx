@@ -220,6 +220,10 @@ class App extends React.Component<Props, State> {
       return
     }
 
+    if (!data.Nodes) {
+      return
+    }
+
     // first add all the nodes
     for (let node of data.Nodes) {
       this.addNode(node, ["infra"])
@@ -362,9 +366,6 @@ class App extends React.Component<Props, State> {
     var data: { Type: string, Obj: any } = JSON.parse(msg)
     switch (data.Type) {
       case "SyncReply":
-        if (!data.Obj.Nodes) {
-          return
-        }
         this.parseTopology(data.Obj)
         this.synced = true
         break

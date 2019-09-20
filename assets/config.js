@@ -1,8 +1,8 @@
 var config = {
     "nodeAttrs": function (node) {
         var name = node.data.Name
-        if (name.length > 8) {
-            name = node.data.Name.substring(0, 12) + "."
+        if (name.length > 24) {
+            name = node.data.Name.substring(0, 24) + "."
         }
 
         var attrs = { classes: [node.data.Type], name: name, icon: "\uf192", weight: 0 }
@@ -12,7 +12,6 @@ var config = {
         }
 
         switch (node.data.Type) {
-            case "device":
             case "host":
                 attrs.icon = "\uf109"
                 attrs.weight = 3
@@ -28,11 +27,13 @@ var config = {
             case "erspan":
                 attrs.icon = "\uf1e0"
                 break
+            case "geneve":
             case "vxlan":
             case "gre":
             case "gretap":
                 attrs.icon = "\uf55b"
                 break
+            case "device":
             case "internal":
             case "interface":
             case "tun":
@@ -47,9 +48,11 @@ var config = {
             case "switchport":
                 attrs.icon = "\uf0e8"
                 break
+            case "patch":
             case "port":
             case "ovsport":
                 attrs.icon = "\uf0e8"
+                attrs.weight = 5
                 break
             case "netns":
                 attrs.icon = "\uf24d"
@@ -70,6 +73,10 @@ var config = {
         }
 
         if (node.data.IPV4 && node.data.IPV4.length) {
+            attrs.weight = 3
+        }
+
+        if (node.data.Driver && ["tap", "veth", "tun", "openvswitch"].indexOf(node.data.Driver) < 0) {
             attrs.weight = 3
         }
 
