@@ -73,13 +73,6 @@ svg {
     stroke: #5097c7;
 }
 
-.node-group {
-    fill: none;
-    stroke-width: 3;
-    stroke: #5097c7;
-    stroke-dasharray: 10, 10;
-}
-
 .node-overlay {
     fill: #ffeb3b;
 }

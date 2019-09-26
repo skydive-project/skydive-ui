@@ -89,12 +89,16 @@ interface LevelNodes {
     nodes: Array<D3Node>
 }
 
-interface LevelRect {
-    weight: number
+interface BoundingBox {
     x: number
     y: number
     width: number
     height: number
+}
+
+interface LevelRect {
+    weight: number
+    bb: BoundingBox
 }
 
 enum WrapperType {
@@ -109,13 +113,15 @@ class NodeWrapper {
     children: Array<NodeWrapper>
     parent: NodeWrapper | null
     type: WrapperType
+    offset: number
 
-    constructor(id: string, node: Node, parent: NodeWrapper | null) {
+    constructor(id: string, type: WrapperType, node: Node, parent: NodeWrapper | null) {
         this.id = id
         this.wrapped = node
         this.parent = parent
         this.children = new Array<NodeWrapper>()
-        this.type = WrapperType.Normal
+        this.type = type
+        this.offset = 0
     }
 }
 
@@ -124,6 +130,11 @@ interface D3Node {
     x: number
     y: number
     children: Array<D3Node>
+}
+
+interface Group {
+    id: string
+    nodes: Array<D3Node>
 }
 
 export interface NodeAttrs {
@@ -168,6 +179,7 @@ export class Topology extends React.Component<Props, {}> {
     private gLinkOverlays: Selection<SVGGraphicsElement, {}, null, undefined>
     private gLinks: Selection<SVGGraphicsElement, {}, null, undefined>
     private gLinkWraps: Selection<SVGGraphicsElement, {}, null, undefined>
+    private gGroups: Selection<SVGGraphicsElement, {}, null, undefined>
     private gNodes: Selection<SVGGraphicsElement, {}, null, undefined>
     private gContextMenu: Selection<SVGGraphicsElement, {}, null, undefined>
     private zoom: zoom
@@ -181,10 +193,11 @@ export class Topology extends React.Component<Props, {}> {
     private linkTagCount: Map<string, number>
     private invalidated: boolean
     private levelRects: Array<LevelRect>
+    private groups: Map<string, NodeWrapper>
+    private groupStates: Map<string, State>
 
     root: Node
     nodes: Map<string, Node>
-    groups: Map<string, Node>
     nodeTagStates: Map<string, boolean>
     linkTagStates: Map<string, LinkTagState>
     weightTitles: Map<number, string>
@@ -353,6 +366,10 @@ export class Topology extends React.Component<Props, {}> {
         this.gLinkWraps = this.g.append("g")
             .attr("class", "link-wraps")
 
+        // groups group, yes read it correctly groups group
+        this.gGroups = this.g.append("g")
+            .attr("class", "groups")
+
         // nodes group
         this.gNodes = this.g.append("g")
             .attr("class", "nodes")
@@ -394,7 +411,8 @@ export class Topology extends React.Component<Props, {}> {
 
         this.levelRects = new Array<LevelRect>()
 
-        this.groups = new Map<string, Node>()
+        this.groups = new Map<string, NodeWrapper>()
+        this.groupStates = new Map<string, State>()
 
         this.invalidated = true
     }
@@ -531,70 +549,76 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     // group nodes using groupBy and groupSize
-    private groupify(node: NodeWrapper) {
-        var groups = new Map<string, { name: string, weight: number, count: number, nodes: Array<NodeWrapper> }>()
+    private groupify(node: NodeWrapper): Map<string, NodeWrapper> {
+        var groups = new Map<string, NodeWrapper>()
 
+        // dispatch node per groups
         node.children.forEach(child => {
             var field = child.wrapped.data.Type
+            if (!field) {
+                return
+            }
+
             var weight = child.wrapped.getWeight()
 
             // group only nodes being at the same level, meaning weight
-            var key = field ? field + "/" + weight : "_"
-            var group = groups.get(key)
-            if (group) {
-                group.nodes.push(child)
-            } else {
-                groups.set(key, { name: field, weight: weight, count: 0, nodes: [child] })
+            var gid = node.id + "_" + field + "_" + weight
+
+            var name = field + '(s)'
+
+            var wrapper = groups.get(gid)
+            if (!wrapper) {
+                var state = this.groupStates.get(gid) || { expanded: false, selected: false, mouseover: false }
+                this.groupStates.set(gid, state)
+
+                var wrapped = new Node(gid, [], { Name: name, "Type": field }, state, () => { return child.wrapped.getWeight() })
+                wrapper = new NodeWrapper(gid, WrapperType.Group, wrapped, node)
             }
+
+            child.wrapped.tags.forEach(tag => {
+                if (wrapper && !wrapper.wrapped.tags.includes(tag)) {
+                    wrapper.wrapped.tags.push(tag)
+                }
+            })
+
+            wrapper.wrapped.children.push(child.wrapped)
+            wrapper.children.push(child)
+
+            groups.set(gid, wrapper)
         })
 
+        var pushed = new Set<string>()
+
         var children = new Array<NodeWrapper>()
-
-        var size = 10, gid = 0
-        for (const [key, value] of groups.entries()) {
-            if (key !== "_" && value.nodes.length > size) {
-                for (let i = 0; i < value.nodes.length; i += size) {
-                    let subChildren = value.nodes.slice(i, i + size)
-
-                    if (subChildren.length === 1) {
-                        children = children.concat(subChildren)
-                        continue
-                    }
-
-                    // apply tags of all sub node so that the group will appear
-                    // if one of the node tag is selected
-                    let tags = new Array<string>()
-                    subChildren.forEach(n => tags.concat(n.wrapped.tags))
-                    tags = tags.filter(t => !tags.includes(t))
-
-                    let id = node.id + "_group_" + gid
-                    let wrapped = this.groups.get(id)
-                    if (!wrapped) {
-                        let name = value.name + '(s) #' + value.count
-                        let state = { selected: false, mouseover: false, expanded: false }
-
-                        wrapped = new Node(id, tags, { Name: name, "Type": value.name }, state, value.weight)
-                        this.groups.set(id, wrapped)
-
-                        value.count++
-                    }
-                    wrapped.children = subChildren.map(n => n.wrapped)
-
-                    let wrapper = new NodeWrapper(node.id + "_" + value.count, wrapped, node)
-                    wrapper.type = WrapperType.Group
-
-                    if (wrapped.state.expanded) {
-                        wrapper.children = subChildren
-                    }
-
-                    children.push(wrapper)
-                    gid++
-                }
-            } else {
-                children = children.concat(value.nodes)
+        node.children.forEach(child => {
+            var field = child.wrapped.data.Type
+            if (!field) {
+                children.push(child)
+                return
             }
-        }
+
+            var gid = node.id + "_" + field + "_" + child.wrapped.getWeight()
+            if (pushed.has(gid)) {
+                return
+            }
+
+            var wrapper = groups.get(gid)
+            if (wrapper && wrapper.wrapped.children.length > 5) {
+                if (wrapper.wrapped.state.expanded) {
+                    children = children.concat(wrapper.children.splice(2, 4))
+                } else {
+                    wrapper.children = []
+                    children.push(wrapper)
+                }
+                pushed.add(gid)
+            } else {
+                groups.delete(gid)
+                children.push(child)
+            }
+        })
         node.children = children
+
+        return groups
     }
 
     // clone using wrapped node
@@ -605,7 +629,7 @@ export class Topology extends React.Component<Props, {}> {
             return null
         }
 
-        let cloned = new NodeWrapper(node.id, node, parent)
+        let cloned = new NodeWrapper(node.id, WrapperType.Normal, node, parent)
 
         if (node.state.expanded) {
             node.children.forEach(child => {
@@ -617,7 +641,9 @@ export class Topology extends React.Component<Props, {}> {
             if (this.props.sortNodesFnc) {
                 cloned.children.sort((a, b) => this.props.sortNodesFnc(a.wrapped, b.wrapped))
             }
-            //this.groupify(cloned)
+            for (const [gid, group] of this.groupify(cloned).entries()) {
+                this.groups.set(gid, group)
+            }
         }
 
         return cloned
@@ -641,7 +667,7 @@ export class Topology extends React.Component<Props, {}> {
             return maxDepth
         }
 
-        // re-order tree to add placeholder node in order to separate levels
+        // re-order tree to add wrapper node in order to separate levels
         let normalizeTreeHeight = (root: NodeWrapper, node: NodeWrapper, weight: number, currDepth: number, cache: { chains: Map<string, { first: NodeWrapper, last: NodeWrapper }> }) => {
             var nodeWeight = node.wrapped.getWeight()
             if (nodeWeight > weight) {
@@ -664,8 +690,7 @@ export class Topology extends React.Component<Props, {}> {
 
                     last = chain.last
                 } else {
-                    first = new NodeWrapper(node.id + "_" + currDepth, node.wrapped, node.parent)
-                    first.type = WrapperType.Hidden
+                    first = new NodeWrapper(node.id + "_" + currDepth, WrapperType.Hidden, node.wrapped, node.parent)
 
                     let children = node.parent.children
                     let index = children.indexOf(node)
@@ -674,8 +699,7 @@ export class Topology extends React.Component<Props, {}> {
                     last = first
 
                     while (currDepth++ < parentDepth) {
-                        let next = new NodeWrapper(node.id + "_" + currDepth, node.wrapped, node.parent)
-                        next.type = WrapperType.Hidden
+                        let next = new NodeWrapper(node.id + "_" + currDepth, WrapperType.Hidden, node.wrapped, node.parent)
 
                         last.children = [next]
                         last = next
@@ -692,6 +716,8 @@ export class Topology extends React.Component<Props, {}> {
                 normalizeTreeHeight(root, child, weight, currDepth + 1, cache)
             })
         }
+
+        this.groups.clear()
 
         var tree = this.cloneTree(node, null)
         if (!tree) {
@@ -788,20 +814,51 @@ export class Topology extends React.Component<Props, {}> {
         return bb
     }
 
+    private nodesBB(d3nodes: Array<D3Node>): BoundingBox | null {
+        if (d3nodes.length === 0) {
+            return null
+        }
+
+        var node0 = d3nodes[0]
+        var minX = node0.x, maxX = node0.x, minY = node0.y, maxY = node0.y
+
+        for (let node of d3nodes) {
+            if (minX > node.x) {
+                minX = node.x
+            }
+            if (maxX < node.x) {
+                maxX = node.x
+            }
+            if (minY > node.y) {
+                minY = node.y
+            }
+            if (maxY < node.y) {
+                maxY = node.y
+            }
+        }
+
+        return {
+            x: minX - this.nodeWidth / 2,
+            y: minY - this.nodeHeight / 2,
+            width: maxX - minX + this.nodeWidth,
+            height: maxY - minY + this.nodeHeight
+        }
+    }
+
     private levelRect(levelNodes: LevelNodes): LevelRect | null {
         if (!this.svgDiv) {
             return null
         }
 
         var node0 = levelNodes.nodes[0]
-        var nBB = [node0.y, node0.y]
+        var minY = node0.y, maxY = node0.y
 
         for (let node of levelNodes.nodes) {
-            if (nBB[0] > node.y) {
-                nBB[0] = node.y
+            if (minY > node.y) {
+                minY = node.y
             }
-            if (nBB[1] < node.y) {
-                nBB[1] = node.y
+            if (maxY < node.y) {
+                maxY = node.y
             }
         }
 
@@ -812,10 +869,12 @@ export class Topology extends React.Component<Props, {}> {
 
         return {
             weight: levelNodes.weight,
-            x: gBB[0] - width,
-            y: nBB[0] - margin,
-            width: (gBB[1] - gBB[0]) + width * 2,
-            height: nBB[1] - nBB[0] + margin * 2
+            bb: {
+                x: gBB[0] - width,
+                y: minY - margin,
+                width: (gBB[1] - gBB[0]) + width * 2,
+                height: maxY - minY + margin * 2
+            }
         }
     }
 
@@ -827,12 +886,12 @@ export class Topology extends React.Component<Props, {}> {
             var rect = this.levelRect(levelNodes)
             if (rect) {
                 // ensure there is no overlap between no zone
-                if (prevY && rect.y + rect.height > prevY) {
-                    rect.height = prevY - rect.y
+                if (prevY && rect.bb.y + rect.bb.height > prevY) {
+                    rect.bb.height = prevY - rect.bb.y
                 }
                 this.levelRects.push(rect)
 
-                prevY = rect.y
+                prevY = rect.bb.y
             }
         })
     }
@@ -899,11 +958,6 @@ export class Topology extends React.Component<Props, {}> {
         })
     }
 
-    /**
-     * Select or Unselect the node of the given id according to active boolean
-     * @param {string} id
-     * @param {boolean} active
-     */
     selectNode(id: string, active: boolean) {
         if (!this.isCtrlPressed) {
             this.unselectAllNodes()
@@ -929,10 +983,6 @@ export class Topology extends React.Component<Props, {}> {
         }
     }
 
-    /**
-     * Select or unSelect node depending of its state
-     * @param {string} id
-     */
     toggleNode(id: string) {
         if (select("#node-" + id).classed("node-selected")) {
             this.selectNode(id, false)
@@ -941,7 +991,7 @@ export class Topology extends React.Component<Props, {}> {
         }
     }
 
-    viewSize(): { width: number, height: number } {
+    private viewSize(): { width: number, height: number } {
         var element = this.g.node()
         if (!element) {
             return { width: 0, height: 0 }
@@ -954,9 +1004,6 @@ export class Topology extends React.Component<Props, {}> {
         return { width: parent.clientWidth || parent.parentNode.clientWidth, height: parent.clientHeight || parent.parentNode.clientHeight }
     }
 
-    /**
-     * Zoom until all the nodes are displayed
-     */
     zoomFit() {
         if (!this.gNodes) {
             return
@@ -1247,16 +1294,16 @@ export class Topology extends React.Component<Props, {}> {
     private showLevelLabel(d: LevelRect) {
         var label = select("#level-label-" + d.weight)
         label
-            .attr("transform", `translate(${-this.absTransformX},${d.y + 2})`)
+            .attr("transform", `translate(${-this.absTransformX},${d.bb.y + 2})`)
             .select("rect")
-            .attr("height", d.height - 4)
+            .attr("height", d.bb.height - 4)
 
         var text = label.select("text")
             .attr("style", "")
         var element = text.node()
         if (element) {
             text
-                .attr("dy", (d.height - element.getComputedTextLength()) / 2)
+                .attr("dy", (d.bb.height - element.getComputedTextLength()) / 2)
                 .attr("style", "writing-mode: tb; glyph-orientation-vertical: 0")
         }
         label.transition()
@@ -1274,9 +1321,26 @@ export class Topology extends React.Component<Props, {}> {
         selectAll("g.level-label").each((d: LevelRect) => this.showLevelLabel(d))
     }
 
-    /**
-     * Invalidate the view and render the tree
-     */
+    private groupBB(node: NodeWrapper): BoundingBox | null {
+        var d3nodes = new Array<D3Node>()
+
+        if (node.wrapped.state.expanded) {
+            node.wrapped.children.forEach(child => {
+                let d3node = this.d3nodes.get(child.id)
+                if (d3node) {
+                    d3nodes.push(d3node)
+                }
+            })
+        } else {
+            let d3node = this.d3nodes.get(node.id)
+            if (d3node) {
+                d3nodes.push(d3node)
+            }
+        }
+
+        return this.nodesBB(d3nodes)
+    }
+
     renderTree() {
         var self = this
 
@@ -1306,10 +1370,10 @@ export class Topology extends React.Component<Props, {}> {
             .attr("id", (d: LevelRect) => "level-label-" + d.weight)
             .attr("class", "level-label")
             .style("opacity", 0)
-            .attr("transform", (d: LevelRect) => `translate(${-self.absTransformX},${d.y})`)
+            .attr("transform", (d: LevelRect) => `translate(${-self.absTransformX},${d.bb.y})`)
         levelLabelEnter.append("rect")
             .attr("width", 40)
-            .attr("height", (d: LevelRect) => d.height)
+            .attr("height", (d: LevelRect) => d.bb.height)
         levelLabelEnter.append("text")
             .attr("font-size", 26)
             .attr("dx", 18)
@@ -1324,13 +1388,13 @@ export class Topology extends React.Component<Props, {}> {
             .attr("id", (d: LevelRect) => "level-" + d.weight)
             .attr("class", "level")
             .style("opacity", 0)
-            .attr("transform", (d: LevelRect) => `translate(${d.x},${d.y})`)
+            .attr("transform", (d: LevelRect) => `translate(${d.bb.x},${d.bb.y})`)
 
         levelEnter.append("rect")
             .attr("id", (d: LevelRect) => "level-zone-" + d.weight)
             .attr("class", "level-zone")
-            .attr("width", (d: LevelRect) => d.width)
-            .attr("height", (d: LevelRect) => d.height)
+            .attr("width", (d: LevelRect) => d.bb.width)
+            .attr("height", (d: LevelRect) => d.bb.height)
         level.exit().remove()
 
         levelEnter.transition()
@@ -1342,9 +1406,9 @@ export class Topology extends React.Component<Props, {}> {
             .duration(500)
             .style("opacity", 1)
             .on('end', d => this.showLevelLabel(d))
-            .attr("transform", (d: LevelRect) => `translate(${d.x},${d.y})`)
+            .attr("transform", (d: LevelRect) => `translate(${d.bb.x},${d.bb.y})`)
             .select('rect.level-zone')
-            .attr("height", (d: LevelRect) => d.height)
+            .attr("height", (d: LevelRect) => d.bb.height)
 
         var hieraLink = this.gHieraLinks.selectAll('path.hiera-link')
             .data(root.links(), (d: any) => d.source.data.id + d.target.data.id)
@@ -1364,6 +1428,48 @@ export class Topology extends React.Component<Props, {}> {
         hieraLink.transition()
             .duration(500)
             .attr("d", hieraLinker)
+            .style("opacity", 1)
+
+        var group = this.gGroups.selectAll('g.group')
+            .interrupt()
+            .data(Array.from(this.groups.values()), (d: NodeWrapper) => d.id)
+        var groupEnter = group.enter()
+            .append("g")
+            .attr("class", "group")
+            .attr("id", (d: Group) => d.id)
+            .style("opacity", 0)
+        group.exit().remove()
+
+        const groupRect = function (rect: any, d: NodeWrapper, animated: boolean) {
+            var bb = self.groupBB(d)
+            if (!bb) {
+                return
+            }
+
+            if (animated) {
+                rect = rect.transition()
+                    .duration(500)
+            }
+
+            rect
+                .attr("x", bb.x)
+                .attr("y", bb.y)
+                .attr("width", bb.width)
+                .attr("height", bb.height)
+        }
+
+        groupEnter.transition()
+            .duration(500)
+            .style("opacity", 1)
+
+        groupEnter.append("rect")
+            .each(function(d) { groupRect(select(this), d, false) })
+
+        group.selectAll("rect")
+            .each(function(d) { groupRect(select(this), d, true) })
+
+        group.transition()
+            .duration(500)
             .style("opacity", 1)
 
         var node = this.gNodes.selectAll('g.node')
@@ -1389,7 +1495,6 @@ export class Topology extends React.Component<Props, {}> {
             })
             .on("mouseover", (d: D3Node) => {
                 this.overNode(d.data.id, true)
-                console.log(d.data.wrapped.getWeight())
             })
             .on("mouseout", (d: D3Node) => {
                 this.overNode(d.data.id, false)
@@ -1422,7 +1527,7 @@ export class Topology extends React.Component<Props, {}> {
             .attr("dy", -60)
 
         nodeEnter.append("circle")
-            .attr("class", (d: D3Node) => d.data.type !== WrapperType.Group ? "node-circle" : "node-group")
+            .attr("class", "node-circle")
             .attr("r", hexSize + 16)
 
         nodeEnter.append("circle")
