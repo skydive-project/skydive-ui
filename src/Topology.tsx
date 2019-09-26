@@ -25,6 +25,8 @@ import ResizeObserver from 'react-resize-observer'
 
 import './Topology.css'
 
+const animDuration = 500
+
 export enum LinkTagState {
     Hidden = 1,
     EventBased,
@@ -1036,7 +1038,7 @@ export class Topology extends React.Component<Props, {}> {
             .scale(scale)
         this.svg
             .transition()
-            .duration(500)
+            .duration(animDuration)
             .call(this.zoom.transform, t)
     }
 
@@ -1307,7 +1309,7 @@ export class Topology extends React.Component<Props, {}> {
                 .attr("style", "writing-mode: tb; glyph-orientation-vertical: 0")
         }
         label.transition()
-            .duration(500)
+            .duration(animDuration)
             .style("opacity", 1)
     }
 
@@ -1398,12 +1400,12 @@ export class Topology extends React.Component<Props, {}> {
         level.exit().remove()
 
         levelEnter.transition()
-            .duration(500)
+            .duration(animDuration)
             .style("opacity", 1)
             .on('end', d => this.showLevelLabel(d))
 
         level.transition()
-            .duration(500)
+            .duration(animDuration)
             .style("opacity", 1)
             .on('end', d => this.showLevelLabel(d))
             .attr("transform", (d: LevelRect) => `translate(${d.bb.x},${d.bb.y})`)
@@ -1422,11 +1424,11 @@ export class Topology extends React.Component<Props, {}> {
         hieraLink.exit().remove()
 
         hieraLinkEnter.transition()
-            .duration(500)
+            .duration(animDuration)
             .style("opacity", 1)
 
         hieraLink.transition()
-            .duration(500)
+            .duration(animDuration)
             .attr("d", hieraLinker)
             .style("opacity", 1)
 
@@ -1448,18 +1450,18 @@ export class Topology extends React.Component<Props, {}> {
 
             if (animated) {
                 rect = rect.transition()
-                    .duration(500)
+                    .duration(animDuration)
             }
 
             rect
                 .attr("x", bb.x)
-                .attr("y", bb.y)
+                .attr("y", bb.y + 30)
                 .attr("width", bb.width)
-                .attr("height", bb.height)
+                .attr("height", bb.height - 30)
         }
 
         groupEnter.transition()
-            .duration(500)
+            .duration(animDuration)
             .style("opacity", 1)
 
         groupEnter.append("rect")
@@ -1469,7 +1471,7 @@ export class Topology extends React.Component<Props, {}> {
             .each(function(d) { groupRect(select(this), d, true) })
 
         group.transition()
-            .duration(500)
+            .duration(animDuration)
             .style("opacity", 1)
 
         var node = this.gNodes.selectAll('g.node')
@@ -1501,11 +1503,11 @@ export class Topology extends React.Component<Props, {}> {
             })
         node.exit()
             .transition()
-            .duration(500).style("opacity", 0)
+            .duration(animDuration).style("opacity", 0)
             .remove()
 
         nodeEnter.transition()
-            .duration(500)
+            .duration(animDuration)
             .style("opacity", 1)
 
         const hexSize = 30
@@ -1618,7 +1620,7 @@ export class Topology extends React.Component<Props, {}> {
             .text((d: D3Node) => d.data.wrapped.children.length > 99 ? "+99" : d.data.wrapped.children.length)
 
         node.transition()
-            .duration(500)
+            .duration(animDuration)
             .style("opacity", 1)
             .attr("transform", (d: D3Node) => `translate(${d.x},${d.y})`)
             .attr("class", nodeClass)
@@ -1703,7 +1705,7 @@ export class Topology extends React.Component<Props, {}> {
 
         linkOverlay = linkOverlay.merge(linkOverlayEnter)
         linkOverlay.transition()
-            .duration(500)
+            .duration(animDuration)
             .style("opacity", (d: Link) => this.isLinkNodeSelected(d) || this.isLinkNodeMouseOver(d) ? 1 : 0)
             .attr("d", (d: Link) => linker(d))
 
@@ -1719,7 +1721,7 @@ export class Topology extends React.Component<Props, {}> {
 
         link = link.merge(linkEnter)
         link.transition()
-            .duration(500)
+            .duration(animDuration)
             .style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : 0)
             .attr("d", d => linker(d))
 
@@ -1745,7 +1747,7 @@ export class Topology extends React.Component<Props, {}> {
 
         linkWrap = linkWrap.merge(linkWrapEnter)
         linkWrap.transition()
-            .duration(500)
+            .duration(animDuration)
             .attr("d", d => linker(d))
 
         this.invalidated = false
