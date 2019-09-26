@@ -143,6 +143,12 @@ svg {
     font-family: sans-serif;
 }
 
+.group rect {
+    fill: #ffe9a8;
+    stroke: #333;
+    stroke-width: 2px;
+}
+
 .context-menu {
     font-size: 16px;
 }

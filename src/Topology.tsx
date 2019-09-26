@@ -352,6 +352,10 @@ export class Topology extends React.Component<Props, {}> {
         this.gLevels = this.g.append("g")
             .attr("class", "levels")
 
+        // groups group, yes read it correctly groups group
+        this.gGroups = this.g.append("g")
+            .attr("class", "groups")
+
         // hiera links group 
         this.gHieraLinks = this.g.append("g")
             .attr("class", "hiera-links")
@@ -367,10 +371,6 @@ export class Topology extends React.Component<Props, {}> {
         // link wrapper group, used to catch mouse event
         this.gLinkWraps = this.g.append("g")
             .attr("class", "link-wraps")
-
-        // groups group, yes read it correctly groups group
-        this.gGroups = this.g.append("g")
-            .attr("class", "groups")
 
         // nodes group
         this.gNodes = this.g.append("g")
@@ -1451,9 +1451,9 @@ export class Topology extends React.Component<Props, {}> {
 
             rect
                 .attr("x", bb.x)
-                .attr("y", bb.y + 30)
+                .attr("y", bb.y + 50)
                 .attr("width", bb.width)
-                .attr("height", bb.height - 30)
+                .attr("height", bb.height - 55)
         }
 
         groupEnter.transition()
@@ -1461,10 +1461,12 @@ export class Topology extends React.Component<Props, {}> {
             .style("opacity", 1)
 
         groupEnter.append("rect")
-            .each(function (d) { groupRect(select(this), d, false) })
+            //.attr("rx", 10)
+            //.attr("ry", 10)
+            .each(function (d: NodeWrapper) { groupRect(select(this), d, false) })
 
         group.selectAll("rect")
-            .each(function (d) { groupRect(select(this), d, true) })
+            .each(function (d: NodeWrapper) { groupRect(select(this), d, true) })
 
         group.transition()
             .duration(animDuration)
