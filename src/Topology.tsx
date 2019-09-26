@@ -1343,22 +1343,8 @@ export class Topology extends React.Component<Props, {}> {
         return this.nodesBB(d3nodes)
     }
 
-    renderTree() {
+    private renderLevels() {
         var self = this
-
-        var normRoot = this.normalizeTree(this.root)
-
-        var root = hierarchy(normRoot)
-        this.tree(root)
-
-        this.d3nodes = new Map<string, D3Node>()
-        root.each(node => {
-            this.d3nodes.set(node.data.id, node)
-        })
-
-        const hieraLinker = linkVertical()
-            .x(d => d.x)
-            .y(d => d.y)
 
         if (this.invalidated) {
             this.updateLevelRects(this.levelNodes())
@@ -1411,6 +1397,12 @@ export class Topology extends React.Component<Props, {}> {
             .attr("transform", (d: LevelRect) => `translate(${d.bb.x},${d.bb.y})`)
             .select('rect.level-zone')
             .attr("height", (d: LevelRect) => d.bb.height)
+    }
+
+    private renderHieraLinks(root: any) {
+        const hieraLinker = linkVertical()
+            .x(d => d.x)
+            .y(d => d.y)
 
         var hieraLink = this.gHieraLinks.selectAll('path.hiera-link')
             .data(root.links(), (d: any) => d.source.data.id + d.target.data.id)
@@ -1431,6 +1423,10 @@ export class Topology extends React.Component<Props, {}> {
             .duration(animDuration)
             .attr("d", hieraLinker)
             .style("opacity", 1)
+    }
+
+    private renderGroups() {
+        var self = this
 
         var group = this.gGroups.selectAll('g.group')
             .interrupt()
@@ -1465,15 +1461,17 @@ export class Topology extends React.Component<Props, {}> {
             .style("opacity", 1)
 
         groupEnter.append("rect")
-            .each(function(d) { groupRect(select(this), d, false) })
+            .each(function (d) { groupRect(select(this), d, false) })
 
         group.selectAll("rect")
-            .each(function(d) { groupRect(select(this), d, true) })
+            .each(function (d) { groupRect(select(this), d, true) })
 
         group.transition()
             .duration(animDuration)
             .style("opacity", 1)
+    }
 
+    private renderNodes(root: any) {
         var node = this.gNodes.selectAll('g.node')
             .interrupt()
             .data(root.descendants(), (d: D3Node) => d.data.id)
@@ -1624,7 +1622,9 @@ export class Topology extends React.Component<Props, {}> {
             .style("opacity", 1)
             .attr("transform", (d: D3Node) => `translate(${d.x},${d.y})`)
             .attr("class", nodeClass)
+    }
 
+    private renderLinks() {
         const vLinker = linkVertical()
             .x((d: any) => {
                 let node = this.d3nodes.get(d.node.id)
@@ -1749,6 +1749,27 @@ export class Topology extends React.Component<Props, {}> {
         linkWrap.transition()
             .duration(animDuration)
             .attr("d", d => linker(d))
+    }
+
+    renderTree() {
+        var self = this
+
+        var normRoot = this.normalizeTree(this.root)
+
+        var root = hierarchy(normRoot)
+        this.tree(root)
+
+        // update d3nodes cache
+        this.d3nodes = new Map<string, D3Node>()
+        root.each(node => {
+            this.d3nodes.set(node.data.id, node)
+        })
+
+        this.renderLevels()
+        this.renderHieraLinks(root)
+        this.renderGroups()
+        this.renderNodes(root)
+        this.renderLinks()
 
         this.invalidated = false
     }
