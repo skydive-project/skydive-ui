@@ -197,6 +197,7 @@ export class Topology extends React.Component<Props, {}> {
     private levelRects: Array<LevelRect>
     private groups: Map<string, NodeWrapper>
     private groupStates: Map<string, State>
+    private nodeGroup: Map<string, NodeWrapper>
 
     root: Node
     nodes: Map<string, Node>
@@ -415,6 +416,7 @@ export class Topology extends React.Component<Props, {}> {
 
         this.groups = new Map<string, NodeWrapper>()
         this.groupStates = new Map<string, State>()
+        this.nodeGroup = new Map<string, NodeWrapper>()
 
         this.invalidated = true
     }
@@ -583,6 +585,8 @@ export class Topology extends React.Component<Props, {}> {
                 }
             })
 
+            this.nodeGroup.set(child.id, wrapper)
+
             wrapper.wrapped.children.push(child.wrapped)
             wrapper.children.push(child)
 
@@ -720,6 +724,7 @@ export class Topology extends React.Component<Props, {}> {
         }
 
         this.groups.clear()
+        this.nodeGroup.clear()
 
         var tree = this.cloneTree(node, null)
         if (!tree) {
@@ -778,6 +783,17 @@ export class Topology extends React.Component<Props, {}> {
                 if (this.d3nodes.get(node.id)) {
                     return node
                 }
+
+                // check within groups
+                var group = this.nodeGroup.get(node.id)
+                if (group && !group.wrapped.state.expanded) {
+                    for (let child of group.wrapped.children) {
+                        if (child.id === node.id && this.d3nodes.get(group.id)) {
+                            return group.wrapped
+                        }
+                    }
+                }
+
                 node = node.parent
             }
         }
@@ -1438,35 +1454,108 @@ export class Topology extends React.Component<Props, {}> {
             .style("opacity", 0)
         group.exit().remove()
 
-        const groupRect = function (rect: any, d: NodeWrapper, animated: boolean) {
-            var bb = self.groupBB(d)
+        const curlyBrace = (x1, y1, x2, y2, w) => {
+            var len = y2 - y1
+
+            var qx1 = x1 - w, qy1 = y1
+            var qx2 = x1 - w * 0.6, qy2 = y1 + len * 0.25
+            var qx3 = x1 - w * 0.8, qy3 = y1 + len / 2
+            var qx4 = x1 - w * 0.2, qy4 = y1 + len / 2
+            var qx5 = x1 - w * 0.6, qy5 = y1 + len * 0.75
+
+            return "Q " + qx1 + " " + qy1 + " " + qx2 + " " + qy2 +
+                " T " + qx3 + " " + qy3 +
+                " Q " + qx4 + " " + qy4 + " " + qx5 + " " + qy5 +
+                " T " + x2 + " " + y2
+        }
+
+        var curlyBraces = (g: any, d: NodeWrapper, animated: boolean) => {
+            var bb = this.groupBB(d)
             if (!bb) {
                 return
             }
 
+            var x1 = bb.x + 15
+            var y1 = bb.y + 70
+            var x2 = bb.x + bb.width - 15
+            var y2 = bb.y + bb.height - 70
+
+            var left = curlyBrace(x1, y1, x1, y2, 15)
+            var right = curlyBrace(x2, y2, x2, y1, -15)
+
+            var curly = g.select("path.curly-brace")
             if (animated) {
-                rect = rect.transition()
+                curly = curly.transition()
+                    .duration(animDuration)
+            }
+            curly.attr("d",
+                "M " + x1 + " " + y1 + " " +
+                left +
+                " M " + x2 + " " + y2 + " " +
+                right
+            )
+
+            curly = g.select("path.curly-brace-bg")
+            if (animated) {
+                curly = curly.transition()
                     .duration(animDuration)
             }
 
-            rect
-                .attr("x", bb.x)
-                .attr("y", bb.y + 50)
-                .attr("width", bb.width)
-                .attr("height", bb.height - 55)
+            curly
+                .attr("d",
+                    "M " + x1 + " " + y1 + " " +
+                    left +
+                    " L " + x2 + " " + y2 + " " +
+                    right +
+                    " L " + x1 + " " + y1 + " "
+                )
+
+            var icon = g.select("text")
+            if (animated) {
+                icon = icon.transition()
+                    .duration(animDuration)
+            }
+
+            icon.style("opacity", d.wrapped.state.expanded ? 1 : 0)
+
+            icon
+                .attr("x", x2 + 8)
+                .attr("y", y1 - 8)
         }
 
         groupEnter.transition()
             .duration(animDuration)
             .style("opacity", 1)
 
-        groupEnter.append("rect")
-            //.attr("rx", 10)
-            //.attr("ry", 10)
-            .each(function (d: NodeWrapper) { groupRect(select(this), d, false) })
+        groupEnter.append("path")
+            .attr("class", "curly-brace-bg")
 
-        group.selectAll("rect")
-            .each(function (d: NodeWrapper) { groupRect(select(this), d, true) })
+        groupEnter.append("path")
+            .attr("class", "curly-brace")
+
+        groupEnter.append("text")
+            .attr("class", "curly-close-icon")
+            .attr("id", (d: NodeWrapper) => d.id)
+            .style("opacity", 0)
+            .text("\uf057")
+            .on("click", function (d) {
+                var text = select(this)
+                if (!text) {
+                    return
+                }
+                var gid = text.attr("id")
+                var group = self.groups.get(gid)
+                if (group) {
+                    group.wrapped.state.expanded = false
+
+                    self.invalidated = true
+                    self.renderTree()
+                }
+            })
+
+        groupEnter.each(function (d) { curlyBraces(select(this), d, false) })
+
+        group.each(function (d) { curlyBraces(select(this), d, true) })
 
         group.transition()
             .duration(animDuration)
