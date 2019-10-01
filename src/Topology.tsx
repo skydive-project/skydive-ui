@@ -26,6 +26,7 @@ import ResizeObserver from 'react-resize-observer'
 import './Topology.css'
 
 const animDuration = 500
+const defaultGroupSize = 4
 
 export enum LinkTagState {
     Hidden = 1,
@@ -37,6 +38,7 @@ interface State {
     expanded: boolean
     selected: boolean
     mouseover: boolean
+    groupOffset: number
 }
 
 export class Node {
@@ -115,7 +117,6 @@ class NodeWrapper {
     children: Array<NodeWrapper>
     parent: NodeWrapper | null
     type: WrapperType
-    offset: number
 
     constructor(id: string, type: WrapperType, node: Node, parent: NodeWrapper | null) {
         this.id = id
@@ -123,7 +124,6 @@ class NodeWrapper {
         this.parent = parent
         this.children = new Array<NodeWrapper>()
         this.type = type
-        this.offset = 0
     }
 }
 
@@ -208,7 +208,7 @@ export class Topology extends React.Component<Props, {}> {
     constructor(props) {
         super(props)
 
-        this.nodeWidth = 140
+        this.nodeWidth = 150
         this.nodeHeight = 260
 
         if (this.props.weightTitles) {
@@ -392,7 +392,7 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     private defaultState(): State {
-        return { expanded: false, selected: false, mouseover: false }
+        return { expanded: false, selected: false, mouseover: false, groupOffset: 0 }
     }
 
     resetTree() {
@@ -401,7 +401,9 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     private initTree() {
-        this.root = new Node("root", ["root"], { name: "root" }, { expanded: true, selected: false, mouseover: false }, 0)
+        var state = { expanded: true, selected: false, mouseover: false, groupOffset: 0 }
+
+        this.root = new Node("root", ["root"], { name: "root" }, state, 0)
 
         this.nodes = new Map<string, Node>()
         this.nodeTagStates = new Map<string, boolean>()
@@ -572,7 +574,7 @@ export class Topology extends React.Component<Props, {}> {
 
             var wrapper = groups.get(gid)
             if (!wrapper) {
-                var state = this.groupStates.get(gid) || { expanded: false, selected: false, mouseover: false }
+                var state = this.groupStates.get(gid) || { expanded: false, selected: false, mouseover: false, groupOffset: 0 }
                 this.groupStates.set(gid, state)
 
                 var wrapped = new Node(gid, [], { Name: name, "Type": field }, state, () => { return child.wrapped.getWeight() })
@@ -610,12 +612,14 @@ export class Topology extends React.Component<Props, {}> {
 
             var wrapper = groups.get(gid)
             if (wrapper && wrapper.wrapped.children.length > 5) {
+                children.push(wrapper)
                 if (wrapper.wrapped.state.expanded) {
-                    children = children.concat(wrapper.children.splice(2, 4))
-                } else {
-                    wrapper.children = []
-                    children.push(wrapper)
+                    children = children.concat(
+                        wrapper.children.splice(wrapper.wrapped.state.groupOffset, this.props.groupSize || defaultGroupSize)
+                    )
                 }
+                wrapper.children = []
+
                 pushed.add(gid)
             } else {
                 groups.delete(gid)
@@ -786,7 +790,7 @@ export class Topology extends React.Component<Props, {}> {
 
                 // check within groups
                 var group = this.nodeGroup.get(node.id)
-                if (group && !group.wrapped.state.expanded) {
+                if (group) {
                     for (let child of group.wrapped.children) {
                         if (child.id === node.id && this.d3nodes.get(group.id)) {
                             return group.wrapped
@@ -1185,6 +1189,19 @@ export class Topology extends React.Component<Props, {}> {
             if (!parent.state.expanded) {
                 nodes.push(parent)
             }
+
+            // check within groups
+            /*var group = this.nodeGroup.get(node.id)
+            if (group) {
+                for (let child of group.wrapped.children) {
+                    if (child.id === node.id && this.d3nodes.get(group.id)) {
+                        return group.wrapped
+                    }
+                }
+            }*/
+
+
+
             parent = parent.parent
         }
 
@@ -1483,17 +1500,19 @@ export class Topology extends React.Component<Props, {}> {
             var left = curlyBrace(x1, y1, x1, y2, 15)
             var right = curlyBrace(x2, y2, x2, y1, -15)
 
-            var curly = g.select("path.curly-brace")
+            var curly = g.select("path.curly-brace-left")
             if (animated) {
                 curly = curly.transition()
                     .duration(animDuration)
             }
-            curly.attr("d",
-                "M " + x1 + " " + y1 + " " +
-                left +
-                " M " + x2 + " " + y2 + " " +
-                right
-            )
+            curly.attr("d", "M " + x1 + " " + y1 + " " + left)
+
+            curly = g.select("path.curly-brace-right")
+            if (animated) {
+                curly = curly.transition()
+                    .duration(animDuration)
+            }
+            curly.attr("d", "M " + x2 + " " + y2 + " " + right)
 
             curly = g.select("path.curly-brace-bg")
             if (animated) {
@@ -1519,8 +1538,8 @@ export class Topology extends React.Component<Props, {}> {
             icon.style("opacity", d.wrapped.state.expanded ? 1 : 0)
 
             icon
-                .attr("x", x2 + 8)
-                .attr("y", y1 - 8)
+                .attr("x", x1 - 40)
+                .attr("y", y1 + (y2 - y1) / 2 + 10)
         }
 
         groupEnter.transition()
@@ -1530,28 +1549,44 @@ export class Topology extends React.Component<Props, {}> {
         groupEnter.append("path")
             .attr("class", "curly-brace-bg")
 
-        groupEnter.append("path")
+        groupEnter.append("g")
             .attr("class", "curly-brace")
-
-        groupEnter.append("text")
-            .attr("class", "curly-close-icon")
-            .attr("id", (d: NodeWrapper) => d.id)
-            .style("opacity", 0)
-            .text("\uf057")
-            .on("click", function (d) {
-                var text = select(this)
-                if (!text) {
+            .style("pointer-events", "bounding-box")
+            .on("click", (d: NodeWrapper) => {
+                if (!d.wrapped.state.expanded) {
                     return
                 }
-                var gid = text.attr("id")
-                var group = self.groups.get(gid)
-                if (group) {
-                    group.wrapped.state.expanded = false
 
-                    self.invalidated = true
-                    self.renderTree()
+                if (d.wrapped.state.groupOffset > 0) {
+                    d.wrapped.state.groupOffset--
+                    this.renderTree()
                 }
             })
+            .append("path")
+            .attr("class", "curly-brace-left")
+
+        groupEnter.append("g")
+            .attr("class", "curly-brace")
+            .style("pointer-events", "bounding-box")
+            .on("click", (d: NodeWrapper) => {
+                if (!d.wrapped.state.expanded) {
+                    return
+                }
+
+                var size = this.props.groupSize || defaultGroupSize
+                if (d.wrapped.state.groupOffset + size < d.wrapped.children.length) {
+                    d.wrapped.state.groupOffset++
+                    this.renderTree()
+                }
+            })
+            .append("path")
+            .attr("class", "curly-brace-right")
+
+        groupEnter.append("text")
+            .attr("class", "curly-dot-icon")
+            .attr("id", (d: NodeWrapper) => d.id)
+            .style("opacity", 0)
+            .text("\uf141")
 
         groupEnter.each(function (d) { curlyBraces(select(this), d, false) })
 

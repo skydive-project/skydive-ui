@@ -143,10 +143,14 @@ svg {
     font-family: sans-serif;
 }
 
-.group .curly-brace {
+.group .curly-brace path  {
     stroke: #333;
     stroke-width: 2px;
     fill: none;
+}
+
+.group .curly-brace:hover path {
+    fill: #bbb;
 }
 
 .group .curly-brace-bg {
@@ -155,7 +159,7 @@ svg {
     stroke-width: 2px;
 }
 
-.group .curly-close-icon {
+.group .curly-dot-icon {
     font-family: 'Font Awesome 5 Free' !important;
     fill: #444;
     font-weight: 900;
