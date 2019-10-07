@@ -1810,6 +1810,9 @@ export class Topology extends React.Component<Props, {}> {
             .attr("y", hexSize + 6)
             .text((d: D3Node) => num(d.data))
 
+        node.select("text.node-exco-children")
+            .text((d: D3Node) => num(d.data))
+
         node.transition()
             .duration(animDuration)
             .style("opacity", 1)
