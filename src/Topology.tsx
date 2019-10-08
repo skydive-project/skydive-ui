@@ -157,7 +157,7 @@ interface Props {
     nodeAttrs: (node: Node) => NodeAttrs
     linkAttrs: (link: Link) => LinkAttrs
     weightTitles?: Map<number, string>
-    groupBy?: string
+    groupBy?: (node: Node) => string
     groupSize?: number
 }
 
@@ -557,6 +557,10 @@ export class Topology extends React.Component<Props, {}> {
     // group nodes using groupBy and groupSize
     private groupify(node: NodeWrapper): Map<string, NodeWrapper> {
         var groups = new Map<string, NodeWrapper>()
+
+        if (!this.props.groupBy) {
+            return groups
+        }
 
         // dispatch node per groups
         node.children.forEach(child => {

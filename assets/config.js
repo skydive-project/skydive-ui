@@ -82,6 +82,9 @@ var config = {
 
         return attrs
     },
+    "groupBy": function(node) {
+        return node.data.Type ? node.data.Type : null
+    },
     "weightTitles": {
         0: "Fabric",
         3: "Physical",

@@ -561,7 +561,8 @@ class App extends React.Component<Props, State> {
           <Container maxWidth="xl" className={classes.container}>
             <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} linkAttrs={this.linkAttrs}
               onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
-              onShowNodeContextMenu={this.onShowNodeContextMenu} weightTitles={this.weightTitles()} />
+              onShowNodeContextMenu={this.onShowNodeContextMenu} weightTitles={this.weightTitles()} 
+              groupBy={config.groupBy}/>
           </Container>
           <Container className={classes.rightPanel}>
             <Paper className={clsx(classes.rightPanelPaper, !this.state.nodeSelected.length && classes.rightPanelPaperClose)}
