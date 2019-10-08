@@ -1276,7 +1276,7 @@ export class Topology extends React.Component<Props, {}> {
         for (let link of links) {
             if (active || !this.isLinkNodeSelected(link)) {
                 select("#link-" + link.id)
-                    .style("opacity", opacity)
+                    .style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : opacity)
                 select("#link-overlay-" + link.id)
                     .style("opacity", opacity)
             }
