@@ -587,8 +587,6 @@ export class Topology extends React.Component<Props, {}> {
                 }
             })
 
-            this.nodeGroup.set(child.id, wrapper)
-
             wrapper.wrapped.children.push(child.wrapped)
             wrapper.children.push(child)
 
@@ -618,6 +616,12 @@ export class Topology extends React.Component<Props, {}> {
                         wrapper.children.splice(wrapper.wrapped.state.groupOffset, this.props.groupSize || defaultGroupSize)
                     )
                 }
+                wrapper.wrapped.children.forEach(child => {
+                    if (wrapper) {
+                        this.nodeGroup.set(child.id, wrapper)
+                    }
+                })
+
                 wrapper.children = []
 
                 pushed.add(gid)
@@ -1182,35 +1186,48 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     private showNode(node: Node) {
-        var nodes = new Array<Node>()
-
-        var parent = node.parent
-        while (parent) {
-            if (!parent.state.expanded) {
-                nodes.push(parent)
+        // find next node to expand, can be either a parent of a group
+        const nextId = () => {
+            var id = "", gid = "", parent: Node | null = node
+            while (parent) {
+                var group = this.nodeGroup.get(parent.id)
+                if (group && !group.wrapped.state.expanded) {
+                    gid = group.id
+                }
+                if (!parent.state.expanded) {
+                    id = parent.id
+                }
+                parent = parent.parent
             }
 
-            // check within groups
-            /*var group = this.nodeGroup.get(node.id)
-            if (group) {
-                for (let child of group.wrapped.children) {
-                    if (child.id === node.id && this.d3nodes.get(group.id)) {
-                        return group.wrapped
-                    }
-                }
-            }*/
-
-
-
-            parent = parent.parent
+            return gid ? gid : id
         }
 
-        nodes.reverse().forEach(node => {
-            var d = this.d3nodes.get(node.id)
+        var id = nextId()
+        while (id) {
+            var d = this.d3nodes.get(id)
             if (d) {
                 this.expand(d.data)
+            } else {
+                // part of a group then slide to the offset
+                var group = this.nodeGroup.get(id)
+                if (group) {
+                    let offset = group.wrapped.children.findIndex(child => child.id === id)
+                    if (offset >= 0) {
+                        let size = this.props.groupSize || defaultGroupSize
+                        if (offset + size > group.wrapped.children.length) {
+                            offset = group.wrapped.children.length - size
+                        }
+                    }
+                    group.wrapped.state.groupOffset = offset
+
+                    this.renderTree()
+                } else {
+                    break
+                }
             }
-        })
+            id = nextId()
+        }
     }
 
     pinNode(node: Node, active) {
