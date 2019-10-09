@@ -309,6 +309,10 @@ class App extends React.Component<Props, State> {
     }
 
     return this.state.nodeSelected.map((node: Node, i: number) => {
+      if (this.state.tab !== i) {
+        return null
+      }
+
       var data = JSON.parse(JSON.stringify(node.data))
 
       return (
