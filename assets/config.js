@@ -82,7 +82,7 @@ var config = {
 
         return attrs
     },
-    "groupBy": function(node) {
+    "groupBy": function (node) {
         return node.data.Type && node.data.Type !== "host" ? node.data.Type : null
     },
     "weightTitles": {
@@ -100,13 +100,21 @@ var config = {
         "data.Name"
     ],
     "dataFields": {
-        "Captures": false,
-        "Injections": false,
-        "IPV4": true,
-        "IPV6": true,
-        "Features": false,
-        "FDB": false,
-        "Neighbors": false,
-        "RoutingTables": false
+        "Captures": {
+            expanded: false,
+            normalizer: function (data) {
+                for (let capture of data) {
+                    capture.ID = capture.ID.split('-')[0]
+                }
+                return data
+            }
+        },
+        "Injections": { expanded: false },
+        "IPV4": { expanded: true },
+        "IPV6": { expanded: true },
+        "Features": { expanded: false },
+        "FDB": { expanded: false },
+        "Neighbors": { expanded: false },
+        "RoutingTables": { expanded: false }
     }
 }

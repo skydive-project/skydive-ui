@@ -302,7 +302,9 @@ class App extends React.Component<Props, State> {
 
       for (let field in config.dataFields) {
         result.push(
-          <DataViewer key={field} classes={classes} title={field} defaultExpanded={config.dataFields[field]} data={props.data[field]} />
+          <DataViewer key={field} classes={classes} title={field} 
+            defaultExpanded={config.dataFields[field].expanded} data={props.data[field]} 
+            normalizer={config.dataFields[field].normalizer}/>
         )
       }
       return result

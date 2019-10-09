@@ -22,12 +22,14 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import Typography from '@material-ui/core/Typography'
 import { TableDataViewer } from './TableDataViewer'
+import { normalize } from "path";
 
 interface Props {
     title: string
     data: Array<Array<any>>
     classes: any
     defaultExpanded?: boolean
+    normalizer?: (data: any) => any
 }
 
 interface State {
@@ -152,6 +154,10 @@ export class DataViewer extends React.Component<Props, State> {
         var result = {
             columns: new Array<string>(),
             data: new Array<Array<any>>()
+        }
+
+        if (this.props.normalizer) {
+            data = this.props.normalizer(data)
         }
 
         if (Array.isArray(data)) {
