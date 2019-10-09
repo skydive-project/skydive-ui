@@ -30,10 +30,20 @@ interface Props {
     defaultExpanded?: boolean
 }
 
-export class DataViewer extends React.Component<Props, {}> {
+interface State {
+    isExpanded: boolean
+}
+
+export class DataViewer extends React.Component<Props, State> {
+
+    state: State
 
     constructor(props) {
         super(props)
+
+        this.state = {
+            isExpanded: props.defaultExpanded
+        }
     }
 
     private extractMap(data: any): { columns: Array<string>, data: Array<Array<any>> } {
@@ -80,7 +90,7 @@ export class DataViewer extends React.Component<Props, {}> {
         return result
     }
 
-    private extractObjectArray(data: any): { columns: Array<string>, data: Array<Array<any>> } { 
+    private extractObjectArray(data: any): { columns: Array<string>, data: Array<Array<any>> } {
         var result = {
             columns: new Array<string>(),
             data: new Array<Array<any>>()
@@ -155,13 +165,25 @@ export class DataViewer extends React.Component<Props, {}> {
         return result
     }
 
+    onChange(event: object, expanded: boolean) {
+        this.setState({ isExpanded: expanded })
+    }
+
     render() {
         const { classes } = this.props
 
-        var data = this.extractTableData(this.props.data)
-        if (data.data.length) {
+        const Table = (props) => {
+            var data = this.extractTableData(this.props.data)
+            if (this.state.isExpanded && data.data.length) {
+                return <TableDataViewer columns={data.columns} data={data.data} />
+            }
+
+            return null
+        }
+
+        if (this.props.data) {
             return (
-                <ExpansionPanel defaultExpanded={this.props.defaultExpanded}>
+                <ExpansionPanel defaultExpanded={this.props.defaultExpanded} onChange={this.onChange.bind(this)}>
                     <ExpansionPanelSummary
                         expandIcon={<ExpandMoreIcon />}
                         aria-controls="panel1a-content"
@@ -169,7 +191,7 @@ export class DataViewer extends React.Component<Props, {}> {
                         <Typography className={classes.heading}>{this.props.title}</Typography>
                     </ExpansionPanelSummary>
                     <ExpansionPanelDetails>
-                        <TableDataViewer columns={data.columns} data={data.data} />
+                        <Table />
                     </ExpansionPanelDetails>
                 </ExpansionPanel>
             )
