@@ -16,10 +16,12 @@
  */
 
 import * as React from "react"
-import MUIDataTable from "mui-datatables";
+import MUIDataTable from "mui-datatables"
+
+import './TableDataViewer.css'
 
 interface Props {
-    title: string
+    title?: string
     columns: Array<string>
     data: Array<Array<any>>
 }
@@ -34,7 +36,7 @@ export class TableDataViewer extends React.Component<Props, {}> {
         const options = {
             filterType: 'checkbox',
             selectableRows: 'none',
-            responsive: 'scrollFullHeight',
+            responsive: 'stacked',
             print: false,
             download: false
         };

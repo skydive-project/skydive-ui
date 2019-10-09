@@ -98,5 +98,12 @@ var config = {
         "data.IPV4",
         "data.MAC",
         "data.Name"
-    ]
+    ],
+    "dataFields": {
+        "IPV4": true,
+        "IPV6": true,
+        "Features": false,
+        "FDB": false,
+        "Neighbors": false
+    }
 }

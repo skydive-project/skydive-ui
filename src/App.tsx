@@ -40,14 +40,12 @@ import { withSnackbar, WithSnackbarProps } from 'notistack'
 import Tabs from '@material-ui/core/Tabs'
 import Tab from '@material-ui/core/Tab'
 
-import JSONTree from 'react-json-tree'
-
 import { AppStyles } from './Styles'
 import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState } from './Topology'
 import { mainListItems, helpListItems } from './Menu'
 import AutoCompleteInput from './AutoComplete'
 import { a11yProps, TabPanel } from './Tabs'
-import { TableDataViewer } from './TableDataViewer'
+import { DataViewer } from './DataViewer'
 import './App.css'
 
 import Logo from './Logo.png'
@@ -305,30 +303,29 @@ class App extends React.Component<Props, State> {
     })
   }
 
+  renderData(classes: any, node: Node) {
+
+  }
+
   renderTabPanels(classes: any) {
+    const FieldViewer = (props: any) => {
+      var result = [] as any
+
+      for (let field in config.dataFields) {
+        result.push(
+          <DataViewer key={field} classes={classes} title={field} defaultExpanded={config.dataFields[field]} data={props.data[field]} />
+        )
+      }
+      return result
+    }
+
     return this.state.nodeSelected.map((node: Node, i: number) => {
       var data = JSON.parse(JSON.stringify(node.data))
 
-      var features = data.Features
-      delete data.Features
-
-      const columns = ["Feature", "Active"]
-
-      var featureData = new Array<Array<any>>()
-      for (let key in features) {
-        featureData.push([key, features[key] ? "true" : "false"])
-      }
-
       return (
         <TabPanel key={"tabpanel-" + i} value={this.state.tab} index={i}>
-          <Typography component="h6" color="primary" gutterBottom>
-            {node.id}
-          </Typography>
-          <JSONTree className={classes.jsonTree} data={data} theme="bright" invertTheme hideRoot sortObjectKeys />
-          {
-            features && <TableDataViewer title="Features" columns={columns} data={featureData} />
-          }
-
+          <DataViewer classes={classes} title={node.id} data={data} defaultExpanded={true} />
+          <FieldViewer data={data} />
         </TabPanel>
       )
     })
@@ -561,8 +558,8 @@ class App extends React.Component<Props, State> {
           <Container maxWidth="xl" className={classes.container}>
             <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} linkAttrs={this.linkAttrs}
               onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
-              onShowNodeContextMenu={this.onShowNodeContextMenu} weightTitles={this.weightTitles()} 
-              groupBy={config.groupBy}/>
+              onShowNodeContextMenu={this.onShowNodeContextMenu} weightTitles={this.weightTitles()}
+              groupBy={config.groupBy} />
           </Container>
           <Container className={classes.rightPanel}>
             <Paper className={clsx(classes.rightPanelPaper, !this.state.nodeSelected.length && classes.rightPanelPaperClose)}
