@@ -64,7 +64,6 @@ interface State {
   contextMenuY: number
   isNavOpen: boolean
   linkTagStates: Map<string, LinkTagState>
-  overflow: string
   suggestions: Array<string>
   tab: number
   nodeSelected: Array<Node>
@@ -86,7 +85,6 @@ class App extends React.Component<Props, State> {
       contextMenuX: 0,
       contextMenuY: 0,
       isNavOpen: false,
-      overflow: 'hidden', // hack for info panel
       linkTagStates: new Map<string, LinkTagState>(),
       suggestions: new Array<string>(),
       tab: 0,
@@ -283,11 +281,6 @@ class App extends React.Component<Props, State> {
     }
 
     this.setState({ nodeSelected: nodes, tab: tab })
-
-    // hack in order to restore overflow of panel after transition
-    setTimeout(() => {
-      this.setState({ overflow: 'auto' })
-    }, 1000)
   }
 
   renderTabs(classes: any) {
@@ -301,10 +294,6 @@ class App extends React.Component<Props, State> {
           key={"tab-" + i} label={d.id.split("-", 2)[0] + "-..."} {...a11yProps(i)} />
       )
     })
-  }
-
-  renderData(classes: any, node: Node) {
-
   }
 
   renderTabPanels(classes: any) {
@@ -324,7 +313,7 @@ class App extends React.Component<Props, State> {
 
       return (
         <TabPanel key={"tabpanel-" + i} value={this.state.tab} index={i}>
-          <DataViewer classes={classes} title={node.id} data={data} defaultExpanded={true} />
+          <DataViewer classes={classes} title="General" data={data} defaultExpanded={true} />
           <FieldViewer data={data} />
         </TabPanel>
       )
@@ -574,7 +563,7 @@ class App extends React.Component<Props, State> {
                   indicatorColor="primary">
                   {this.renderTabs(classes)}
                 </Tabs>
-                <div className={classes.rightPanelPaperContent} style={{ overflow: this.state.overflow }} >
+                <div className={classes.rightPanelPaperContent} style={{ overflow: "auto" }}>
                   {this.renderTabPanels(classes)}
                 </div>
               </div>

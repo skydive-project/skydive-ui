@@ -36,6 +36,108 @@ export class DataViewer extends React.Component<Props, {}> {
         super(props)
     }
 
+    private extractMap(data: any): { columns: Array<string>, data: Array<Array<any>> } {
+        var result = {
+            columns: new Array<string>(),
+            data: new Array<Array<any>>()
+        }
+
+        result.columns = ["Key", "Value"]
+
+        for (let attr in data) {
+            let value = data[attr]
+            switch (typeof value) {
+                case "object":
+                    break
+                case "boolean":
+                    result.data.push([attr, value ? "true" : "false"])
+                    break
+                default:
+                    result.data.push([attr, value])
+                    break
+            }
+        }
+
+        return result
+    }
+
+    private extractScalarArray(data: any): { columns: Array<string>, data: Array<Array<any>> } {
+        var result = {
+            columns: new Array<string>(),
+            data: new Array<Array<any>>()
+        }
+
+        result.columns = ["Value"]
+
+        for (let value of data) {
+            if (typeof value === "boolean") {
+                result.data.push([value ? "true" : "false"])
+            } else {
+                result.data.push([value])
+            }
+        }
+
+        return result
+    }
+
+    private extractObjectArray(data: any): { columns: Array<string>, data: Array<Array<any>> } { 
+        var result = {
+            columns: new Array<string>(),
+            data: new Array<Array<any>>()
+        }
+
+        var colIndex = new Map<string, number>()
+        for (let value of data) {
+            // get columns
+            for (let attr in value) {
+                let index = colIndex.get(attr)
+                if (index === undefined) {
+                    colIndex.set(attr, result.columns.length)
+
+                    result.columns.push(attr)
+                }
+            }
+
+            // fill with empty values
+            var entry = new Array<any>()
+            for (let i = 0; i !== result.columns.length; i++) {
+                entry.push("")
+            }
+
+            var hasValue = false
+            for (let attr in value) {
+                let index = colIndex.get(attr)
+                if (index === undefined) {
+                    continue
+                }
+
+                var type = typeof value[attr]
+                if (type === "boolean") {
+                    entry[index] = value[attr] ? "true" : "false"
+                } if (type === "string" || type === "number") {
+                    entry[index] = value[attr] === null ? "" : value[attr]
+                } else {
+                    continue
+                }
+                hasValue = true
+            }
+
+            if (hasValue) {
+                result.data.push(entry)
+            }
+        }
+
+        return result
+    }
+
+    private extractArray(data: any): { columns: Array<string>, data: Array<Array<any>> } {
+        if ((data as Array<any>).some(value => typeof value === "object")) {
+            return this.extractObjectArray(data)
+        }
+
+        return this.extractScalarArray(data)
+    }
+
     private extractTableData(data: any): { columns: Array<string>, data: Array<Array<any>> } {
         var result = {
             columns: new Array<string>(),
@@ -43,38 +145,11 @@ export class DataViewer extends React.Component<Props, {}> {
         }
 
         if (Array.isArray(data)) {
-            result.columns = ["Value"]
-        } else if (typeof data === "object") {
-            result.columns = ["Key", "Value"]
+            return this.extractArray(data)
         }
 
-        for (let attr in data) {
-            let value = data[attr]
-
-            let entry = new Array<any>()
-            switch (typeof value) {
-                case "object":
-                    break
-                case "boolean":
-                    entry.push(value ? "true" : "false")
-                    break
-                case "string":
-                    if (value != "") {
-                        entry.push(value)
-                    }
-                    break
-                default:
-                    entry.push(value)
-                    break
-            }
-
-            if (entry.length) {
-                if (!Array.isArray(data)) {
-                    entry.unshift(attr)
-                }
-            
-                result.data.push(entry)
-            }
+        if (typeof data === "object") {
+            return this.extractMap(data)
         }
 
         return result

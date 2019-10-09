@@ -83,7 +83,7 @@ var config = {
         return attrs
     },
     "groupBy": function(node) {
-        return node.data.Type ? node.data.Type : null
+        return node.data.Type && node.data.Type !== "host" ? node.data.Type : null
     },
     "weightTitles": {
         0: "Fabric",
@@ -100,10 +100,13 @@ var config = {
         "data.Name"
     ],
     "dataFields": {
+        "Captures": false,
+        "Injections": false,
         "IPV4": true,
         "IPV6": true,
         "Features": false,
         "FDB": false,
-        "Neighbors": false
+        "Neighbors": false,
+        "RoutingTables": false
     }
 }

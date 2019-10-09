@@ -1164,7 +1164,7 @@ export class Topology extends React.Component<Props, {}> {
 
             this.hideNodeContextMenu()
             this.toggleNode(d.data.id)
-        }, 200)
+        }, 150)
     }
 
     private nodeDoubleClicked(d: D3Node) {
