@@ -82,6 +82,9 @@ var config = {
 
         return attrs
     },
+    "nodeTabTitle": function (node) {
+        return node.data.Name.substring(0, 8)
+    },
     "groupBy": function (node) {
         return node.data.Type && node.data.Type !== "host" ? node.data.Type : null
     },
@@ -99,8 +102,9 @@ var config = {
         "data.MAC",
         "data.Name"
     ],
-    "dataFields": {
-        "Captures": {
+    "nodeDataFields": [
+        {
+            field: "Captures",
             expanded: false,
             normalizer: function (data) {
                 for (let capture of data) {
@@ -109,12 +113,89 @@ var config = {
                 return data
             }
         },
-        "Injections": { expanded: false },
-        "IPV4": { expanded: true },
-        "IPV6": { expanded: true },
-        "Features": { expanded: false },
-        "FDB": { expanded: false },
-        "Neighbors": { expanded: false },
-        "RoutingTables": { expanded: false }
-    }
+        {
+            field: "Injections",
+            expanded: false
+        },
+        {
+            field: "IPV4",
+            expanded: true
+        },
+        {
+            field: "IPV6",
+            expanded: true
+        },
+        {
+            field: "Metric",
+            title: "Total metrics",
+            expanded: false,
+            normalizer: function (data) {
+                return {
+                    RxPackets: data.RxPackets.toLocaleString(),
+                    RxBytes: prettyBytes(data.RxBytes),
+                    TxPackets: data.TxPackets.toLocaleString(),
+                    TxBytes: prettyBytes(data.TxBytes),
+                    Last: new Date(data.Last).toLocaleString()
+                }
+            }
+        },
+        {
+            field: "LastUpdateMetric",
+            title: "Last update metrics",
+            expanded: false,
+            normalizer: function (data) {
+                return {
+                    RxPackets: data.RxPackets.toLocaleString(),
+                    RxBytes: prettyBytes(data.RxBytes),
+                    TxPackets: data.TxPackets.toLocaleString(),
+                    TxBytes: prettyBytes(data.TxBytes),
+                    Start: new Date(data.Start).toLocaleString(),
+                    Last: new Date(data.Last).toLocaleString()
+                }
+            }
+        },
+        {
+            field: "Features",
+            expanded: false
+        },
+        {
+            field: "FDB",
+            expanded: false
+        },
+        {
+            field: "Neighbors",
+            expanded: false
+        },
+        {
+            field: "RoutingTables",
+            title: "Routing tables",
+            expanded: false,
+            normalizer: function (data) {
+                var rows = []
+                for (let table of data) {
+                    if (!table.Routes) {
+                        continue
+                    }
+                    for (let route of table.Routes) {
+                        if (!route.NextHops) {
+                            continue
+                        }
+                        for (let nh of route.NextHops) {
+                            rows.push({
+                                ID: table.ID,
+                                Src: table.Src,
+                                Protocol: route["Protocol"],
+                                Prefix: route["Prefix"],
+                                Priority: nh["Priority"],
+                                IP: nh["IP"],
+                                IfIndex: nh["IfIndex"]
+                            })
+                        }
+                    }
+                }
+
+                return rows
+            }
+        }
+    ]
 }

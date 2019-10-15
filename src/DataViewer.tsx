@@ -22,7 +22,7 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import Typography from '@material-ui/core/Typography'
 import { TableDataViewer } from './TableDataViewer'
-import { normalize } from "path";
+import { DataNormalizer } from './DataNormalizer'
 
 interface Props {
     title: string
@@ -30,6 +30,7 @@ interface Props {
     classes: any
     defaultExpanded?: boolean
     normalizer?: (data: any) => any
+    flatten?: boolean
 }
 
 interface State {
@@ -39,6 +40,7 @@ interface State {
 export class DataViewer extends React.Component<Props, State> {
 
     state: State
+    dataNormalizer: DataNormalizer
 
     constructor(props) {
         super(props)
@@ -46,129 +48,8 @@ export class DataViewer extends React.Component<Props, State> {
         this.state = {
             isExpanded: props.defaultExpanded
         }
-    }
 
-    private extractMap(data: any): { columns: Array<string>, data: Array<Array<any>> } {
-        var result = {
-            columns: new Array<string>(),
-            data: new Array<Array<any>>()
-        }
-
-        result.columns = ["Key", "Value"]
-
-        for (let attr in data) {
-            let value = data[attr]
-            switch (typeof value) {
-                case "object":
-                    break
-                case "boolean":
-                    result.data.push([attr, value ? "true" : "false"])
-                    break
-                default:
-                    result.data.push([attr, value])
-                    break
-            }
-        }
-
-        return result
-    }
-
-    private extractScalarArray(data: any): { columns: Array<string>, data: Array<Array<any>> } {
-        var result = {
-            columns: new Array<string>(),
-            data: new Array<Array<any>>()
-        }
-
-        result.columns = ["Value"]
-
-        for (let value of data) {
-            if (typeof value === "boolean") {
-                result.data.push([value ? "true" : "false"])
-            } else {
-                result.data.push([value])
-            }
-        }
-
-        return result
-    }
-
-    private extractObjectArray(data: any): { columns: Array<string>, data: Array<Array<any>> } {
-        var result = {
-            columns: new Array<string>(),
-            data: new Array<Array<any>>()
-        }
-
-        var colIndex = new Map<string, number>()
-        for (let value of data) {
-            // get columns
-            for (let attr in value) {
-                let index = colIndex.get(attr)
-                if (index === undefined) {
-                    colIndex.set(attr, result.columns.length)
-
-                    result.columns.push(attr)
-                }
-            }
-
-            // fill with empty values
-            var entry = new Array<any>()
-            for (let i = 0; i !== result.columns.length; i++) {
-                entry.push("")
-            }
-
-            var hasValue = false
-            for (let attr in value) {
-                let index = colIndex.get(attr)
-                if (index === undefined) {
-                    continue
-                }
-
-                var type = typeof value[attr]
-                if (type === "boolean") {
-                    entry[index] = value[attr] ? "true" : "false"
-                } if (type === "string" || type === "number") {
-                    entry[index] = value[attr] === null ? "" : value[attr]
-                } else {
-                    continue
-                }
-                hasValue = true
-            }
-
-            if (hasValue) {
-                result.data.push(entry)
-            }
-        }
-
-        return result
-    }
-
-    private extractArray(data: any): { columns: Array<string>, data: Array<Array<any>> } {
-        if ((data as Array<any>).some(value => typeof value === "object")) {
-            return this.extractObjectArray(data)
-        }
-
-        return this.extractScalarArray(data)
-    }
-
-    private extractTableData(data: any): { columns: Array<string>, data: Array<Array<any>> } {
-        var result = {
-            columns: new Array<string>(),
-            data: new Array<Array<any>>()
-        }
-
-        if (this.props.normalizer) {
-            data = this.props.normalizer(data)
-        }
-
-        if (Array.isArray(data)) {
-            return this.extractArray(data)
-        }
-
-        if (typeof data === "object") {
-            return this.extractMap(data)
-        }
-
-        return result
+        this.dataNormalizer = new DataNormalizer(props.normalizer)
     }
 
     onChange(event: object, expanded: boolean) {
@@ -179,9 +60,9 @@ export class DataViewer extends React.Component<Props, State> {
         const { classes } = this.props
 
         const Table = (props) => {
-            var data = this.extractTableData(this.props.data)
-            if (this.state.isExpanded && data.data.length) {
-                return <TableDataViewer columns={data.columns} data={data.data} />
+            var data = this.dataNormalizer.normalize(this.props.data)
+            if (this.state.isExpanded && data.rows.length) {
+                return <TableDataViewer columns={data.columns} data={data.rows} />
             }
 
             return null

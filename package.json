@@ -10,10 +10,13 @@
     "@material-ui/core": "^4.3.2",
     "@material-ui/icons": "^4.2.1",
     "@material-ui/lab": "^4.0.0-alpha.26",
+    "@types/chai": "^4.2.3",
+    "@types/mocha": "^5.2.7",
     "@types/react": "^16.9.2",
     "@types/react-dom": "^16.9.0",
     "@types/styled-jsx": "^2.2.8",
     "awesome-typescript-loader": "^5.2.1",
+    "chai": "^4.2.0",
     "clsx": "^1.0.4",
     "copy-webpack-plugin": "^5.0.4",
     "css-loader": "^3.2.0",
@@ -29,8 +32,10 @@
     "html-webpack-plugin": "^3.2.0",
     "image-webpack-loader": "^5.0.0",
     "lodash.deburr": "^4.1.0",
+    "mocha": "^6.2.1",
     "mui-datatables": "^2.10.3",
     "notistack": "^0.8.9",
+    "nyc": "^14.1.1",
     "react": "^16.8.6",
     "react-docgen": "^4.1.1",
     "react-dom": "^16.8.6",
@@ -42,13 +47,16 @@
     "source-map-loader": "^0.2.4",
     "style-loader": "^1.0.0",
     "ts-debounce": "^1.0.0",
-    "typescript": "^3.5.3",
+    "ts-node": "^8.4.1",
+    "typescript": "^3.6.4",
     "webpack": "^4.39.2",
     "webpack-cli": "^3.3.7",
     "webpack-dev-server": "^3.8.0"
   },
   "scripts": {
     "start": "webpack-dev-server --mode development --host 0.0.0.0 --open",
-    "build": "webpack --mode production"
+    "build": "webpack --mode production",
+    "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' mocha -r ts-node/register tests/**/*.test.ts",
+    "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test"
   }
 }

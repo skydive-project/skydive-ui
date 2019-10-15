@@ -291,7 +291,7 @@ class App extends React.Component<Props, State> {
       }
       return (
         <Tab className="tab" icon={<span className={className}>{config.nodeAttrs(d).icon}</span>}
-          key={"tab-" + i} label={d.id.split("-", 2)[0] + "-..."} {...a11yProps(i)} />
+          key={"tab-" + i} label={<span className={classes.tabTitle}>{config.nodeTabTitle(d)}</span>} {...a11yProps(i)} />
       )
     })
   }
@@ -300,11 +300,11 @@ class App extends React.Component<Props, State> {
     const FieldViewer = (props: any) => {
       var result = [] as any
 
-      for (let field in config.dataFields) {
+      for (let cfg of config.nodeDataFields) {
         result.push(
-          <DataViewer key={field} classes={classes} title={field} 
-            defaultExpanded={config.dataFields[field].expanded} data={props.data[field]} 
-            normalizer={config.dataFields[field].normalizer}/>
+          <DataViewer key={cfg.field} classes={classes} title={cfg.title || cfg.field}
+            defaultExpanded={cfg.expanded} data={props.data[cfg.field]}
+            normalizer={cfg.normalizer} />
         )
       }
       return result
