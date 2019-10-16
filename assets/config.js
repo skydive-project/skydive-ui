@@ -145,12 +145,12 @@ var config = {
             expanded: false,
             normalizer: function (data) {
                 return {
-                    RxPackets: data.RxPackets.toLocaleString(),
-                    RxBytes: prettyBytes(data.RxBytes),
-                    TxPackets: data.TxPackets.toLocaleString(),
-                    TxBytes: prettyBytes(data.TxBytes),
-                    Start: new Date(data.Start).toLocaleString(),
-                    Last: new Date(data.Last).toLocaleString()
+                    RxPackets: data.RxPackets ? data.RxPackets.toLocaleString() : 0,
+                    RxBytes: data.RxBytes ? prettyBytes(data.RxBytes) : 0,
+                    TxPackets: data.TxPackets ? data.TxPackets.toLocaleString() : 0,
+                    TxBytes: data.TxPackets ? prettyBytes(data.TxBytes) : 0,
+                    Start: data.Start ? new Date(data.Start).toLocaleString() : 0,
+                    Last: data.Last ? new Date(data.Last).toLocaleString() : 0
                 }
             }
         },

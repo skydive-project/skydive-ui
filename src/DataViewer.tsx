@@ -60,7 +60,10 @@ export class DataViewer extends React.Component<Props, State> {
         const { classes } = this.props
 
         const Table = (props) => {
-            var data = this.dataNormalizer.normalize(this.props.data)
+            // copy so that we can normalize without altering the original data
+            var data = JSON.parse(JSON.stringify(this.props.data))
+
+            data = this.dataNormalizer.normalize(data)
             if (this.state.isExpanded && data.rows.length) {
                 return <TableDataViewer columns={data.columns} data={data.rows} />
             }

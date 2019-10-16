@@ -39,6 +39,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel'
 import { withSnackbar, WithSnackbarProps } from 'notistack'
 import Tabs from '@material-ui/core/Tabs'
 import Tab from '@material-ui/core/Tab'
+import { connect } from 'react-redux'
 
 import { AppStyles } from './Styles'
 import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState } from './Topology'
@@ -47,6 +48,7 @@ import AutoCompleteInput from './AutoComplete'
 import { a11yProps, TabPanel } from './Tabs'
 import { DataViewer } from './DataViewer'
 import './App.css'
+import { AppState, selectNode, unselectNode } from './Store'
 
 import Logo from './Logo.png'
 
@@ -56,6 +58,9 @@ const data = require('./dump.json')
 
 interface Props extends WithSnackbarProps {
   classes: any
+  selectNode: typeof selectNode
+  unselectNode: typeof unselectNode
+  nodeSelection: Array<Node>
 }
 
 interface State {
@@ -66,7 +71,6 @@ interface State {
   linkTagStates: Map<string, LinkTagState>
   suggestions: Array<string>
   tab: number
-  nodeSelected: Array<Node>
 }
 
 class App extends React.Component<Props, State> {
@@ -87,8 +91,7 @@ class App extends React.Component<Props, State> {
       isNavOpen: false,
       linkTagStates: new Map<string, LinkTagState>(),
       suggestions: new Array<string>(),
-      tab: 0,
-      nodeSelected: new Array<Node>()
+      tab: 0
     }
 
     this.synced = false
@@ -268,23 +271,25 @@ class App extends React.Component<Props, State> {
   }
 
   onNodeSelected(node: Node, active: boolean) {
-    var nodes = this.state.nodeSelected.filter(d => node.id !== d.id)
     if (active) {
-      nodes.push(node)
+      this.props.selectNode(node)
+    } else {
+      this.props.unselectNode(node)
     }
+
     var tab = this.state.tab
-    if (tab >= nodes.length) {
-      tab = nodes.length - 1
+    if (tab >= this.props.nodeSelection.length) {
+      tab = this.props.nodeSelection.length - 1
     }
     if (tab < 0) {
       tab = 0
     }
 
-    this.setState({ nodeSelected: nodes, tab: tab })
+    this.setState({ tab: tab })
   }
 
   renderTabs(classes: any) {
-    return this.state.nodeSelected.map((d: Node, i: number) => {
+    return this.props.nodeSelection.map((d: Node, i: number) => {
       var className = classes.tabIconFree
       if (config.nodeAttrs(d).classes.includes("font-brands")) {
         className = classes.tabIconBrands
@@ -310,16 +315,14 @@ class App extends React.Component<Props, State> {
       return result
     }
 
-    return this.state.nodeSelected.map((node: Node, i: number) => {
+    return this.props.nodeSelection.map((node: Node, i: number) => {
       if (this.state.tab !== i) {
         return null
       }
 
-      var data = JSON.parse(JSON.stringify(node.data))
-
       return (
         <TabPanel key={"tabpanel-" + i} value={this.state.tab} index={i}>
-          <DataViewer classes={classes} title="General" data={data} defaultExpanded={true} />
+          <DataViewer classes={classes} title="General" data={node.data} defaultExpanded={true} />
           <FieldViewer data={data} />
         </TabPanel>
       )
@@ -557,7 +560,7 @@ class App extends React.Component<Props, State> {
               groupBy={config.groupBy} />
           </Container>
           <Container className={classes.rightPanel}>
-            <Paper className={clsx(classes.rightPanelPaper, !this.state.nodeSelected.length && classes.rightPanelPaperClose)}
+            <Paper className={clsx(classes.rightPanelPaper, !this.props.nodeSelection.length && classes.rightPanelPaperClose)}
               square={true}>
               <div className={classes.tabs}>
                 <Tabs
@@ -600,4 +603,13 @@ class App extends React.Component<Props, State> {
   }
 }
 
-export default withStyles(AppStyles)(withSnackbar(App))
+export const mapStateToProps = (state: AppState) => ({
+  nodeSelection: state.nodeSelection
+})
+
+export const mapDispatchToProps = ({
+  selectNode,
+  unselectNode
+})
+
+export default withStyles(AppStyles)(connect(mapStateToProps, mapDispatchToProps)(withSnackbar(App)))
