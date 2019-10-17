@@ -17,29 +17,81 @@
 
 import * as React from "react"
 import MUIDataTable from "mui-datatables"
+import { Column } from "./TableDataNormalizer"
 
-import './TableDataViewer.css'
+import "./TableDataViewer.css"
+import { filter } from "minimatch";
 
 interface Props {
     title?: string
-    columns: Array<string>
+    columns: Array<Column>
     data: Array<Array<any>>
 }
 
-export class TableDataViewer extends React.Component<Props, {}> {
-    
+interface State {
+    sortField: string
+    sortDirection: string
+    filterList: Map<string, Array<any>>
+}
+
+export class TableDataViewer extends React.Component<Props, State> {
+
+    state: State
+
     constructor(props) {
         super(props)
+
+        this.state = {
+            sortField: "",
+            sortDirection: "none",
+            filterList: new Map<string, Array<any>>()
+        }
     }
 
     render() {
         const options = {
-            filterType: 'checkbox',
+            filterType: 'multiselect',
             selectableRows: 'none',
             responsive: 'stacked',
             print: false,
-            download: false
+            download: false,
+            onColumnSortChange: (field: string, direction: string) => {
+                this.setState({ sortField: field, sortDirection: direction })
+            },
+            onFilterChange: (field: string, filterList: Array<any>) => {
+                var newList = new Array<any>()
+
+                filterList.forEach((a: Array<any>) => {
+                    if (a.length) {
+                        newList = newList.concat(a)
+                    }
+                })
+
+                this.state.filterList.set(field, newList)
+                this.setState({ filterList: this.state.filterList })
+            }
         };
+
+        // re-apply sort and filter if need
+        for (let column of this.props.columns) {
+            if (column.name === this.state.sortField && this.state.sortDirection) {
+                switch (this.state.sortDirection) {
+                    case "ascending":
+                        column.options.sortDirection = "asc"
+                        break
+                    case "descending":
+                        column.options.sortDirection = "desc"
+                        break
+                    default:
+                        column.options.sortDirection = "none"
+                        break
+                }
+            }
+            let filterList = this.state.filterList.get(column.name)
+            if (filterList) {
+                column.options.filterList = filterList
+            }
+        }
 
         return (
             <MUIDataTable

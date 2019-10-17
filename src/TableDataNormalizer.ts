@@ -15,14 +15,22 @@
  *
  */
 
+export interface Column {
+    name: string
+    options: {
+        sortDirection: string
+        filterList: Array<any>
+    }
+}
+
 export class Result {
-    private _columns: Array<string>
+    private _columns: Array<Column>
     private _rows: Array<Map<string, any>>
 
     private colIndexes: Map<string, number>
 
     constructor() {
-        this._columns = new Array<string>()
+        this._columns = new Array<Column>()
         this._rows = new Array<Map<string, any>>()
 
         this.colIndexes = new Map<string, number>()
@@ -31,9 +39,11 @@ export class Result {
     addColumn(name: string) {
         let index = this.colIndexes.get(name)
         if (index === undefined) {
-            this.colIndexes.set(name, this.columns.length)
+            this.colIndexes.set(name, this._columns.length)
 
-            this._columns.push(name)
+            let dir = this._columns.length === 0 ? 'asc' : 'none'
+
+            this._columns.push({ "name": name, options: { sortDirection: dir, filterList: new Array<any>() } })
         }
     }
 
@@ -61,13 +71,13 @@ export class Result {
             let plain = new Array<any>()
             for (let i = 0; i != this.colIndexes.size; i++) {
                 plain[i] = ""
-            }    
-        
+            }
+
             row.forEach((value, key) => {
                 var index = this.columnIndex(key)
                 if (index === undefined) {
                     return
-                }                
+                }
                 plain[index] = value
             })
 
@@ -77,12 +87,12 @@ export class Result {
         return rows
     }
 
-    get columns(): Array<string> {
+    get columns(): Array<Column> {
         return this._columns
     }
 }
 
-export class DataNormalizer {
+export class TableDataNormalizer {
 
     normalizer: ((any) => any) | null
 

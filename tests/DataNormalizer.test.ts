@@ -1,4 +1,4 @@
-import { DataNormalizer } from '../src/DataNormalizer'
+import { TableDataNormalizer } from '../src/TableDataNormalizer'
 
 var assert = require('assert');
 describe('DataNormalizer', function () {
@@ -21,7 +21,7 @@ describe('DataNormalizer', function () {
         [455, "", "255.255.0.0"]
       ]
 
-      var dn = new DataNormalizer()
+      var dn = new TableDataNormalizer()
       var normalized = dn.normalize(data)
 
       assert.deepEqual(normalized.columns, columns)

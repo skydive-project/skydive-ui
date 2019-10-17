@@ -37,18 +37,15 @@ import Checkbox from '@material-ui/core/Checkbox'
 import FormGroup from '@material-ui/core/FormGroup'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import { withSnackbar, WithSnackbarProps } from 'notistack'
-import Tabs from '@material-ui/core/Tabs'
-import Tab from '@material-ui/core/Tab'
 import { connect } from 'react-redux'
 
 import { AppStyles } from './Styles'
-import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState } from './Topology'
+import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState, Link } from './Topology'
 import { mainListItems, helpListItems } from './Menu'
 import AutoCompleteInput from './AutoComplete'
-import { a11yProps, TabPanel } from './Tabs'
-import { DataViewer } from './DataViewer'
 import './App.css'
-import { AppState, selectNode, unselectNode } from './Store'
+import { AppState, selectNode, unselectNode, bumpRevision } from './Store'
+import SelectionPanel from './SelectionPanel'
 
 import Logo from './Logo.png'
 
@@ -60,7 +57,8 @@ interface Props extends WithSnackbarProps {
   classes: any
   selectNode: typeof selectNode
   unselectNode: typeof unselectNode
-  nodeSelection: Array<Node>
+  selection: Array<Node|Link>
+  bumpRevision: typeof bumpRevision
 }
 
 interface State {
@@ -70,7 +68,6 @@ interface State {
   isNavOpen: boolean
   linkTagStates: Map<string, LinkTagState>
   suggestions: Array<string>
-  tab: number
 }
 
 class App extends React.Component<Props, State> {
@@ -80,6 +77,7 @@ class App extends React.Component<Props, State> {
   synced: boolean
   state: State
   refreshTopology: any
+  bumpRevision: typeof bumpRevision
 
   constructor(props) {
     super(props)
@@ -90,8 +88,7 @@ class App extends React.Component<Props, State> {
       contextMenuY: 0,
       isNavOpen: false,
       linkTagStates: new Map<string, LinkTagState>(),
-      suggestions: new Array<string>(),
-      tab: 0
+      suggestions: new Array<string>()
     }
 
     this.synced = false
@@ -103,9 +100,11 @@ class App extends React.Component<Props, State> {
     this.onNodeSelected = this.onNodeSelected.bind(this)
     this.onLayerLinkStateChange = this.onLayerLinkStateChange.bind(this)
     this.onSearchChange = this.onSearchChange.bind(this)
-    this.onTabChange = this.onTabChange.bind(this)
 
     this.refreshTopology = debounce(this._refreshTopology.bind(this), 300)
+
+    // we will refresh info each 1s
+    this.bumpRevision = debounce(this.props.bumpRevision.bind(this), 1000)
   }
 
   componentDidMount() {
@@ -161,6 +160,9 @@ class App extends React.Component<Props, State> {
     }
 
     this.tc.updateNode(node.ID, node.Metadata)
+
+    // eventually update the panels
+    this.bumpRevision(node.ID)
 
     return true
   }
@@ -276,57 +278,6 @@ class App extends React.Component<Props, State> {
     } else {
       this.props.unselectNode(node)
     }
-
-    var tab = this.state.tab
-    if (tab >= this.props.nodeSelection.length) {
-      tab = this.props.nodeSelection.length - 1
-    }
-    if (tab < 0) {
-      tab = 0
-    }
-
-    this.setState({ tab: tab })
-  }
-
-  renderTabs(classes: any) {
-    return this.props.nodeSelection.map((d: Node, i: number) => {
-      var className = classes.tabIconFree
-      if (config.nodeAttrs(d).classes.includes("font-brands")) {
-        className = classes.tabIconBrands
-      }
-      return (
-        <Tab className="tab" icon={<span className={className}>{config.nodeAttrs(d).icon}</span>}
-          key={"tab-" + i} label={<span className={classes.tabTitle}>{config.nodeTabTitle(d)}</span>} {...a11yProps(i)} />
-      )
-    })
-  }
-
-  renderTabPanels(classes: any) {
-    const FieldViewer = (props: any) => {
-      var result = [] as any
-
-      for (let cfg of config.nodeDataFields) {
-        result.push(
-          <DataViewer key={cfg.field} classes={classes} title={cfg.title || cfg.field}
-            defaultExpanded={cfg.expanded} data={props.data[cfg.field]}
-            normalizer={cfg.normalizer} />
-        )
-      }
-      return result
-    }
-
-    return this.props.nodeSelection.map((node: Node, i: number) => {
-      if (this.state.tab !== i) {
-        return null
-      }
-
-      return (
-        <TabPanel key={"tabpanel-" + i} value={this.state.tab} index={i}>
-          <DataViewer classes={classes} title="General" data={node.data} defaultExpanded={true} />
-          <FieldViewer data={data} />
-        </TabPanel>
-      )
-    })
   }
 
   weightTitles(): Map<number, string> {
@@ -505,10 +456,6 @@ class App extends React.Component<Props, State> {
     })
   }
 
-  onTabChange(event: React.ChangeEvent<{}>, value: number) {
-    this.setState({ tab: value })
-  }
-
   render() {
     const { classes } = this.props
 
@@ -560,22 +507,9 @@ class App extends React.Component<Props, State> {
               groupBy={config.groupBy} />
           </Container>
           <Container className={classes.rightPanel}>
-            <Paper className={clsx(classes.rightPanelPaper, !this.props.nodeSelection.length && classes.rightPanelPaperClose)}
+            <Paper className={clsx(classes.rightPanelPaper, !this.props.selection.length && classes.rightPanelPaperClose)}
               square={true}>
-              <div className={classes.tabs}>
-                <Tabs
-                  orientation="horizontal"
-                  variant="scrollable"
-                  value={this.state.tab}
-                  onChange={this.onTabChange}
-                  aria-label="Metadata"
-                  indicatorColor="primary">
-                  {this.renderTabs(classes)}
-                </Tabs>
-                <div className={classes.rightPanelPaperContent} style={{ overflow: "auto" }}>
-                  {this.renderTabPanels(classes)}
-                </div>
-              </div>
+              <SelectionPanel classes={classes} />
             </Paper>
           </Container>
           <Container className={classes.nodeTagsPanel}>
@@ -604,12 +538,13 @@ class App extends React.Component<Props, State> {
 }
 
 export const mapStateToProps = (state: AppState) => ({
-  nodeSelection: state.nodeSelection
+  selection: state.selection
 })
 
 export const mapDispatchToProps = ({
   selectNode,
-  unselectNode
+  unselectNode,
+  bumpRevision
 })
 
 export default withStyles(AppStyles)(connect(mapStateToProps, mapDispatchToProps)(withSnackbar(App)))

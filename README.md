@@ -5,5 +5,5 @@ Next gen Skydive WebUI
 
 ```
 npm install
-npm run start
+npm start
 ```

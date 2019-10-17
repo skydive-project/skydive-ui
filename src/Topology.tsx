@@ -49,6 +49,7 @@ export class Node {
     children: Array<Node>
     state: State
     parent: Node | null
+    revision: number
 
     constructor(id: string, tags: Array<string>, data: any, state: State, weight: number | ((node: Node) => number)) {
         this.id = id
@@ -78,6 +79,7 @@ export class Link {
     target: Node
     data: any
     directed: boolean
+    revision: number
 
     constructor(id: string, tags: Array<string>, source: Node, target: Node, data: any, directed: boolean) {
         this.id = id
@@ -464,6 +466,9 @@ export class Topology extends React.Component<Props, {}> {
         if (prevWeight !== node.getWeight()) {
             this.invalidated = true
         }
+
+        // keep it internal for now, don't use real revision number
+        node.revision++
     }
 
     delNode(id: string) {
@@ -527,6 +532,10 @@ export class Topology extends React.Component<Props, {}> {
         this.links.some(link => {
             if (link.id === id) {
                 link.data = data
+                
+                // just increase for now, do not use real revision number                
+                link.revision++
+
                 return true
             }
             return false

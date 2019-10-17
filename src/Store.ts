@@ -17,10 +17,11 @@
 
 import { createStore } from 'redux'
 
-import { Node } from './Topology'
+import { Node, Link } from './Topology'
 
 export const SELECT_NODE = 'SELECT_NODE'
 export const UNSELECT_NODE = 'UNSELECT_NODE'
+export const BUMP_REVISION = 'BUMP_REVISION'
 
 interface selectNodeAction {
     type: typeof SELECT_NODE
@@ -30,6 +31,11 @@ interface selectNodeAction {
 interface unselectNodeAction {
     type: typeof UNSELECT_NODE
     payload: Node
+}
+
+interface bumpRevisionAction {
+    type: typeof BUMP_REVISION
+    payload: string
 }
 
 export function selectNode(node: Node): selectNodeAction {
@@ -46,27 +52,43 @@ export function unselectNode(node: Node): unselectNodeAction {
     }
 }
 
-export type ActionTypes = selectNodeAction | unselectNodeAction
+export function bumpRevision(id: string): bumpRevisionAction {
+    return {
+        type: BUMP_REVISION,
+        payload: id
+    }
+}
+
+export type ActionTypes = selectNodeAction | unselectNodeAction | bumpRevisionAction
 
 const initialState = {
-    nodeSelection: new Array<Node>()
+    selection: new Array<Node|Link>(),
+    selectionRevision: 0
 }
 
 function appReducer(state = initialState, action: ActionTypes) {
     switch (action.type) {
         case SELECT_NODE:
-            var nodes = state.nodeSelection.filter(d => action.payload.id !== d.id)
-            nodes.push(action.payload)
+            var selection = state.selection.filter(d => action.payload.id !== d.id)
+            selection.push(action.payload)
             return {
                 ...state,
-                nodeSelection: nodes
+                selection: selection
             }
         case UNSELECT_NODE:
-            var nodes = state.nodeSelection.filter(d => action.payload.id !== d.id)
+            var selection = state.selection.filter(d => action.payload.id !== d.id)
             return {
                 ...state,
-                nodeSelection: nodes
+                selection: selection
             }
+        case BUMP_REVISION:
+            if (state.selection.some(el => el.id === action.payload)) {
+                return {
+                    ...state,
+                    selectionRevision: state.selectionRevision + 1
+                }
+            }
+            return state
         default:
             return state
     }

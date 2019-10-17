@@ -22,11 +22,11 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import Typography from '@material-ui/core/Typography'
 import { TableDataViewer } from './TableDataViewer'
-import { DataNormalizer } from './DataNormalizer'
+import { TableDataNormalizer, Result } from './TableDataNormalizer'
 
 interface Props {
     title: string
-    data: Array<Array<any>>
+    data: any
     classes: any
     defaultExpanded?: boolean
     normalizer?: (data: any) => any
@@ -35,57 +35,67 @@ interface Props {
 
 interface State {
     isExpanded: boolean
+    data: Result
 }
 
-export class DataViewer extends React.Component<Props, State> {
+export class DataViewer extends React.PureComponent<Props, State> {
 
     state: State
-    dataNormalizer: DataNormalizer
 
     constructor(props) {
         super(props)
 
         this.state = {
-            isExpanded: props.defaultExpanded
+            isExpanded: props.defaultExpanded,
+            data: DataViewer.normalizeData(props.data, props.normalizer)
         }
-
-        this.dataNormalizer = new DataNormalizer(props.normalizer)
     }
 
-    onChange(event: object, expanded: boolean) {
-        this.setState({ isExpanded: expanded })
+    static normalizeData(data: any, normalizer?: (data: any) => any): Result {
+        var dataNormalizer = new TableDataNormalizer(normalizer)
+
+        return dataNormalizer.normalize(data)
+    }
+
+    static getDerivedStateFromProps(props, state) {
+        if (state.isExpanded) {
+            return {
+                data: DataViewer.normalizeData(props.data, props.normalizer)
+            }
+        }
+        return null
+    }
+
+    onExpandChange(event: object, expanded: boolean) {
+        if (expanded) {
+            this.setState({ data: DataViewer.normalizeData(this.props.data, this.props.normalizer), isExpanded: expanded })
+        } else {
+            this.setState({ isExpanded: expanded })
+        }
+    }
+
+    componentDidMount() {
+        console.log(this.props.title)
     }
 
     render() {
         const { classes } = this.props
 
-        const Table = (props) => {
-            // copy so that we can normalize without altering the original data
-            var data = JSON.parse(JSON.stringify(this.props.data))
-
-            data = this.dataNormalizer.normalize(data)
-            if (this.state.isExpanded && data.rows.length) {
-                return <TableDataViewer columns={data.columns} data={data.rows} />
-            }
-
-            return null
-        }
-
-        if (this.props.data) {
-            return (
-                <ExpansionPanel defaultExpanded={this.props.defaultExpanded} onChange={this.onChange.bind(this)}>
-                    <ExpansionPanelSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="panel1a-content"
-                        id="panel1a-header">
-                        <Typography className={classes.heading}>{this.props.title}</Typography>
-                    </ExpansionPanelSummary>
-                    <ExpansionPanelDetails>
-                        <Table />
-                    </ExpansionPanelDetails>
-                </ExpansionPanel>
-            )
-        }
-        return null
+        return (
+            <ExpansionPanel defaultExpanded={this.props.defaultExpanded} onChange={this.onExpandChange.bind(this)}>
+                <ExpansionPanelSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="panel1a-content"
+                    id="panel1a-header">
+                    <Typography className={classes.heading}>{this.props.title}</Typography>
+                </ExpansionPanelSummary>
+                <ExpansionPanelDetails>
+                    {
+                        this.state.data.rows.length && this.state.isExpanded &&
+                        <TableDataViewer columns={this.state.data.columns} data={this.state.data.rows} />
+                    }
+                </ExpansionPanelDetails>
+            </ExpansionPanel>
+        )
     }
 }
