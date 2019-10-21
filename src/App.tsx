@@ -154,6 +154,11 @@ class App extends React.Component<Props, State> {
       return false
     }
 
+    if (!node.Metadata) {
+      console.warn("no metadata found: " + node)
+      return false
+    }
+
     // ignore Type ofrule
     if (node.Metadata.Type === "ofrule") {
       return false

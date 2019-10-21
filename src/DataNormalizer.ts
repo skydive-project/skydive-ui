@@ -15,6 +15,13 @@
  *
  */
 
+import { GoogleChartWrapperChartType } from 'react-google-charts/dist/types';
+
+export interface Graph {
+    type: GoogleChartWrapperChartType
+    data: Array<Array<any>>
+}
+
 export interface Column {
     name: string
     options: {
@@ -26,6 +33,7 @@ export interface Column {
 export class Result {
     private _columns: Array<Column>
     private _rows: Array<Map<string, any>>
+    graph?: Graph
 
     private colIndexes: Map<string, number>
 
@@ -92,12 +100,14 @@ export class Result {
     }
 }
 
-export class TableDataNormalizer {
+export class DataNormalizer {
 
     normalizer: ((any) => any) | null
+    graph: ((any) => Graph) | null
 
-    constructor(normalizer?: (any) => any) {
+    constructor(normalizer?: (any) => any, graph?: ((any) => Graph)) {
         this.normalizer = normalizer || null
+        this.graph = graph || null
     }
 
     private normalizeMap(data: any, result: Result) {
@@ -176,6 +186,10 @@ export class TableDataNormalizer {
 
     normalize(data: any): Result {
         var result = new Result()
+
+        if (this.graph) {
+            result.graph = this.graph(data)
+        }
 
         if (this.normalizer) {
             data = this.normalizer(data)

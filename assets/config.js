@@ -110,6 +110,7 @@ var config = {
         {
             field: "Captures",
             expanded: false,
+            icon: "\uf51f",
             normalizer: function (data) {
                 for (let capture of data) {
                     capture.ID = capture.ID.split('-')[0]
@@ -119,20 +120,24 @@ var config = {
         },
         {
             field: "Injections",
-            expanded: false
+            expanded: false,
+            icon: "\uf48e"
         },
         {
             field: "IPV4",
-            expanded: true
+            expanded: true,
+            icon: "\uf1fa"
         },
         {
             field: "IPV6",
-            expanded: true
+            expanded: true,
+            icon: "\uf1fa"
         },
         {
             field: "Metric",
             title: "Total metrics",
             expanded: false,
+            icon: "\uf201",
             normalizer: function (data) {
                 return {
                     RxPackets: data.RxPackets ? data.RxPackets.toLocaleString() : 0,
@@ -147,6 +152,7 @@ var config = {
             field: "LastUpdateMetric",
             title: "Last update metrics",
             expanded: false,
+            icon: "\uf201",
             normalizer: function (data) {
                 return {
                     RxPackets: data.RxPackets ? data.RxPackets.toLocaleString() : 0,
@@ -156,24 +162,41 @@ var config = {
                     Start: data.Start ? new Date(data.Start).toLocaleString() : 0,
                     Last: data.Last ? new Date(data.Last).toLocaleString() : 0
                 }
+            },
+            graph: function (data) {
+                return {
+                    type: "LineChart",
+                    data: [
+                        [
+                            { type: "datetime", label: "time" },
+                            "RxBytes",
+                            "TxBytes"
+                        ],
+                        [new Date(data.Last || 0), data.RxBytes || 0, data.TxBytes || 0]
+                    ]
+                }
             }
         },
         {
             field: "Features",
-            expanded: false
+            expanded: false,
+            icon: "\uf022"
         },
         {
             field: "FDB",
-            expanded: false
+            expanded: false,
+            icon: "\uf0ce"
         },
         {
             field: "Neighbors",
-            expanded: false
+            expanded: false,
+            icon: "\uf0ce"
         },
         {
             field: "RoutingTables",
             title: "Routing tables",
             expanded: false,
+            icon: "\uf0ce",
             normalizer: function (data) {
                 var rows = []
                 for (let table of data) {

@@ -15,30 +15,28 @@
  *
  */
 
-import * as React from "react"
-import ExpansionPanel from '@material-ui/core/ExpansionPanel'
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
-import Typography from '@material-ui/core/Typography'
-import { TableDataViewer } from './TableDataViewer'
-import { TableDataNormalizer, Result } from './TableDataNormalizer'
+import * as React from 'react'
+import MUIDataTable from 'mui-datatables'
+import { Chart } from 'react-google-charts'
+import { Column, Graph } from './DataNormalizer'
+
+import './DataViewer.css'
 
 interface Props {
-    title: string
-    data: any
-    classes: any
-    defaultExpanded?: boolean
-    normalizer?: (data: any) => any
-    flatten?: boolean
+    title?: string
+    columns: Array<Column>
+    data: Array<Array<any>>
+    graph?: Graph
 }
 
 interface State {
-    isExpanded: boolean
-    data: Result
+    sortField: string
+    sortDirection: string
+    filterList: Map<string, Array<any>>
+    graph?: Graph
 }
 
-export class DataViewer extends React.PureComponent<Props, State> {
+export class DataViewer extends React.Component<Props, State> {
 
     state: State
 
@@ -46,56 +44,107 @@ export class DataViewer extends React.PureComponent<Props, State> {
         super(props)
 
         this.state = {
-            isExpanded: props.defaultExpanded,
-            data: DataViewer.normalizeData(props.data, props.normalizer)
+            sortField: "",
+            sortDirection: "none",
+            filterList: new Map<string, Array<any>>()
         }
     }
 
-    static normalizeData(data: any, normalizer?: (data: any) => any): Result {
-        var dataNormalizer = new TableDataNormalizer(normalizer)
-
-        return dataNormalizer.normalize(data)
-    }
-
     static getDerivedStateFromProps(props, state) {
-        if (state.isExpanded) {
+        if (props.graph) {
+            var graph = props.graph
+            if (state.graph) {
+                graph.data = state.graph.data.concat(graph.data.slice(1))
+            }
             return {
-                data: DataViewer.normalizeData(props.data, props.normalizer)
+                graph: graph
             }
         }
         return null
     }
 
-    onExpandChange(event: object, expanded: boolean) {
-        if (expanded) {
-            this.setState({ data: DataViewer.normalizeData(this.props.data, this.props.normalizer), isExpanded: expanded })
-        } else {
-            this.setState({ isExpanded: expanded })
-        }
-    }
-
-    componentDidMount() {
-        console.log(this.props.title)
-    }
-
     render() {
-        const { classes } = this.props
+        const options = {
+            filterType: 'multiselect',
+            selectableRows: 'none',
+            responsive: 'stacked',
+            print: false,
+            download: false,
+
+
+            /*expandableRows: true,
+            expandableRowsOnClick: true,
+            isRowExpandable: (dataIndex, expandedRows) => {
+              return true;
+            },
+            rowsExpanded: [0, 1],
+            renderExpandableRow: (rowData, rowMeta) => {
+              const colSpan = rowData.length + 1
+              return (
+                <div>caca</div>
+              )
+            },
+            onRowsExpand: (curExpanded, allExpanded) => console.log(curExpanded, allExpanded),*/
+
+            onColumnSortChange: (field: string, direction: string) => {
+                this.setState({ sortField: field, sortDirection: direction })
+            },
+            onFilterChange: (field: string, filterList: Array<any>) => {
+                var newList = new Array<any>()
+
+                filterList.forEach((a: Array<any>) => {
+                    if (a.length) {
+                        newList = newList.concat(a)
+                    }
+                })
+
+                this.state.filterList.set(field, newList)
+                this.setState({ filterList: this.state.filterList })
+            }
+        };
+
+        // re-apply sort and filter if need
+        for (let column of this.props.columns) {
+            if (column.name === this.state.sortField && this.state.sortDirection) {
+                switch (this.state.sortDirection) {
+                    case "ascending":
+                        column.options.sortDirection = "asc"
+                        break
+                    case "descending":
+                        column.options.sortDirection = "desc"
+                        break
+                    default:
+                        column.options.sortDirection = "none"
+                        break
+                }
+            }
+            let filterList = this.state.filterList.get(column.name)
+            if (filterList) {
+                column.options.filterList = filterList
+            }
+        }
 
         return (
-            <ExpansionPanel defaultExpanded={this.props.defaultExpanded} onChange={this.onExpandChange.bind(this)}>
-                <ExpansionPanelSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls="panel1a-content"
-                    id="panel1a-header">
-                    <Typography className={classes.heading}>{this.props.title}</Typography>
-                </ExpansionPanelSummary>
-                <ExpansionPanelDetails>
-                    {
-                        this.state.data.rows.length && this.state.isExpanded &&
-                        <TableDataViewer columns={this.state.data.columns} data={this.state.data.rows} />
-                    }
-                </ExpansionPanelDetails>
-            </ExpansionPanel>
+            <React.Fragment>
+                <MUIDataTable
+                    title={this.props.title}
+                    data={this.props.data}
+                    columns={this.props.columns}
+                    options={options} />
+                {
+                    this.state.graph &&
+                    <Chart
+                        height={300}
+                        chartType={this.state.graph.type}
+                        loader={<div>Loading Chart</div>}
+                        data={this.state.graph.data}
+                        options={{
+                            chart: {
+                            },
+                        }}
+                    />
+                }
+            </React.Fragment>
         )
     }
 }

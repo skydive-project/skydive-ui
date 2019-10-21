@@ -190,7 +190,14 @@ export const AppStyles = (theme: Theme) => createStyles({
   },
   tabTitle: {
     fontSize: 18
-  }
+  },
+  panelIconFree: {
+    fontFamily: `"Font Awesome 5 Free" !important`,
+    fontWeight: 900,
+    fontSize: 20,
+    marginBottom: `0 !important`,
+    paddingRight: 8
+  },
 })
 
 export const AutoCompleteStyles = makeStyles((theme: Theme) =>

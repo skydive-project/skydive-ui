@@ -21,7 +21,7 @@ import Tab from '@material-ui/core/Tab'
 import { AppState } from './Store'
 import { connect } from 'react-redux'
 import { Node, Link } from './Topology'
-import { DataViewer } from './DataViewer'
+import { DataPanel } from './DataPanel'
 import { a11yProps, TabPanel } from './Tabs'
 
 declare var config: any
@@ -69,14 +69,15 @@ class SelectionPanel extends React.PureComponent<Props, State> {
 
       return (
         <TabPanel key={"tabpanel-" + node.id} value={this.state.tab} index={i}>
-          <DataViewer key={"dataviewer-general-" + node.id} classes={classes} title="General" data={node.data} defaultExpanded={true} />
+          <DataPanel key={"dataviewer-general-" + node.id} classes={classes} title="General" icon={"\uf05a"}
+          data={node.data} defaultExpanded={true} />
 
           {config.nodeDataFields.map(cfg => {
             if (node.data[cfg.field]) {
               return (
-                <DataViewer key={"dataviewer-" + cfg.field + "-" + node.id} classes={classes} title={cfg.title || cfg.field}
+                <DataPanel key={"dataviewer-" + cfg.field + "-" + node.id} classes={classes} title={cfg.title || cfg.field}
                   defaultExpanded={cfg.expanded} data={node.data[cfg.field]}
-                  normalizer={cfg.normalizer} />
+                  normalizer={cfg.normalizer} graph={cfg.graph} icon={cfg.icon} />
               )
             }
           })
