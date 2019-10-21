@@ -17,7 +17,10 @@
 
 import * as React from 'react'
 import MUIDataTable from 'mui-datatables'
+import TableRow from "@material-ui/core/TableRow"
+import TableCell from "@material-ui/core/TableCell"
 import { Chart } from 'react-google-charts'
+import JSONTree from 'react-json-tree'
 import { Column, Graph } from './DataNormalizer'
 
 import './DataViewer.css'
@@ -27,6 +30,7 @@ interface Props {
     columns: Array<Column>
     data: Array<Array<any>>
     graph?: Graph
+    details: Map<number, any>
 }
 
 interface State {
@@ -70,22 +74,32 @@ export class DataViewer extends React.Component<Props, State> {
             responsive: 'stacked',
             print: false,
             download: false,
-
-
-            /*expandableRows: true,
+            setRowProps: (row, dataIndex) => {
+                if (!this.props.details.get(dataIndex)) {
+                    return { "className": "not-expandable" }
+                }
+                return {}
+            },
+            expandableRows: true,
             expandableRowsOnClick: true,
             isRowExpandable: (dataIndex, expandedRows) => {
-              return true;
+                if (this.props.details.get(dataIndex)) {
+                    return true
+                }
+                return false
             },
-            rowsExpanded: [0, 1],
             renderExpandableRow: (rowData, rowMeta) => {
-              const colSpan = rowData.length + 1
-              return (
-                <div>caca</div>
-              )
+                const colSpan = rowData.length
+                return (
+                    <TableRow>
+                        <TableCell />
+                        <TableCell colSpan={colSpan}>
+                            <JSONTree data={this.props.details.get(rowMeta.dataIndex)} theme="bright"
+                                invertTheme={true} sortObjectKeys={true} hideRoot={true} />
+                        </TableCell>
+                    </TableRow>
+                )
             },
-            onRowsExpand: (curExpanded, allExpanded) => console.log(curExpanded, allExpanded),*/
-
             onColumnSortChange: (field: string, direction: string) => {
                 this.setState({ sortField: field, sortDirection: direction })
             },

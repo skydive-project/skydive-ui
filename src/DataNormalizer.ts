@@ -30,16 +30,21 @@ export interface Column {
     }
 }
 
+interface Row {
+    entries: Map<string, any>
+    details: any
+}
+
 export class Result {
     private _columns: Array<Column>
-    private _rows: Array<Map<string, any>>
+    private _rows: Array<Row>
     graph?: Graph
 
     private colIndexes: Map<string, number>
 
     constructor() {
         this._columns = new Array<Column>()
-        this._rows = new Array<Map<string, any>>()
+        this._rows = new Array<Row>()
 
         this.colIndexes = new Map<string, number>()
     }
@@ -59,13 +64,13 @@ export class Result {
         return this.colIndexes.get(name)
     }
 
-    newRow(): Map<string, any> {
-        return new Map<string, any>()
+    newRow(): Row {
+        return { entries: new Map<string, any>(), details: null }
     }
 
-    addRow(row: Map<string, any>) {
-        if (row.size) {
-            for (let key of row.keys()) {
+    addRow(row: Row) {
+        if (row.entries.size) {
+            for (let key of row.entries.keys()) {
                 this.addColumn(key)
             }
 
@@ -81,7 +86,7 @@ export class Result {
                 plain[i] = ""
             }
 
-            row.forEach((value, key) => {
+            row.entries.forEach((value, key) => {
                 var index = this.columnIndex(key)
                 if (index === undefined) {
                     return
@@ -95,6 +100,18 @@ export class Result {
         return rows
     }
 
+    get details(): Map<number, any> {
+        var details = new Map<number, any>()
+
+        this._rows.forEach((row, index) => {
+            if (row.details) {
+                details.set(index, row.details)
+            }
+        })
+
+        return details
+    }
+
     get columns(): Array<Column> {
         return this._columns
     }
@@ -104,27 +121,36 @@ export class DataNormalizer {
 
     normalizer: ((any) => any) | null
     graph: ((any) => Graph) | null
+    exclude: Array<string> | null
 
-    constructor(normalizer?: (any) => any, graph?: ((any) => Graph)) {
+    constructor(normalizer?: (any) => any, graph?: ((any) => Graph), exclude?: Array<string>) {
         this.normalizer = normalizer || null
         this.graph = graph || null
+        this.exclude = exclude || []
     }
 
     private normalizeMap(data: any, result: Result) {
         for (let attr in data) {
+            if (this.exclude && this.exclude.includes(attr)) {
+                continue
+            }
+
             let row = result.newRow()
 
             let value = data[attr]
             switch (typeof value) {
                 case "object":
+                    row.entries.set("Key", attr)
+                    row.entries.set("Value", "")
+                    row.details = value
                     break
                 case "boolean":
-                    row.set("Key", attr)
-                    row.set("Value", value ? "true" : "false")
+                    row.entries.set("Key", attr)
+                    row.entries.set("Value", value ? "true" : "false")
                     break
                 default:
-                    row.set("Key", attr)
-                    row.set("Value", value)
+                    row.entries.set("Key", attr)
+                    row.entries.set("Value", value)
                     break
             }
 
@@ -139,9 +165,9 @@ export class DataNormalizer {
             let row = result.newRow()
 
             if (typeof value === "boolean") {
-                row.set("Value", value ? "true" : "false")
+                row.entries.set("Value", value ? "true" : "false")
             } else {
-                row.set("Value", value)
+                row.entries.set("Value", value)
             }
             result.addRow(row)
         }
@@ -156,9 +182,9 @@ export class DataNormalizer {
             for (let attr in value) {
                 var type = typeof value[attr]
                 if (type === "boolean") {
-                    row.set(attr, value ? "true" : "false")
+                    row.entries.set(attr, value ? "true" : "false")
                 } if (type === "string" || type === "number") {
-                    row.set(attr, value[attr] === null ? "" : value[attr])
+                    row.entries.set(attr, value[attr] === null ? "" : value[attr])
                 }
             }
 

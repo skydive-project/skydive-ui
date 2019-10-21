@@ -70,7 +70,7 @@ class SelectionPanel extends React.PureComponent<Props, State> {
       return (
         <TabPanel key={"tabpanel-" + node.id} value={this.state.tab} index={i}>
           <DataPanel key={"dataviewer-general-" + node.id} classes={classes} title="General" icon={"\uf05a"}
-          data={node.data} defaultExpanded={true} />
+          data={node.data} defaultExpanded={true} exclude={config.nodeDataFields.map(cfg => cfg.field)}/>
 
           {config.nodeDataFields.map(cfg => {
             if (node.data[cfg.field]) {

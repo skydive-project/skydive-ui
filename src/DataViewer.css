@@ -10,3 +10,7 @@
 .MuiExpansionPanelSummary-root {
     background-color: #e8e8e8 !important;
 }
+
+.not-expandable button {
+    visibility: hidden;
+}

@@ -34,7 +34,8 @@ interface Props {
     defaultExpanded?: boolean
     normalizer?: (data: any) => any
     flatten?: boolean
-    graph?: (data: any) => Array<Array<any>>
+    graph?: (data: any) => Graph
+    exclude?: Array<string>
 }
 
 interface State {
@@ -55,15 +56,15 @@ export class DataPanel extends React.PureComponent<Props, State> {
         }
     }
 
-    static normalizeData(data: any, normalizer?: (data: any) => any, graph?: (data: any) => Graph): Result {
-        var dataNormalizer = new DataNormalizer(normalizer, graph)
+    static normalizeData(data: any, normalizer?: (data: any) => any, graph?: (data: any) => Graph, exclude?: Array<string>): Result {
+        var dataNormalizer = new DataNormalizer(normalizer, graph, exclude)
         return dataNormalizer.normalize(data)
     }
 
     static getDerivedStateFromProps(props, state) {
         if (state.isExpanded) {
             return {
-                data: DataPanel.normalizeData(props.data, props.normalizer, props.graph)
+                data: DataPanel.normalizeData(props.data, props.normalizer, props.graph, props.exclude)
             }
         }
         return null
@@ -71,7 +72,7 @@ export class DataPanel extends React.PureComponent<Props, State> {
 
     onExpandChange(event: object, expanded: boolean) {
         if (expanded) {
-            this.setState({ data: DataPanel.normalizeData(this.props.data, this.props.normalizer), isExpanded: expanded })
+            this.setState({ data: DataPanel.normalizeData(this.props.data, this.props.normalizer, this.props.graph, this.props.exclude), isExpanded: expanded })
         } else {
             this.setState({ isExpanded: expanded })
         }
@@ -97,7 +98,8 @@ export class DataPanel extends React.PureComponent<Props, State> {
                     {
                         this.state.data.rows.length && this.state.isExpanded &&
                         (
-                            <DataViewer columns={this.state.data.columns} data={this.state.data.rows} graph={this.state.data.graph} />
+                            <DataViewer columns={this.state.data.columns} data={this.state.data.rows}
+                                graph={this.state.data.graph} details={this.state.data.details} />
                         )
                     }
                 </ExpansionPanelDetails>
