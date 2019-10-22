@@ -104,8 +104,9 @@ var config = {
     ],
     "nodeDataFields": [
         {
-            field: "Memory",
-            expanded: false
+            field: "Sockets",
+            expanded: false,
+            icon: "\uf1e6"
         },
         {
             field: "Captures",
@@ -134,23 +135,8 @@ var config = {
             icon: "\uf1fa"
         },
         {
-            field: "Metric",
-            title: "Total metrics",
-            expanded: false,
-            icon: "\uf201",
-            normalizer: function (data) {
-                return {
-                    RxPackets: data.RxPackets ? data.RxPackets.toLocaleString() : 0,
-                    RxBytes: data.RxBytes ? prettyBytes(data.RxBytes) : 0,
-                    TxPackets: data.TxPackets ? data.TxPackets.toLocaleString() : 0,
-                    TxBytes: data.TxPackets ? prettyBytes(data.TxBytes) : 0,
-                    Last: data.Last ? new Date(data.Last).toLocaleString() : 0
-                }
-            }
-        },
-        {
             field: "LastUpdateMetric",
-            title: "Last update metrics",
+            title: "Last metrics",
             expanded: false,
             icon: "\uf201",
             normalizer: function (data) {
@@ -174,6 +160,21 @@ var config = {
                         ],
                         [new Date(data.Last || 0), data.RxBytes || 0, data.TxBytes || 0]
                     ]
+                }
+            }
+        },
+        {
+            field: "Metric",
+            title: "Total metrics",
+            expanded: false,
+            icon: "\uf201",
+            normalizer: function (data) {
+                return {
+                    RxPackets: data.RxPackets ? data.RxPackets.toLocaleString() : 0,
+                    RxBytes: data.RxBytes ? prettyBytes(data.RxBytes) : 0,
+                    TxPackets: data.TxPackets ? data.TxPackets.toLocaleString() : 0,
+                    TxBytes: data.TxPackets ? prettyBytes(data.TxBytes) : 0,
+                    Last: data.Last ? new Date(data.Last).toLocaleString() : 0
                 }
             }
         },

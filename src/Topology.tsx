@@ -39,6 +39,7 @@ interface State {
     selected: boolean
     mouseover: boolean
     groupOffset: number
+    groupFullSize: boolean
 }
 
 export class Node {
@@ -394,7 +395,7 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     private defaultState(): State {
-        return { expanded: false, selected: false, mouseover: false, groupOffset: 0 }
+        return { expanded: false, selected: false, mouseover: false, groupOffset: 0, groupFullSize: false }
     }
 
     resetTree() {
@@ -403,7 +404,7 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     private initTree() {
-        var state = { expanded: true, selected: false, mouseover: false, groupOffset: 0 }
+        var state = { expanded: true, selected: false, mouseover: false, groupOffset: 0, groupFullSize: false }
 
         this.root = new Node("root", ["root"], { name: "root" }, state, 0)
 
@@ -532,7 +533,7 @@ export class Topology extends React.Component<Props, {}> {
         this.links.some(link => {
             if (link.id === id) {
                 link.data = data
-                
+
                 // just increase for now, do not use real revision number                
                 link.revision++
 
@@ -587,7 +588,7 @@ export class Topology extends React.Component<Props, {}> {
 
             var wrapper = groups.get(gid)
             if (!wrapper) {
-                var state = this.groupStates.get(gid) || { expanded: false, selected: false, mouseover: false, groupOffset: 0 }
+                var state = this.groupStates.get(gid) || { expanded: false, selected: false, mouseover: false, groupOffset: 0, groupFullSize: false }
                 this.groupStates.set(gid, state)
 
                 var wrapped = new Node(gid, [], { Name: name, "Type": field }, state, () => { return child.wrapped.getWeight() })
@@ -625,9 +626,13 @@ export class Topology extends React.Component<Props, {}> {
             if (wrapper && wrapper.wrapped.children.length > 5) {
                 children.push(wrapper)
                 if (wrapper.wrapped.state.expanded) {
-                    children = children.concat(
-                        wrapper.children.splice(wrapper.wrapped.state.groupOffset, this.props.groupSize || defaultGroupSize)
-                    )
+                    if (wrapper.wrapped.state.groupFullSize) {
+                        children = children.concat(wrapper.children)
+                    } else {
+                        children = children.concat(
+                            wrapper.children.splice(wrapper.wrapped.state.groupOffset, this.props.groupSize || defaultGroupSize)
+                        )
+                    }
                 }
                 wrapper.wrapped.children.forEach(child => {
                     if (wrapper) {
@@ -1616,6 +1621,7 @@ export class Topology extends React.Component<Props, {}> {
 
             handleIcon(g.select("g.curly-left-icon"), 50, d.wrapped.state.groupOffset == 0)
             handleIcon(g.select("g.curly-right-icon"), 25, d.wrapped.state.groupOffset + size >= d.wrapped.children.length)
+            handleIcon(g.select("g.curly-full-icon"), 75, d.wrapped.state.groupOffset + size >= d.wrapped.children.length)
         }
 
         groupEnter.transition()
@@ -1672,6 +1678,26 @@ export class Topology extends React.Component<Props, {}> {
                     d.wrapped.state.groupOffset++
                     this.renderTree()
                 }
+            })
+
+        var fullIcon = groupEnter.append("g")
+            .attr("class", "curly-icon curly-full-icon")
+            .style("opacity", 0)
+        fullIcon.append("rect")
+            .attr("rx", 5)
+            .attr("ry", 5)
+        fullIcon.append("text")
+            .text("\uf0fe")
+            .on("click", function (d: NodeWrapper) {
+                if (d.wrapped.state.groupFullSize) {
+                    d.wrapped.state.groupFullSize = false
+                    select(this).text("\uf0fe")
+                } else {
+                    d.wrapped.state.groupFullSize = true
+                    select(this).text("\uf146")
+                }
+
+                self.renderTree()
             })
 
         groupEnter.each(function (d) { curlyBraces(select(this), d, false) })
@@ -1825,8 +1851,10 @@ export class Topology extends React.Component<Props, {}> {
         const num = (node: NodeWrapper) => {
             var n = 0
             if (node.type == WrapperType.Group && node.wrapped.state.expanded) {
-                var size = this.props.groupSize || defaultGroupSize
-                n = node.wrapped.children.length - size
+                if (!node.wrapped.state.groupFullSize) {
+                    var size = this.props.groupSize || defaultGroupSize
+                    n = node.wrapped.children.length - size
+                }
             } else {
                 n = node.wrapped.children.length
             }
