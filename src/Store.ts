@@ -22,6 +22,7 @@ import { Node, Link } from './Topology'
 export const SELECT_NODE = 'SELECT_NODE'
 export const UNSELECT_NODE = 'UNSELECT_NODE'
 export const BUMP_REVISION = 'BUMP_REVISION'
+export const REGISTER_SESSION = 'REGISTER_SESSION'
 
 interface selectNodeAction {
     type: typeof SELECT_NODE
@@ -36,6 +37,18 @@ interface unselectNodeAction {
 interface bumpRevisionAction {
     type: typeof BUMP_REVISION
     payload: string
+}
+
+export interface session {
+    endpoint: string
+    username: string
+    token: string
+    permissions: any
+}
+
+interface registerSessionAction {
+    type: typeof REGISTER_SESSION
+    payload: session
 }
 
 export function selectNode(node: Node): selectNodeAction {
@@ -59,11 +72,24 @@ export function bumpRevision(id: string): bumpRevisionAction {
     }
 }
 
-export type ActionTypes = selectNodeAction | unselectNodeAction | bumpRevisionAction
+export function registerSession(endpoint: string, username: string, token: string, permissions: any): registerSessionAction {
+    return {
+        type: REGISTER_SESSION,
+        payload: {
+            endpoint: endpoint,
+            username: username,
+            token: token,
+            permissions: permissions
+        }
+    }
+}
+
+export type ActionTypes = selectNodeAction | unselectNodeAction | bumpRevisionAction | registerSessionAction
 
 const initialState = {
-    selection: new Array<Node|Link>(),
-    selectionRevision: 0
+    selection: new Array<Node | Link>(),
+    selectionRevision: 0,
+    session: { token: "", permissions: null }
 }
 
 function appReducer(state = initialState, action: ActionTypes) {
@@ -89,6 +115,11 @@ function appReducer(state = initialState, action: ActionTypes) {
                 }
             }
             return state
+        case REGISTER_SESSION:
+            return {
+                ...state,
+                session: action.payload
+            }
         default:
             return state
     }

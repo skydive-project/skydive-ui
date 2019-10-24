@@ -233,3 +233,38 @@ export const AutoCompleteStyles = makeStyles((theme: Theme) =>
     }
   })
 )
+
+
+export const LoginStyles = (theme: Theme) => createStyles({
+  '@global': {
+    body: {
+      backgroundColor: theme.palette.common.white
+    }
+  },
+  paper: {
+    marginTop: theme.spacing(8),
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center'
+  },
+  avatar: {
+    margin: theme.spacing(1),
+    backgroundColor: '#546e7a',
+    width: 80,
+    height: 80
+  },
+  form: {
+    width: '100%',
+    marginTop: theme.spacing(1)
+  },
+  submit: {
+    margin: theme.spacing(3, 0, 2)
+  },
+  error: {
+    color: '#bb2c2c'
+  },
+  failure: {
+    color: '#bb2c2c',
+    fontSize: 18
+  }
+})

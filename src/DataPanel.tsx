@@ -43,7 +43,7 @@ interface State {
     data: Result
 }
 
-export class DataPanel extends React.PureComponent<Props, State> {
+export class DataPanel extends React.Component<Props, State> {
 
     state: State
 

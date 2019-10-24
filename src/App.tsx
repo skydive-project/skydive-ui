@@ -43,11 +43,11 @@ import { AppStyles } from './Styles'
 import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState, Link } from './Topology'
 import { mainListItems, helpListItems } from './Menu'
 import AutoCompleteInput from './AutoComplete'
-import './App.css'
-import { AppState, selectNode, unselectNode, bumpRevision } from './Store'
+import { AppState, selectNode, unselectNode, bumpRevision, session } from './Store'
 import SelectionPanel from './SelectionPanel'
 
-import Logo from './Logo.png'
+import './App.css'
+import Logo from '../assets/Logo.png'
 
 declare var config: any
 
@@ -59,6 +59,7 @@ interface Props extends WithSnackbarProps {
   unselectNode: typeof unselectNode
   selection: Array<Node|Link>
   bumpRevision: typeof bumpRevision
+  session: session
 }
 
 interface State {
@@ -461,13 +462,24 @@ class App extends React.Component<Props, State> {
     })
   }
 
+  subscriberURL(): string {
+    var url = new URL('/ws/subscriber?x-client-type=webui', this.props.session.endpoint)
+    if (url.protocol.startsWith('https')) {
+      url.protocol = 'wss:'
+    } else {
+      url.protocol = 'ws'
+    }
+
+    return url.toString()
+  }
+
   render() {
     const { classes } = this.props
 
     return (
       <div className={classes.app}>
         <CssBaseline />
-        <Websocket ref={node => this.websocket = node} url="ws://localhost:8082/ws/subscriber?x-client-type=webui" onOpen={this.onOpen}
+        <Websocket ref={node => this.websocket = node} url={this.subscriberURL()} onOpen={this.onOpen}
           onMessage={this.onMessage} onClose={this.onClose} reconnectIntervalInMilliSeconds={2500} />
         <AppBar position="absolute" className={clsx(classes.appBar, this.state.isNavOpen && classes.appBarShift)}>
           <Toolbar className={classes.toolbar}>
@@ -543,7 +555,8 @@ class App extends React.Component<Props, State> {
 }
 
 export const mapStateToProps = (state: AppState) => ({
-  selection: state.selection
+  selection: state.selection,
+  session: state.session
 })
 
 export const mapDispatchToProps = ({

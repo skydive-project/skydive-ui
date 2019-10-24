@@ -36,7 +36,7 @@ interface State {
   tab: number
 }
 
-class SelectionPanel extends React.PureComponent<Props, State> {
+class SelectionPanel extends React.Component<Props, State> {
 
   state: State
 

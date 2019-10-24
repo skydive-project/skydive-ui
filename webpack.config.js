@@ -7,7 +7,7 @@ const htmlPlugin = new HtmlWebPackPlugin({
 });
 
 module.exports = {
-    entry: './src/index.js',
+    entry: './src/index.tsx',
     output: {
         filename: './dist/bundle.js'
     },
@@ -54,6 +54,10 @@ module.exports = {
                 ]
             }
         ]
+    },
+
+    devServer: {
+        historyApiFallback: true,
     },
 
     devtool: "source-map",

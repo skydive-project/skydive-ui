@@ -80,6 +80,10 @@ var config = {
             attrs.weight = 3
         }
 
+        if (node.data.Probe === "fabric") {
+            attrs.weight = 0
+        }
+
         return attrs
     },
     "nodeTabTitle": function (node) {
