@@ -18,7 +18,7 @@
 import * as React from 'react'
 import clsx from 'clsx'
 import Websocket from 'react-websocket'
-import { debounce } from 'ts-debounce';
+import { debounce } from 'ts-debounce'
 
 import { withStyles } from '@material-ui/core/styles'
 import CssBaseline from '@material-ui/core/CssBaseline'
@@ -463,7 +463,7 @@ class App extends React.Component<Props, State> {
   }
 
   subscriberURL(): string {
-    var url = new URL('/ws/subscriber?x-client-type=webui', this.props.session.endpoint)
+    var url = new URL(`/ws/subscriber?x-client-type=webui&x-auth-token=${this.props.session.token}`, this.props.session.endpoint)
     if (url.protocol.startsWith('https')) {
       url.protocol = 'wss:'
     } else {

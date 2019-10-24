@@ -1,4 +1,4 @@
-import { minWidth } from "@material-ui/system";
+import { minWidth, borderRadius } from "@material-ui/system";
 
 /*
  * Copyright (C) 2019 Sylvain Afchain
@@ -238,20 +238,16 @@ export const AutoCompleteStyles = makeStyles((theme: Theme) =>
 export const LoginStyles = (theme: Theme) => createStyles({
   '@global': {
     body: {
-      backgroundColor: theme.palette.common.white
+      backgroundColor: theme.palette.common.black
     }
   },
   paper: {
-    marginTop: theme.spacing(8),
+    padding: theme.spacing(4),
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center'
-  },
-  avatar: {
-    margin: theme.spacing(1),
-    backgroundColor: '#546e7a',
-    width: 80,
-    height: 80
+    alignItems: 'center',
+    backgroundColor: theme.palette.common.white,
+    borderRadius: 5
   },
   form: {
     width: '100%',
@@ -266,5 +262,21 @@ export const LoginStyles = (theme: Theme) => createStyles({
   failure: {
     color: '#bb2c2c',
     fontSize: 18
+  },
+  logo: {
+    marginTop: theme.spacing(12),
+    marginBottom: theme.spacing(2),
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  logoImg: {
+    width: '40%',
+    height: 'auto'
+  },
+  logoTitle: {
+    color: theme.palette.common.white,
+    fontStyle: 'italic',
+    fontWeight: 400
   }
 })

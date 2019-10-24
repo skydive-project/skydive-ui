@@ -31,7 +31,7 @@ import { withRouter } from 'react-router-dom'
 
 import { LoginStyles } from './Styles'
 
-import Logo from '../assets/Logo-tiny.png'
+import Logo from '../assets/Logo-large.png'
 
 interface Props {
     classes: any
@@ -127,15 +127,13 @@ class Login extends React.Component<Props, State> {
         return (
             <Container component="main" maxWidth="xs">
                 <CssBaseline />
-                <div className={classes.paper}>
-
-                    <Avatar className={classes.avatar}>
-                        <img src={Logo} alt="logo" />
-                    </Avatar>
-
-                    <Typography component="h1" variant="h5">
-                        Sign in
+                <div className={classes.logo}>
+                    <img src={Logo} alt="logo" className={classes.logoImg} />
+                    <Typography className={classes.logoTitle} variant="h3" component="h3">
+                        SKYDIVE
                     </Typography>
+                </div>
+                <div className={classes.paper}>
                     {this.state.failure &&
                         <React.Fragment>
                             <div className={classes.failure}>Login failure</div>
