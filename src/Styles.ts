@@ -26,6 +26,14 @@ export const AppStyles = (theme: Theme) => createStyles({
   app: {
     display: 'flex',
   },
+  grow: {
+    flexGrow: 1
+  },
+  avatar: {
+    margin: 10,
+    color: '#121212',
+    backgroundColor: '#757575'
+  },
   toolbar: {
     paddingRight: 24, // keep right padding when drawer closed
   },
@@ -37,7 +45,7 @@ export const AppStyles = (theme: Theme) => createStyles({
     ...theme.mixins.toolbar,
   },
   appBar: {
-    backgroundColor: '#000',
+    backgroundColor: theme.palette.common.black,
     zIndex: theme.zIndex.drawer + 1,
     transition: theme.transitions.create(['width', 'margin'], {
       easing: theme.transitions.easing.sharp,

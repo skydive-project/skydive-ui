@@ -22,7 +22,8 @@ import { Node, Link } from './Topology'
 export const SELECT_NODE = 'SELECT_NODE'
 export const UNSELECT_NODE = 'UNSELECT_NODE'
 export const BUMP_REVISION = 'BUMP_REVISION'
-export const REGISTER_SESSION = 'REGISTER_SESSION'
+export const OPEN_SESSION = 'OPEN_SESSION'
+export const CLOSE_SESSION = 'CLOSE_SESSION'
 
 interface selectNodeAction {
     type: typeof SELECT_NODE
@@ -44,11 +45,17 @@ export interface session {
     username: string
     token: string
     permissions: any
+    persistent: boolean
 }
 
-interface registerSessionAction {
-    type: typeof REGISTER_SESSION
+interface openSessionAction {
+    type: typeof OPEN_SESSION
     payload: session
+}
+
+interface closeSessionAction {
+    type: typeof CLOSE_SESSION
+    payload: null
 }
 
 export function selectNode(node: Node): selectNodeAction {
@@ -72,24 +79,52 @@ export function bumpRevision(id: string): bumpRevisionAction {
     }
 }
 
-export function registerSession(endpoint: string, username: string, token: string, permissions: any): registerSessionAction {
+export function openSession(endpoint: string, username: string, token: string, permissions: any, persistent: boolean): openSessionAction {
     return {
-        type: REGISTER_SESSION,
+        type: OPEN_SESSION,
         payload: {
             endpoint: endpoint,
             username: username,
             token: token,
-            permissions: permissions
+            permissions: permissions,
+            persistent: persistent
         }
     }
 }
 
-export type ActionTypes = selectNodeAction | unselectNodeAction | bumpRevisionAction | registerSessionAction
+export function closeSession(): closeSessionAction {
+    return {
+        type: CLOSE_SESSION,
+        payload: null
+    }
+}
+
+export type ActionTypes = selectNodeAction | unselectNodeAction | bumpRevisionAction | openSessionAction | closeSessionAction
+
+const emptySession = {
+    endpoint: `${window.location.protocol}//${window.location.hostname}:8082`,
+    username: "",
+    token: "",
+    permissions: {},
+    persistent: false
+}
+
+const loadSession = (): session => {
+    try {
+        const serializedSession = localStorage.getItem('session');
+        if (serializedSession === null) {
+            return emptySession
+        }
+        return JSON.parse(serializedSession);
+    } catch (err) {
+        return emptySession
+    }
+}
 
 const initialState = {
     selection: new Array<Node | Link>(),
     selectionRevision: 0,
-    session: { token: "", permissions: null }
+    session: loadSession()
 }
 
 function appReducer(state = initialState, action: ActionTypes) {
@@ -115,10 +150,21 @@ function appReducer(state = initialState, action: ActionTypes) {
                 }
             }
             return state
-        case REGISTER_SESSION:
+        case OPEN_SESSION:
+            if (action.payload.persistent) {
+                localStorage.setItem('session', JSON.stringify(action.payload))
+            }
+
             return {
                 ...state,
                 session: action.payload
+            }
+        case CLOSE_SESSION:
+            localStorage.removeItem('session')
+
+            return {
+                ...state,
+                session: emptySession
             }
         default:
             return state

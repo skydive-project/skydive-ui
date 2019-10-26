@@ -26,7 +26,6 @@ import Drawer from '@material-ui/core/Drawer'
 import AppBar from '@material-ui/core/AppBar'
 import Toolbar from '@material-ui/core/Toolbar'
 import IconButton from '@material-ui/core/IconButton'
-import MenuIcon from '@material-ui/icons/Menu'
 import Typography from '@material-ui/core/Typography'
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
 import Divider from '@material-ui/core/Divider'
@@ -38,12 +37,17 @@ import FormGroup from '@material-ui/core/FormGroup'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import { withSnackbar, WithSnackbarProps } from 'notistack'
 import { connect } from 'react-redux'
+import AccountCircle from '@material-ui/icons/AccountCircle'
+import MenuIcon from '@material-ui/icons/Menu'
+import MenuItem from '@material-ui/core/MenuItem'
+import Menu from '@material-ui/core/Menu'
+import { withRouter } from 'react-router-dom'
 
 import { AppStyles } from './Styles'
 import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState, Link } from './Topology'
 import { mainListItems, helpListItems } from './Menu'
 import AutoCompleteInput from './AutoComplete'
-import { AppState, selectNode, unselectNode, bumpRevision, session } from './Store'
+import { AppState, selectNode, unselectNode, bumpRevision, session, closeSession } from './Store'
 import SelectionPanel from './SelectionPanel'
 
 import './App.css'
@@ -57,9 +61,11 @@ interface Props extends WithSnackbarProps {
   classes: any
   selectNode: typeof selectNode
   unselectNode: typeof unselectNode
-  selection: Array<Node|Link>
+  selection: Array<Node | Link>
   bumpRevision: typeof bumpRevision
   session: session
+  closeSession: typeof closeSession
+  history: any
 }
 
 interface State {
@@ -69,6 +75,7 @@ interface State {
   isNavOpen: boolean
   linkTagStates: Map<string, LinkTagState>
   suggestions: Array<string>
+  anchorEl: null | HTMLElement
 }
 
 class App extends React.Component<Props, State> {
@@ -79,6 +86,7 @@ class App extends React.Component<Props, State> {
   state: State
   refreshTopology: any
   bumpRevision: typeof bumpRevision
+  checkAuthID: number
 
   constructor(props) {
     super(props)
@@ -89,18 +97,11 @@ class App extends React.Component<Props, State> {
       contextMenuY: 0,
       isNavOpen: false,
       linkTagStates: new Map<string, LinkTagState>(),
-      suggestions: new Array<string>()
+      suggestions: new Array<string>(),
+      anchorEl: null
     }
 
     this.synced = false
-
-    this.onShowNodeContextMenu = this.onShowNodeContextMenu.bind(this)
-    this.onOpen = this.onOpen.bind(this)
-    this.onClose = this.onClose.bind(this)
-    this.onMessage = this.onMessage.bind(this)
-    this.onNodeSelected = this.onNodeSelected.bind(this)
-    this.onLayerLinkStateChange = this.onLayerLinkStateChange.bind(this)
-    this.onSearchChange = this.onSearchChange.bind(this)
 
     this.refreshTopology = debounce(this._refreshTopology.bind(this), 300)
 
@@ -110,6 +111,16 @@ class App extends React.Component<Props, State> {
 
   componentDidMount() {
     //this.parseTopology(data)
+
+    this.checkAuthID = window.setInterval(() => {
+      this.checkAuth()
+    }, 2000)
+  }
+
+  componentWillUnmount() {
+    if (this.checkAuthID) {
+      window.clearInterval(this.checkAuthID)
+    }
   }
 
   fillSuggestions(node: Node, suggestions: Array<string>) {
@@ -314,7 +325,7 @@ class App extends React.Component<Props, State> {
     }
   }
 
-  onMessage(msg: string) {
+  onWebSocketMessage(msg: string) {
     var data: { Type: string, Obj: any } = JSON.parse(msg)
     switch (data.Type) {
       case "SyncReply":
@@ -380,7 +391,7 @@ class App extends React.Component<Props, State> {
     }
   }
 
-  onClose() {
+  onWebSocketClose() {
     if (this.synced) {
       this.notify("Disconnected", "error")
     } else {
@@ -388,6 +399,25 @@ class App extends React.Component<Props, State> {
     }
 
     this.synced = false
+
+    // check if still authenticated
+    this.checkAuth()
+  }
+
+  checkAuth() {
+    const requestOptions = {
+      method: 'GET',
+      headers: {
+        'X-Auth-Token': this.props.session.token
+      }
+    }
+
+    return fetch(`${this.props.session.endpoint}/api/status`, requestOptions)
+      .then(response => {
+        if (response.status !== 200) {
+          this.logout()
+        }
+      })
   }
 
   sendMessage(data) {
@@ -399,7 +429,7 @@ class App extends React.Component<Props, State> {
     this.sendMessage(msg)
   }
 
-  onOpen() {
+  onWebSocketOpen() {
     if (!this.tc) {
       return
     }
@@ -473,14 +503,28 @@ class App extends React.Component<Props, State> {
     return url.toString()
   }
 
+  openProfileMenu(event: React.MouseEvent<HTMLElement>) {
+    this.setState({ anchorEl: event.currentTarget })
+  }
+
+  closeProfileMenu() {
+    this.setState({ anchorEl: null })
+  }
+
+  logout() {
+    this.props.closeSession()
+    this.props.history.push("/login")
+  }
+
   render() {
     const { classes } = this.props
 
     return (
       <div className={classes.app}>
         <CssBaseline />
-        <Websocket ref={node => this.websocket = node} url={this.subscriberURL()} onOpen={this.onOpen}
-          onMessage={this.onMessage} onClose={this.onClose} reconnectIntervalInMilliSeconds={2500} />
+        <Websocket ref={node => this.websocket = node} url={this.subscriberURL()} onOpen={this.onWebSocketOpen.bind(this)}
+          onMessage={this.onWebSocketMessage.bind(this)} onClose={this.onWebSocketClose.bind(this)}
+          reconnectIntervalInMilliSeconds={2500} />
         <AppBar position="absolute" className={clsx(classes.appBar, this.state.isNavOpen && classes.appBarShift)}>
           <Toolbar className={classes.toolbar}>
             <IconButton
@@ -495,7 +539,34 @@ class App extends React.Component<Props, State> {
               <img src={Logo} alt="logo" />
             </Typography>
             <div className={classes.search}>
-              <AutoCompleteInput placeholder="metadata value" suggestions={this.state.suggestions} onChange={this.onSearchChange} />
+              <AutoCompleteInput placeholder="metadata value" suggestions={this.state.suggestions} onChange={this.onSearchChange.bind(this)} />
+            </div>
+            <div className={classes.grow} />
+            <div>
+              <IconButton
+                aria-label="account of current user"
+                aria-controls="menu-appbar"
+                aria-haspopup="true"
+                onClick={this.openProfileMenu.bind(this)}
+                color="inherit">
+                <AccountCircle fontSize="large" />
+              </IconButton>
+              <Menu
+                id="menu-appbar"
+                anchorEl={this.state.anchorEl}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={this.state.anchorEl !== null}
+                onClose={this.closeProfileMenu.bind(this)}>
+                <MenuItem onClick={this.logout.bind(this)}>Logout</MenuItem>
+              </Menu>
             </div>
           </Toolbar>
         </AppBar>
@@ -519,8 +590,8 @@ class App extends React.Component<Props, State> {
           <div className={classes.appBarSpacer} />
           <Container maxWidth="xl" className={classes.container}>
             <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} linkAttrs={this.linkAttrs}
-              onNodeSelected={this.onNodeSelected} sortNodesFnc={this.sortNodesFnc}
-              onShowNodeContextMenu={this.onShowNodeContextMenu} weightTitles={this.weightTitles()}
+              onNodeSelected={this.onNodeSelected.bind(this)} sortNodesFnc={this.sortNodesFnc}
+              onShowNodeContextMenu={this.onShowNodeContextMenu.bind(this)} weightTitles={this.weightTitles()}
               groupBy={config.groupBy} />
           </Container>
           <Container className={classes.rightPanel}>
@@ -538,7 +609,7 @@ class App extends React.Component<Props, State> {
                 <FormGroup>
                   {Array.from(this.state.linkTagStates.keys()).map((key) => (
                     <FormControlLabel key={key} control={
-                      <Checkbox value={key} color="primary" onChange={this.onLayerLinkStateChange}
+                      <Checkbox value={key} color="primary" onChange={this.onLayerLinkStateChange.bind(this)}
                         checked={this.state.linkTagStates.get(key) === LinkTagState.Visible}
                         indeterminate={this.state.linkTagStates.get(key) === LinkTagState.EventBased} />
                     }
@@ -562,7 +633,8 @@ export const mapStateToProps = (state: AppState) => ({
 export const mapDispatchToProps = ({
   selectNode,
   unselectNode,
-  bumpRevision
+  bumpRevision,
+  closeSession
 })
 
-export default withStyles(AppStyles)(connect(mapStateToProps, mapDispatchToProps)(withSnackbar(App)))
+export default withStyles(AppStyles)(connect(mapStateToProps, mapDispatchToProps)(withSnackbar(withRouter(App))))

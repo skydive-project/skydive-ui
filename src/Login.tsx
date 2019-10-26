@@ -19,14 +19,13 @@ import * as React from "react"
 import { connect } from 'react-redux'
 import Container from '@material-ui/core/Container'
 import Typography from '@material-ui/core/Typography'
-import Avatar from '@material-ui/core/Avatar'
 import Button from '@material-ui/core/Button'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import TextField from '@material-ui/core/TextField'
 import { withStyles } from '@material-ui/core/styles'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Checkbox from '@material-ui/core/Checkbox'
-import { AppState, registerSession } from './Store'
+import { AppState, openSession, session } from './Store'
 import { withRouter } from 'react-router-dom'
 
 import { LoginStyles } from './Styles'
@@ -35,9 +34,10 @@ import Logo from '../assets/Logo-large.png'
 
 interface Props {
     classes: any
-    registerSession: typeof registerSession
+    openSession: typeof openSession
     history: any
     location: any
+    session: session
 }
 
 interface State {
@@ -46,6 +46,7 @@ interface State {
     password: string
     submitted: boolean
     failure: boolean
+    persistent: boolean
 }
 
 class Login extends React.Component<Props, State> {
@@ -55,14 +56,13 @@ class Login extends React.Component<Props, State> {
     constructor(props) {
         super(props)
 
-        console.log(window.location)
-
         this.state = {
-            endpoint: `${window.location.protocol}//${window.location.hostname}:8082`,
+            endpoint: "",
             username: "",
             password: "",
             submitted: false,
-            failure: false
+            failure: false,
+            persistent: false
         }
     }
 
@@ -77,6 +77,9 @@ class Login extends React.Component<Props, State> {
                 break
             case "password":
                 this.setState({ password: value })
+                break
+            case "persistent":
+                this.setState({ persistent: Boolean(value) })
                 break
         }
     }
@@ -113,7 +116,7 @@ class Login extends React.Component<Props, State> {
             })
             .then(data => {
                 if (data) {
-                    this.props.registerSession(this.state.endpoint, this.state.username, data.Token, data.Permissions)
+                    this.props.openSession(this.state.endpoint, this.state.username, data.Token, data.Permissions, this.state.persistent)
 
                     const { from } = this.props.location.state || { from: { pathname: "/" } }
                     this.props.history.push(from)
@@ -151,7 +154,7 @@ class Login extends React.Component<Props, State> {
                             name="endpoint"
                             autoComplete="endpoint"
                             autoFocus
-                            value={this.state.endpoint}
+                            value={this.props.session.endpoint}
                             onChange={this.handleChange.bind(this)}
                         />
                         {this.state.submitted && !this.state.endpoint &&
@@ -192,6 +195,9 @@ class Login extends React.Component<Props, State> {
                         <FormControlLabel
                             control={<Checkbox value="remember" color="primary" />}
                             label="Remember me"
+                            name="persistent"
+                            value={true}
+                            onChange={this.handleChange.bind(this)}
                         />
                         <Button
                             type="submit"
@@ -210,10 +216,11 @@ class Login extends React.Component<Props, State> {
 }
 
 export const mapStateToProps = (state: AppState) => ({
+    session: state.session
 })
 
 export const mapDispatchToProps = ({
-    registerSession
+    openSession
 })
 
 export default withStyles(LoginStyles)(connect(mapStateToProps, mapDispatchToProps)(withRouter(Login)))
