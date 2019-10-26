@@ -31,6 +31,7 @@ interface Props {
     data: Array<Array<any>>
     graph?: Graph
     details: Map<number, any>
+    filterKeys?: Array<string>
 }
 
 interface State {
@@ -64,6 +65,7 @@ export class DataViewer extends React.Component<Props, State> {
                 graph: graph
             }
         }
+
         return null
     }
 
@@ -132,6 +134,12 @@ export class DataViewer extends React.Component<Props, State> {
                         break
                 }
             }
+
+            // use value from config first
+            if (column.name === "Key" && this.props.filterKeys) {
+                column.options.filterList = this.props.filterKeys
+            }
+
             let filterList = this.state.filterList.get(column.name)
             if (filterList) {
                 column.options.filterList = filterList

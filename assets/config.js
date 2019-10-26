@@ -108,6 +108,21 @@ var config = {
     ],
     "nodeDataFields": [
         {
+            field: "",
+            title: "General",
+            expanded: true,
+            icon: "\uf05a",
+            sort: ['Name', 'Type', 'MAC', 'Driver', 'State'],
+            filterKeys: function (data) {
+                switch (data.Type) {
+                    case "host":
+                        return null
+                    default:
+                        return ['Name', 'Type', 'MAC', 'Driver', 'State']
+                }
+            }
+        },
+        {
             field: "Sockets",
             expanded: false,
             icon: "\uf1e6"

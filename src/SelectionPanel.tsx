@@ -69,14 +69,23 @@ class SelectionPanel extends React.Component<Props, State> {
 
       return (
         <TabPanel key={"tabpanel-" + node.id} value={this.state.tab} index={i}>
-          <DataPanel key={"dataviewer-general-" + node.id} classes={classes} title="General" icon={"\uf05a"}
-          data={node.data} defaultExpanded={true} exclude={config.nodeDataFields.map(cfg => cfg.field)}/>
-
           {config.nodeDataFields.map(cfg => {
-            if (node.data[cfg.field]) {
+            var data = node.data
+            var exclude = []
+
+            if (cfg.field) {
+              data = node.data[cfg.field]
+            } else {
+              exclude = config.nodeDataFields.filter(cfg => cfg.field).map(cfg => cfg.field)
+            }
+
+            if (data) {
+              var title = cfg.title || cfg.field || "General"
+              var filterKeys = cfg.filterKeys ? cfg.filterKeys(data) : null
+
               return (
-                <DataPanel key={"dataviewer-" + cfg.field + "-" + node.id} classes={classes} title={cfg.title || cfg.field}
-                  defaultExpanded={cfg.expanded} data={node.data[cfg.field]}
+                <DataPanel key={"dataviewer-" + (cfg.field || "general") + "-" + node.id} classes={classes} title={title}
+                  defaultExpanded={cfg.expanded} data={data} exclude={exclude} sort={cfg.sort} filterKeys={filterKeys}
                   normalizer={cfg.normalizer} graph={cfg.graph} icon={cfg.icon} />
               )
             }

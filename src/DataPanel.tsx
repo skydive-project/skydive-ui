@@ -36,6 +36,8 @@ interface Props {
     flatten?: boolean
     graph?: (data: any) => Graph
     exclude?: Array<string>
+    sort?: Array<string>
+    filterKeys?: Array<string>
 }
 
 interface State {
@@ -78,10 +80,6 @@ export class DataPanel extends React.Component<Props, State> {
         }
     }
 
-    componentDidMount() {
-        console.log(this.props.title)
-    }
-
     render() {
         const { classes } = this.props
 
@@ -98,7 +96,7 @@ export class DataPanel extends React.Component<Props, State> {
                     {
                         this.state.data.rows.length && this.state.isExpanded &&
                         (
-                            <DataViewer columns={this.state.data.columns} data={this.state.data.rows}
+                            <DataViewer columns={this.state.data.columns} data={this.state.data.rows} filterKeys={this.props.filterKeys}
                                 graph={this.state.data.graph} details={this.state.data.details} />
                         )
                     }
