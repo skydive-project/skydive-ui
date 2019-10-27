@@ -142,7 +142,7 @@ class App extends React.Component<Props, State> {
     }
   }
 
-  addNode(node: any, tags: Array<string>): boolean {
+  addNode(node: any): boolean {
     if (!this.tc) {
       return false
     }
@@ -151,6 +151,8 @@ class App extends React.Component<Props, State> {
     if (node.Metadata.Type === "ofrule") {
       return false
     }
+
+    var tags = config.nodeTags(node.Metadata)
 
     let n = this.tc.addNode(node.ID, tags, node.Metadata, (n: Node): number => config.nodeAttrs(n).weight)
     this.tc.setParent(n, this.tc.root)
@@ -244,7 +246,7 @@ class App extends React.Component<Props, State> {
 
     // first add all the nodes
     for (let node of data.Nodes) {
-      this.addNode(node, ["infra"])
+      this.addNode(node)
     }
 
     if (!data.Edges) {
@@ -336,7 +338,7 @@ class App extends React.Component<Props, State> {
         if (!this.synced) {
           return
         }
-        if (this.addNode(data.Obj, ["infra"])) {
+        if (this.addNode(data.Obj)) {
           this.refreshTopology()
         }
         break

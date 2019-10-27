@@ -8,13 +8,13 @@ var config = {
         var attrs = { classes: [node.data.Type], name: name, icon: "\uf192", iconClass: '', weight: 0 }
 
         if (node.data.OfPort) {
-            attrs.weight = 5
+            attrs.weight = 15
         }
 
         switch (node.data.Type) {
             case "host":
                 attrs.icon = "\uf109"
-                attrs.weight = 3
+                attrs.weight = 13
                 break
             case "switch":
                 attrs.icon = "\uf6ff"
@@ -22,7 +22,7 @@ var config = {
             case "bridge":
             case "ovsbridge":
                 attrs.icon = "\uf6ff"
-                attrs.weight = 4
+                attrs.weight = 14
                 break
             case "erspan":
                 attrs.icon = "\uf1e0"
@@ -39,11 +39,11 @@ var config = {
             case "tun":
             case "tap":
                 attrs.icon = "\uf796"
-                attrs.weight = 7
+                attrs.weight = 17
                 break
             case "veth":
                 attrs.icon = "\uf4d7"
-                attrs.weight = 7
+                attrs.weight = 17
                 break
             case "switchport":
                 attrs.icon = "\uf0e8"
@@ -52,15 +52,15 @@ var config = {
             case "port":
             case "ovsport":
                 attrs.icon = "\uf0e8"
-                attrs.weight = 5
+                attrs.weight = 15
                 break
             case "netns":
                 attrs.icon = "\uf24d"
-                attrs.weight = 8
+                attrs.weight = 18
                 break
             case "libvirt":
                 attrs.icon = "\uf109"
-                attrs.weight = 9
+                attrs.weight = 19
                 break
             default:
                 attrs.icon = "\uf192"
@@ -73,18 +73,29 @@ var config = {
         }
 
         if (node.data.IPV4 && node.data.IPV4.length) {
-            attrs.weight = 3
+            attrs.weight = 13
         }
 
         if (node.data.Driver && ["tap", "veth", "tun", "openvswitch"].indexOf(node.data.Driver) < 0) {
-            attrs.weight = 3
+            attrs.weight = 13
         }
 
         if (node.data.Probe === "fabric") {
-            attrs.weight = 0
+            attrs.weight = 10
+        }
+
+        if (node.data.Manager === "k8s") {
+            attrs.weight = 1
         }
 
         return attrs
+    },
+    "nodeTags": function(data) {
+        if (data.Manager && data.Manager === "k8s") {
+            return ["k8s"]
+        } else {
+            return ["infra"]
+        }
     },
     "nodeTabTitle": function (node) {
         return node.data.Name.substring(0, 8)
@@ -93,13 +104,15 @@ var config = {
         return node.data.Type && node.data.Type !== "host" ? node.data.Type : null
     },
     "weightTitles": {
-        0: "Fabric",
-        3: "Physical",
-        4: "Bridges",
-        5: "Ports",
-        7: "Virtual",
-        8: "Namespaces",
-        9: "VMs"
+        0: "Not classified",
+        1: "Kubernetes",
+        10: "Fabric",
+        13: "Physical",
+        14: "Bridges",
+        15: "Ports",
+        17: "Virtual",
+        18: "Namespaces",
+        19: "VMs"
     },
     "suggestions": [
         "data.IPV4",

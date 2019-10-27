@@ -165,8 +165,6 @@ interface Props {
     groupSize?: number
 }
 
-const maxWeight = 15
-
 /**
  * Topology component. Based on a tree enhanced by multiple levels supports.
  */
@@ -202,6 +200,7 @@ export class Topology extends React.Component<Props, {}> {
     private groups: Map<string, NodeWrapper>
     private groupStates: Map<string, State>
     private nodeGroup: Map<string, NodeWrapper>
+    private weights: Array<number>
 
     root: Node
     nodes: Map<string, Node>
@@ -242,9 +241,6 @@ export class Topology extends React.Component<Props, {}> {
             })
 
         this.createSVG()
-    }
-
-    componentDidUpdate() {
     }
 
     private onResize(rect: any) {
@@ -424,6 +420,8 @@ export class Topology extends React.Component<Props, {}> {
         this.groupStates = new Map<string, State>()
         this.nodeGroup = new Map<string, NodeWrapper>()
 
+        this.weights = new Array<number>()
+
         this.invalidated = true
     }
 
@@ -435,6 +433,14 @@ export class Topology extends React.Component<Props, {}> {
     showNodeTag(tag: string, active: boolean) {
         this.nodeTagStates.set(tag, active)
         this.renderTree()
+    }
+
+    private updateWeighs(node: Node) {
+        var weight = node.getWeight()
+        if (!this.weights.includes(weight)) {
+            this.weights.push(weight)
+            this.weights = this.weights.sort((a, b) => a - b)
+        }
     }
 
     addNode(id: string, tags: Array<string>, data: any, weight: number | ((node: Node) => number)): Node {
@@ -449,6 +455,8 @@ export class Topology extends React.Component<Props, {}> {
                 this.nodeTagStates.set(tag, false)
             }
         })
+
+        this.updateWeighs(node)
 
         this.invalidated = true
 
@@ -466,6 +474,8 @@ export class Topology extends React.Component<Props, {}> {
         // check whether the new data have change the weight
         // in order to trigger a recalculation
         if (prevWeight !== node.getWeight()) {
+            this.updateWeighs(node)
+
             this.invalidated = true
         }
 
@@ -758,9 +768,9 @@ export class Topology extends React.Component<Props, {}> {
             return null
         }
 
-        for (let i = 0; i <= maxWeight; i++) {
+        for (let weight of this.weights) {
             let cache = { chains: new Map<string, { first: NodeWrapper, last: NodeWrapper }>() }
-            normalizeTreeHeight(tree, tree, i, 0, cache)
+            normalizeTreeHeight(tree, tree, weight, 0, cache)
         }
 
         return tree
