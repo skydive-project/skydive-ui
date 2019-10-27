@@ -54,7 +54,7 @@ export class Result {
         if (index === undefined) {
             this.colIndexes.set(name, this._columns.length)
 
-            let dir = this._columns.length === 0 ? 'asc' : 'none'
+            let dir = this._columns.length === 0 ? 'none' : 'none'
 
             this._columns.push({ "name": name, options: { sortDirection: dir, filterList: new Array<any>() } })
         }
@@ -75,6 +75,21 @@ export class Result {
             }
 
             this._rows.push(row)
+        }
+    }
+
+    // sort only if the format in key-value
+    sortRowsByKeys(keys: Array<string>) {
+        if (this._columns.length === 2 && this._columns[0].name === "Key") {
+            this._rows = this._rows.sort((a, b) => {
+                var ka = a.entries.get("Key"), kb = b.entries.get("Key")
+                var ia = keys.indexOf(ka), ib = keys.indexOf(kb)
+
+                if (ia === ib) return ka.localeCompare(kb) // -1 == -1
+                if (ia === -1) return 1
+                if (ib === -1) return -1
+                return ia - ib
+            })
         }
     }
 
@@ -122,11 +137,13 @@ export class DataNormalizer {
     normalizer: ((any) => any) | null
     graph: ((any) => Graph) | null
     exclude: Array<string> | null
+    sortKeys: Array<string> | null
 
-    constructor(normalizer?: (any) => any, graph?: ((any) => Graph), exclude?: Array<string>) {
+    constructor(normalizer?: (any) => any, graph?: ((any) => Graph), exclude?: Array<string>, sortKeys?: Array<string>) {
         this.normalizer = normalizer || null
         this.graph = graph || null
         this.exclude = exclude || []
+        this.sortKeys = sortKeys || []
     }
 
     private normalizeMap(data: any, result: Result) {
@@ -222,6 +239,10 @@ export class DataNormalizer {
         }
 
         this.normalizeData(data, result)
+
+        if (this.sortKeys) {
+            result.sortRowsByKeys(this.sortKeys)
+        }
 
         return result
     }

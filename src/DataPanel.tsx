@@ -36,7 +36,7 @@ interface Props {
     flatten?: boolean
     graph?: (data: any) => Graph
     exclude?: Array<string>
-    sort?: Array<string>
+    sortKeys?: Array<string>
     filterKeys?: Array<string>
 }
 
@@ -58,15 +58,15 @@ export class DataPanel extends React.Component<Props, State> {
         }
     }
 
-    static normalizeData(data: any, normalizer?: (data: any) => any, graph?: (data: any) => Graph, exclude?: Array<string>): Result {
-        var dataNormalizer = new DataNormalizer(normalizer, graph, exclude)
+    static normalizeData(data: any, normalizer?: (data: any) => any, graph?: (data: any) => Graph, exclude?: Array<string>, sortKeys?: Array<string>): Result {
+        var dataNormalizer = new DataNormalizer(normalizer, graph, exclude, sortKeys)
         return dataNormalizer.normalize(data)
     }
 
     static getDerivedStateFromProps(props, state) {
         if (state.isExpanded) {
             return {
-                data: DataPanel.normalizeData(props.data, props.normalizer, props.graph, props.exclude)
+                data: DataPanel.normalizeData(props.data, props.normalizer, props.graph, props.exclude, props.sortKeys)
             }
         }
         return null
@@ -74,7 +74,12 @@ export class DataPanel extends React.Component<Props, State> {
 
     onExpandChange(event: object, expanded: boolean) {
         if (expanded) {
-            this.setState({ data: DataPanel.normalizeData(this.props.data, this.props.normalizer, this.props.graph, this.props.exclude), isExpanded: expanded })
+            this.setState(
+                {
+                    data: DataPanel.normalizeData(this.props.data, this.props.normalizer, this.props.graph, this.props.exclude, this.props.sortKeys),
+                    isExpanded: expanded
+                }
+            )
         } else {
             this.setState({ isExpanded: expanded })
         }

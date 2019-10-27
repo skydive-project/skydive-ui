@@ -112,7 +112,9 @@ var config = {
             title: "General",
             expanded: true,
             icon: "\uf05a",
-            sort: ['Name', 'Type', 'MAC', 'Driver', 'State'],
+            sortKeys: function(data) {
+                return ['Name', 'Type', 'MAC', 'Driver', 'State']
+            },
             filterKeys: function (data) {
                 switch (data.Type) {
                     case "host":

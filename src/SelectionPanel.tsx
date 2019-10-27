@@ -81,11 +81,12 @@ class SelectionPanel extends React.Component<Props, State> {
 
             if (data) {
               var title = cfg.title || cfg.field || "General"
+              var sortKeys = cfg.sortKeys ? cfg.sortKeys(data) : null
               var filterKeys = cfg.filterKeys ? cfg.filterKeys(data) : null
 
               return (
                 <DataPanel key={"dataviewer-" + (cfg.field || "general") + "-" + node.id} classes={classes} title={title}
-                  defaultExpanded={cfg.expanded} data={data} exclude={exclude} sort={cfg.sort} filterKeys={filterKeys}
+                  defaultExpanded={cfg.expanded} data={data} exclude={exclude} sortKeys={sortKeys} filterKeys={filterKeys}
                   normalizer={cfg.normalizer} graph={cfg.graph} icon={cfg.icon} />
               )
             }
