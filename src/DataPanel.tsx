@@ -29,6 +29,7 @@ import './DataPanel.css'
 interface Props {
     title: string
     icon?: string
+    iconClass?: string
     data: any
     classes: any
     defaultExpanded?: boolean
@@ -88,13 +89,15 @@ export class DataPanel extends React.Component<Props, State> {
     render() {
         const { classes } = this.props
 
+        const iconClass = this.props.iconClass === "font-brands" ? classes.panelIconBrands : classes.panelIconFree
+
         return (
             <ExpansionPanel defaultExpanded={this.props.defaultExpanded} onChange={this.onExpandChange.bind(this)}>
                 <ExpansionPanelSummary
                     expandIcon={<ExpandMoreIcon />}
                     aria-controls="panel1a-content"
                     id="panel1a-header">
-                    <Typography className={classes.panelIconFree}>{this.props.icon}</Typography>
+                    <Typography className={iconClass}>{this.props.icon}</Typography>
                     <Typography className={classes.heading}>{this.props.title}</Typography>
                 </ExpansionPanelSummary>
                 <ExpansionPanelDetails>

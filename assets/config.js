@@ -5,7 +5,7 @@ var config = {
             name = node.data.Name.substring(0, 24) + "."
         }
 
-        var attrs = { classes: [node.data.Type], name: name, icon: "\uf192", weight: 0 }
+        var attrs = { classes: [node.data.Type], name: name, icon: "\uf192", iconClass: '', weight: 0 }
 
         if (node.data.OfPort) {
             attrs.weight = 5
@@ -69,7 +69,7 @@ var config = {
 
         if (node.data.Manager === "docker") {
             attrs.icon = "\uf395"
-            attrs.classes.push('font-brands')
+            attrs.iconClass = "font-brands"
         }
 
         if (node.data.IPV4 && node.data.IPV4.length) {
@@ -144,6 +144,12 @@ var config = {
             field: "Injections",
             expanded: false,
             icon: "\uf48e"
+        },
+        {
+            field: "Docker",
+            expanded: false,
+            icon: "\uf395",
+            iconClass: "font-brands"
         },
         {
             field: "IPV4",

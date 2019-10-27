@@ -51,7 +51,7 @@ class SelectionPanel extends React.Component<Props, State> {
   renderTabs(classes: any) {
     return this.props.selection.map((d: Node, i: number) => {
       var className = classes.tabIconFree
-      if (config.nodeAttrs(d).classes.includes("font-brands")) {
+      if (config.nodeAttrs(d).iconClass === "font-brands") {
         className = classes.tabIconBrands
       }
       return (
@@ -87,7 +87,7 @@ class SelectionPanel extends React.Component<Props, State> {
               return (
                 <DataPanel key={"dataviewer-" + (cfg.field || "general") + "-" + node.id} classes={classes} title={title}
                   defaultExpanded={cfg.expanded} data={data} exclude={exclude} sortKeys={sortKeys} filterKeys={filterKeys}
-                  normalizer={cfg.normalizer} graph={cfg.graph} icon={cfg.icon} />
+                  normalizer={cfg.normalizer} graph={cfg.graph} icon={cfg.icon} iconClass={cfg.iconClass} />
               )
             }
           })

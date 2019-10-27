@@ -195,12 +195,22 @@ export const AppStyles = (theme: Theme) => createStyles({
   },
   tabIconBrands: {
     fontFamily: `"Font Awesome 5 Brands" !important`,
+    fontWeight: 900,
+    fontSize: 24,
+    marginBottom: `0 !important`
   },
   tabTitle: {
     fontSize: 18
   },
   panelIconFree: {
     fontFamily: `"Font Awesome 5 Free" !important`,
+    fontWeight: 900,
+    fontSize: 20,
+    marginBottom: `0 !important`,
+    paddingRight: 8
+  },
+  panelIconBrands: {
+    fontFamily: `"Font Awesome 5 Brands" !important`,
     fontWeight: 900,
     fontSize: 20,
     marginBottom: `0 !important`,

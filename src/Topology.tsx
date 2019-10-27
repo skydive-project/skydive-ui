@@ -146,6 +146,7 @@ export interface NodeAttrs {
     name: string
     classes: Array<string>
     icon: string
+    iconClass: string
 }
 
 export interface LinkAttrs {
@@ -1777,7 +1778,7 @@ export class Topology extends React.Component<Props, {}> {
             .attr("d", (d: D3Node) => this.liner(this.hexagon(d, hexSize)))
 
         nodeEnter.append("text")
-            .attr("class", "node-icon")
+            .attr("class", (d: D3Node) => "node-icon " + this.props.nodeAttrs(d.data.wrapped).iconClass)
             .attr("dy", 9)
             .text((d: D3Node) => this.props.nodeAttrs(d.data.wrapped).icon)
 
