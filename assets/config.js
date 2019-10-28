@@ -92,11 +92,12 @@ var config = {
     },
     "nodeTags": function(data) {
         if (data.Manager && data.Manager === "k8s") {
-            return ["k8s"]
+            return ["kubernetes"]
         } else {
-            return ["infra"]
+            return ["infrastructure"]
         }
     },
+    "defaultNodeTag": "infrastructure",
     "nodeTabTitle": function (node) {
         return node.data.Name.substring(0, 8)
     },

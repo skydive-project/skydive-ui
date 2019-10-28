@@ -432,6 +432,16 @@ export class Topology extends React.Component<Props, {}> {
 
     showNodeTag(tag: string, active: boolean) {
         this.nodeTagStates.set(tag, active)
+        this.invalidated = true
+        this.renderTree()
+    }
+
+    activeNodeTag(tag: string) {
+        for (const [key, state] of this.nodeTagStates.entries()) {
+            this.nodeTagStates.set(key, false)
+        }
+        this.nodeTagStates.set(tag, true)
+        this.invalidated = true
         this.renderTree()
     }
 

@@ -41,6 +41,7 @@ import AccountCircle from '@material-ui/icons/AccountCircle'
 import MenuIcon from '@material-ui/icons/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import Menu from '@material-ui/core/Menu'
+import Fab from '@material-ui/core/Fab'
 import { withRouter } from 'react-router-dom'
 
 import { AppStyles } from './Styles'
@@ -73,6 +74,7 @@ interface State {
   contextMenuX: number
   contextMenuY: number
   isNavOpen: boolean
+  nodeTagStates: Map<string, boolean>
   linkTagStates: Map<string, LinkTagState>
   suggestions: Array<string>
   anchorEl: null | HTMLElement
@@ -96,6 +98,7 @@ class App extends React.Component<Props, State> {
       contextMenuX: 0,
       contextMenuY: 0,
       isNavOpen: false,
+      nodeTagStates: new Map<string, boolean>(),
       linkTagStates: new Map<string, LinkTagState>(),
       suggestions: new Array<string>(),
       anchorEl: null
@@ -268,9 +271,9 @@ class App extends React.Component<Props, State> {
       }
     }
 
-    this.tc.showNodeTag("infra", true)
+    this.tc.activeNodeTag(config.defaultNodeTag)
 
-    this.setState({ linkTagStates: this.tc.linkTagStates })
+    this.setState({ nodeTagStates: this.tc.nodeTagStates, linkTagStates: this.tc.linkTagStates })
 
     this.tc.zoomFit()
   }
@@ -518,6 +521,15 @@ class App extends React.Component<Props, State> {
     this.props.history.push("/login")
   }
 
+  activeNodeTag(tag: string) {
+    if (!this.tc) {
+      return
+    }
+
+    this.tc.activeNodeTag(tag)
+    this.setState({ nodeTagStates: this.tc.nodeTagStates })
+  }
+
   render() {
     const { classes } = this.props
 
@@ -603,22 +615,30 @@ class App extends React.Component<Props, State> {
             </Paper>
           </Container>
           <Container className={classes.nodeTagsPanel}>
-            <Paper className={classes.nodeTagsPanelPaper}>
-              <div className={classes.nodeTagsPanelPaperFragment}>
-                <Typography component="h6" color="primary" gutterBottom>
-                  Link types
+            {Array.from(this.state.nodeTagStates.keys()).map((tag) => (
+              <Fab key={tag} variant="extended" aria-label="delete" size="small" 
+                color={this.state.nodeTagStates.get(tag) ? "primary" : "default"}
+                className={classes.nodeTagsFab}
+                onClick={this.activeNodeTag.bind(this, tag)}>
+                {tag}
+              </Fab>
+            ))}
+          </Container>
+          <Container className={classes.linkTagsPanel}>
+            <Paper className={classes.linkTagsPanelPaper}>
+              <Typography component="h6" color="primary" gutterBottom>
+                Link types
                 </Typography>
-                <FormGroup>
-                  {Array.from(this.state.linkTagStates.keys()).map((key) => (
-                    <FormControlLabel key={key} control={
-                      <Checkbox value={key} color="primary" onChange={this.onLayerLinkStateChange.bind(this)}
-                        checked={this.state.linkTagStates.get(key) === LinkTagState.Visible}
-                        indeterminate={this.state.linkTagStates.get(key) === LinkTagState.EventBased} />
-                    }
-                      label={key} />
-                  ))}
-                </FormGroup>
-              </div>
+              <FormGroup>
+                {Array.from(this.state.linkTagStates.keys()).map((key) => (
+                  <FormControlLabel key={key} control={
+                    <Checkbox value={key} color="primary" onChange={this.onLayerLinkStateChange.bind(this)}
+                      checked={this.state.linkTagStates.get(key) === LinkTagState.Visible}
+                      indeterminate={this.state.linkTagStates.get(key) === LinkTagState.EventBased} />
+                  }
+                    label={key} />
+                ))}
+              </FormGroup>
             </Paper>
           </Container>
         </main>

@@ -153,6 +153,24 @@ export const AppStyles = (theme: Theme) => createStyles({
   nodeTagsPanel: {
     position: 'absolute',
     left: 20,
+    top: 80,
+    maxWidth: 'unset',
+    width: 'unset',
+    paddingTop: theme.spacing(0),
+    paddingBottom: theme.spacing(0),
+    paddingLeft: theme.spacing(0),
+    paddingRight: theme.spacing(0),
+  },
+  nodeTagsFab: {
+    margin: theme.spacing(1),
+    boxShadow: 'unset',
+    fontWeight: 'unset',
+    fontSize: '0.8rem',
+    padding: '0 12px !important'
+  },
+  linkTagsPanel: {
+    position: 'absolute',
+    left: 20,
     bottom: 20,
     maxWidth: 'unset',
     width: 'unset',
@@ -161,12 +179,13 @@ export const AppStyles = (theme: Theme) => createStyles({
     paddingLeft: theme.spacing(0),
     paddingRight: theme.spacing(0),
   },
-  nodeTagsPanelPaper: {
+  linkTagsPanelPaper: {
     position: 'relative',
     display: 'flex',
     flexDirection: 'column',
     minWidth: '100px',
-    padding: theme.spacing(2)
+    padding: theme.spacing(2),
+    border: '1px solid #ddd'
   },
   search: {
     padding: theme.spacing(0.2),
