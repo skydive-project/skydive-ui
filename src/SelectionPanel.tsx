@@ -23,6 +23,12 @@ import { connect } from 'react-redux'
 import { Node, Link } from './Topology'
 import { DataPanel } from './DataPanel'
 import { a11yProps, TabPanel } from './Tabs'
+import IconButton from '@material-ui/core/IconButton'
+import LocationOnIcon from '@material-ui/icons/LocationOn'
+import CodeIcon from '@material-ui/icons/Code'
+import CardContent from '@material-ui/core/CardContent'
+import Collapse from '@material-ui/core/Collapse'
+import Highlight from 'react-highlight'
 
 declare var config: any
 
@@ -30,10 +36,12 @@ interface Props {
   classes: any
   selection: Array<Node | Link>
   revision: number
+  onLocation?: (node: Node) => any
 }
 
 interface State {
   tab: number
+  gremlinID: string
 }
 
 class SelectionPanel extends React.Component<Props, State> {
@@ -44,7 +52,8 @@ class SelectionPanel extends React.Component<Props, State> {
     super(props)
 
     this.state = {
-      tab: 0
+      tab: 0,
+      gremlinID: ""
     }
   }
 
@@ -61,6 +70,14 @@ class SelectionPanel extends React.Component<Props, State> {
     })
   }
 
+  showGremlin(node: Node) {
+    if (this.state.gremlinID) {
+      this.setState({ gremlinID: "" })
+    } else {
+      this.setState({ gremlinID: node.id })
+    }
+  }
+
   renderTabPanels(classes: any) {
     return this.props.selection.map((node: Node, i: number) => {
       if (this.state.tab !== i) {
@@ -68,37 +85,62 @@ class SelectionPanel extends React.Component<Props, State> {
       }
 
       return (
-        <TabPanel key={"tabpanel-" + node.id} value={this.state.tab} index={i}>
-          {config.nodeDataFields.map(cfg => {
-            var data = node.data
-            var exclude = []
+        <React.Fragment key={node.id}>
+          <div className={classes.tabActions}>
+            <IconButton
+              aria-label="show node"
+              aria-haspopup="true"
+              onClick={() => this.props.onLocation && this.props.onLocation(node)}
+              color="inherit">
+              <LocationOnIcon />
+            </IconButton>
+            <IconButton
+              aria-label="show gremlin request"
+              aria-haspopup="true"
+              onClick={() => this.showGremlin(node)}
+              color="inherit">
+              <CodeIcon />
+            </IconButton>
+          </div>
+          <Collapse in={this.state.gremlinID !== ""} timeout="auto" unmountOnExit>
+            <CardContent className={classes.gremlinCardContent}>
+              <Highlight language="bash">
+                G.V('{this.state.gremlinID}')
+                </Highlight>
+            </CardContent>
+          </Collapse>
+          <TabPanel key={"tabpanel-" + node.id} value={this.state.tab} index={i}>
+            {config.nodeDataFields.map(cfg => {
+              var data = node.data
+              var exclude = []
 
-            if (cfg.field) {
-              data = node.data[cfg.field]
-            } else {
-              exclude = config.nodeDataFields.filter(cfg => cfg.field).map(cfg => cfg.field)
+              if (cfg.field) {
+                data = node.data[cfg.field]
+              } else {
+                exclude = config.nodeDataFields.filter(cfg => cfg.field).map(cfg => cfg.field)
+              }
+
+              if (data) {
+                var title = cfg.title || cfg.field || "General"
+                var sortKeys = cfg.sortKeys ? cfg.sortKeys(data) : null
+                var filterKeys = cfg.filterKeys ? cfg.filterKeys(data) : null
+
+                return (
+                  <DataPanel key={"dataviewer-" + (cfg.field || "general") + "-" + node.id} classes={classes} title={title}
+                    defaultExpanded={cfg.expanded} data={data} exclude={exclude} sortKeys={sortKeys} filterKeys={filterKeys}
+                    normalizer={cfg.normalizer} graph={cfg.graph} icon={cfg.icon} iconClass={cfg.iconClass} />
+                )
+              }
+            })
             }
-
-            if (data) {
-              var title = cfg.title || cfg.field || "General"
-              var sortKeys = cfg.sortKeys ? cfg.sortKeys(data) : null
-              var filterKeys = cfg.filterKeys ? cfg.filterKeys(data) : null
-
-              return (
-                <DataPanel key={"dataviewer-" + (cfg.field || "general") + "-" + node.id} classes={classes} title={title}
-                  defaultExpanded={cfg.expanded} data={data} exclude={exclude} sortKeys={sortKeys} filterKeys={filterKeys}
-                  normalizer={cfg.normalizer} graph={cfg.graph} icon={cfg.icon} iconClass={cfg.iconClass} />
-              )
-            }
-          })
-          }
-        </TabPanel>
+          </TabPanel>
+        </React.Fragment>
       )
     })
   }
 
   onTabChange(event: React.ChangeEvent<{}>, value: number) {
-    this.setState({ tab: value })
+    this.setState({ tab: value, gremlinID: "" })
   }
 
   render() {

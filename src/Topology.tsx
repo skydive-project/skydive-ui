@@ -1280,6 +1280,10 @@ export class Topology extends React.Component<Props, {}> {
         select("#node-pinned-" + node.id)
             .style("opacity", active ? 1 : 0)
 
+        if (!active) {
+            return
+        }
+
         var scale = 0.8
         var viewSize = this.viewSize()
 

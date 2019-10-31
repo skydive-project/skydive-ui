@@ -298,6 +298,9 @@ class App extends React.Component<Props, State> {
     if (active) {
       this.props.selectNode(node)
     } else {
+      if (this.tc) {
+        this.tc.pinNode(node, false)
+      }
       this.props.unselectNode(node)
     }
   }
@@ -530,6 +533,15 @@ class App extends React.Component<Props, State> {
     this.setState({ nodeTagStates: this.tc.nodeTagStates })
   }
 
+  onLocation(node: Node) {
+    if (!this.tc) {
+      return
+    }
+
+    this.tc.unpinNodes()
+    this.tc.pinNode(node, true)
+  }
+
   render() {
     const { classes } = this.props
 
@@ -611,12 +623,12 @@ class App extends React.Component<Props, State> {
           <Container className={classes.rightPanel}>
             <Paper className={clsx(classes.rightPanelPaper, !this.props.selection.length && classes.rightPanelPaperClose)}
               square={true}>
-              <SelectionPanel classes={classes} />
+              <SelectionPanel classes={classes} onLocation={this.onLocation.bind(this)} />
             </Paper>
           </Container>
           <Container className={classes.nodeTagsPanel}>
             {Array.from(this.state.nodeTagStates.keys()).map((tag) => (
-              <Fab key={tag} variant="extended" aria-label="delete" size="small" 
+              <Fab key={tag} variant="extended" aria-label="delete" size="small"
                 color={this.state.nodeTagStates.get(tag) ? "primary" : "default"}
                 className={classes.nodeTagsFab}
                 onClick={this.activeNodeTag.bind(this, tag)}>

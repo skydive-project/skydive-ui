@@ -235,6 +235,15 @@ export const AppStyles = (theme: Theme) => createStyles({
     marginBottom: `0 !important`,
     paddingRight: 8
   },
+  tabActions: {
+    display: 'flex',
+    flexDirection: 'row-reverse',
+    marginBottom: theme.spacing(1)
+  },
+  gremlinCardContent: {
+    fontSize: '16px',
+    padding: 0
+  }
 })
 
 export const AutoCompleteStyles = makeStyles((theme: Theme) =>
