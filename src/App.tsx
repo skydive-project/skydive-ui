@@ -43,6 +43,8 @@ import MenuItem from '@material-ui/core/MenuItem'
 import Menu from '@material-ui/core/Menu'
 import Fab from '@material-ui/core/Fab'
 import { withRouter } from 'react-router-dom'
+import Badge from '@material-ui/core/Badge'
+import ShoppingCartIcon from '@material-ui/icons/ShoppingCart'
 
 import { AppStyles } from './Styles'
 import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState, Link } from './Topology'
@@ -78,6 +80,7 @@ interface State {
   linkTagStates: Map<string, LinkTagState>
   suggestions: Array<string>
   anchorEl: null | HTMLElement
+  isSelectionOpen: boolean
 }
 
 class App extends React.Component<Props, State> {
@@ -101,7 +104,8 @@ class App extends React.Component<Props, State> {
       nodeTagStates: new Map<string, boolean>(),
       linkTagStates: new Map<string, LinkTagState>(),
       suggestions: new Array<string>(),
-      anchorEl: null
+      anchorEl: null,
+      isSelectionOpen: false
     }
 
     this.synced = false
@@ -294,6 +298,7 @@ class App extends React.Component<Props, State> {
   onNodeSelected(node: Node, active: boolean) {
     if (active) {
       this.props.selectNode(node)
+      this.openSelection()
     } else {
       if (this.tc) {
         this.tc.pinNode(node, false)
@@ -539,6 +544,22 @@ class App extends React.Component<Props, State> {
     this.tc.pinNode(node, true)
   }
 
+  onTopologyClick() {
+    this.setState({ isSelectionOpen: false })
+  }
+
+  onSelectionClose(node: Node) {
+    if (!this.tc) {
+      return
+    }
+
+    this.tc.selectNode(node.id, false)
+  }
+
+  openSelection() {
+    this.setState({ isSelectionOpen: true })
+  }
+
   render() {
     const { classes } = this.props
 
@@ -567,12 +588,19 @@ class App extends React.Component<Props, State> {
             <div className={classes.grow} />
             <div>
               <IconButton
+                onClick={this.openSelection.bind(this)}
+                color="inherit">
+                <Badge badgeContent={this.props.selection.length} color="secondary">
+                  <ShoppingCartIcon />
+                </Badge>
+              </IconButton>
+              <IconButton
                 aria-label="account of current user"
                 aria-controls="menu-appbar"
                 aria-haspopup="true"
                 onClick={this.openProfileMenu.bind(this)}
                 color="inherit">
-                <AccountCircle fontSize="large" />
+                <AccountCircle />
               </IconButton>
               <Menu
                 id="menu-appbar"
@@ -615,12 +643,12 @@ class App extends React.Component<Props, State> {
             <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} linkAttrs={this.linkAttrs}
               onNodeSelected={this.onNodeSelected.bind(this)} sortNodesFnc={this.sortNodesFnc}
               onShowNodeContextMenu={this.onShowNodeContextMenu.bind(this)} weightTitles={this.weightTitles()}
-              groupBy={config.groupBy} />
+              groupBy={config.groupBy} onClick={this.onTopologyClick.bind(this)} />
           </Container>
           <Container className={classes.rightPanel}>
-            <Paper className={clsx(classes.rightPanelPaper, !this.props.selection.length && classes.rightPanelPaperClose)}
+            <Paper className={clsx(classes.rightPanelPaper, (!this.props.selection.length || !this.state.isSelectionOpen) && classes.rightPanelPaperClose)}
               square={true}>
-              <SelectionPanel classes={classes} onLocation={this.onLocation.bind(this)} />
+              <SelectionPanel classes={classes} onLocation={this.onLocation.bind(this)} onClose={this.onSelectionClose.bind(this)} />
             </Paper>
           </Container>
           <Container className={classes.nodeTagsPanel}>

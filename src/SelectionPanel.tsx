@@ -29,6 +29,8 @@ import CodeIcon from '@material-ui/icons/Code'
 import CardContent from '@material-ui/core/CardContent'
 import Collapse from '@material-ui/core/Collapse'
 import Highlight from 'react-highlight'
+import CancelIcon from '@material-ui/icons/Cancel'
+import Tooltip from '@material-ui/core/Tooltip'
 
 declare var config: any
 
@@ -36,7 +38,8 @@ interface Props {
   classes: any
   selection: Array<Node | Link>
   revision: number
-  onLocation?: (node: Node) => any
+  onLocation?: (node: Node) => void
+  onClose?: (node: Node) => void
 }
 
 interface State {
@@ -54,6 +57,19 @@ class SelectionPanel extends React.Component<Props, State> {
     this.state = {
       tab: 0,
       gremlinID: ""
+    }
+  }
+
+  static getDerivedStateFromProps(props, state) {
+    var tab = state.tab
+    if (tab >= props.selection.length) {
+      tab = props.selection.length - 1
+    }
+    if (tab < 0) {
+      tab = 0
+    }
+    return {
+      tab: tab
     }
   }
 
@@ -87,20 +103,28 @@ class SelectionPanel extends React.Component<Props, State> {
       return (
         <React.Fragment key={node.id}>
           <div className={classes.tabActions}>
-            <IconButton
-              aria-label="show node"
-              aria-haspopup="true"
-              onClick={() => this.props.onLocation && this.props.onLocation(node)}
-              color="inherit">
-              <LocationOnIcon />
-            </IconButton>
-            <IconButton
-              aria-label="show gremlin request"
-              aria-haspopup="true"
-              onClick={() => this.showGremlin(node)}
-              color="inherit">
-              <CodeIcon />
-            </IconButton>
+            <Tooltip title="remove from selection" aria-label="remove from selection">
+              <IconButton
+                onClick={() => this.props.onClose && this.props.onClose(node)}
+                color="inherit">
+                <CancelIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="pin node" aria-label="pin node">
+              <IconButton
+                onClick={() => this.props.onLocation && this.props.onLocation(node)}
+                color="inherit">
+                <LocationOnIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="gremlin expression" aria-label="gremlin expression">
+              <IconButton
+                aria-label="show gremlin request"
+                onClick={() => this.showGremlin(node)}
+                color="inherit">
+                <CodeIcon />
+              </IconButton>
+            </Tooltip>
           </div>
           <Collapse in={this.state.gremlinID !== ""} timeout="auto" unmountOnExit>
             <CardContent className={classes.gremlinCardContent}>
@@ -146,20 +170,12 @@ class SelectionPanel extends React.Component<Props, State> {
   render() {
     const { classes } = this.props
 
-    var tab = this.state.tab
-    if (tab >= this.props.selection.length) {
-      tab = this.props.selection.length - 1
-    }
-    if (tab < 0) {
-      tab = 0
-    }
-
     return (
       <div className={classes.tabs}>
         <Tabs
           orientation="horizontal"
           variant="scrollable"
-          value={tab}
+          value={this.state.tab}
           onChange={this.onTabChange.bind(this)}
           aria-label="Metadata"
           indicatorColor="primary">

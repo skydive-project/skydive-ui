@@ -19,6 +19,11 @@
   vertical-align: text-bottom;
 }
 
+.MuiIconButton-root:hover {
+  background-color: #555 !important;
+}
+
+/* move this somewhere else */
 .host .node-hexagon {
   fill: #114B5F;
 }

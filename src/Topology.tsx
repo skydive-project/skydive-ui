@@ -154,6 +154,7 @@ export interface LinkAttrs {
 }
 
 interface Props {
+    onClick: () => void
     sortNodesFnc: (node1: Node, node2: Node) => number
     onShowNodeContextMenu: (node: Node) => any
     onNodeSelected: (node: Node, isSelected: boolean) => any
@@ -265,7 +266,7 @@ export class Topology extends React.Component<Props, {}> {
             .attr("height", height)
             .on("click", () => {
                 this.hideNodeContextMenu()
-                this.unselectAllNodes()
+                this.props.onClick()
             })
 
         var defs = this.svg.append("defs")
@@ -1024,7 +1025,7 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     selectNode(id: string, active: boolean) {
-        if (!this.isCtrlPressed) {
+        if (!this.isCtrlPressed && active) {
             this.unselectAllNodes()
         }
         let n = this.nodes.get(id)
@@ -1198,7 +1199,7 @@ export class Topology extends React.Component<Props, {}> {
             this.nodeClickedID = 0
 
             this.hideNodeContextMenu()
-            this.toggleNode(d.data.id)
+            this.selectNode(d.data.id, true)
         }, 150)
     }
 
