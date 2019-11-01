@@ -211,7 +211,7 @@ class App extends React.Component<Props, State> {
       if (edge.Metadata.RelationType === "ownership") {
         this.tc.setParent(child, parent)
       } else {
-        this.tc.addLink(edge.ID, parent, child, [edge.Metadata.RelationType], edge.Metadata, edge.Metadata.Directed)
+        this.tc.addLink(edge.ID, parent, child, [edge.Metadata.RelationType], edge.Metadata)
       }
     }
 
@@ -287,11 +287,8 @@ class App extends React.Component<Props, State> {
     return attrs
   }
 
-  linkAttrs(link): LinkAttrs {
-    if (link.RelationType) {
-      return { classes: [link.RelationType] }
-    }
-    return { classes: [] }
+  linkAttrs(link: Link): LinkAttrs {
+    return config.linkAttrs(link)
   }
 
   onNodeSelected(node: Node, active: boolean) {

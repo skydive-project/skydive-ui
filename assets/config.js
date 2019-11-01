@@ -90,7 +90,7 @@ var config = {
 
         return attrs
     },
-    "nodeTags": function(data) {
+    "nodeTags": function (data) {
         if (data.Manager && data.Manager === "k8s") {
             return ["kubernetes"]
         } else {
@@ -100,6 +100,15 @@ var config = {
     "defaultNodeTag": "infrastructure",
     "nodeTabTitle": function (node) {
         return node.data.Name.substring(0, 8)
+    },
+    "linkAttrs": function (link) {
+        var attrs = { classes: [link.data.RelationType], directed: false }
+
+        if (link.data.Directed) {
+            attrs.directed = true
+        }
+
+        return attrs
     },
     "groupBy": function (node) {
         return node.data.Type && node.data.Type !== "host" ? node.data.Type : null
@@ -126,7 +135,7 @@ var config = {
             title: "General",
             expanded: true,
             icon: "\uf05a",
-            sortKeys: function(data) {
+            sortKeys: function (data) {
                 return ['Name', 'Type', 'MAC', 'Driver', 'State']
             },
             filterKeys: function (data) {

@@ -79,15 +79,14 @@ export class Link {
     source: Node
     target: Node
     data: any
-    directed: boolean
     revision: number
 
-    constructor(id: string, tags: Array<string>, source: Node, target: Node, data: any, directed: boolean) {
+    constructor(id: string, tags: Array<string>, source: Node, target: Node, data: any) {
         this.id = id
         this.tags = tags
         this.source = source
         this.target = target
-        this.directed = directed
+        this.data = data
     }
 }
 
@@ -151,6 +150,7 @@ export interface NodeAttrs {
 
 export interface LinkAttrs {
     classes: Array<string>
+    directed: boolean
 }
 
 interface Props {
@@ -537,8 +537,8 @@ export class Topology extends React.Component<Props, {}> {
         this.invalidated = true
     }
 
-    addLink(id: string, node1: Node, node2: Node, tags: Array<string>, data: any, directed: boolean) {
-        this.links.push(new Link(id, tags, node1, node2, data, directed))
+    addLink(id: string, node1: Node, node2: Node, tags: Array<string>, data: any) {
+        this.links.push(new Link(id, tags, node1, node2, data))
 
         tags.forEach(tag => {
             var count = this.linkTagCount.get(tag) || 0
@@ -854,7 +854,7 @@ export class Topology extends React.Component<Props, {}> {
             let target = findVisible(link.target)
 
             if (source && target && source !== target) {
-                links.push(new Link(source.id + "_" + target.id, link.tags, source, target, link.data, link.directed))
+                links.push(new Link(source.id + "_" + target.id, link.tags, source, target, link.data))
             }
         })
 
@@ -1986,15 +1986,22 @@ export class Topology extends React.Component<Props, {}> {
         linkOverlay.transition()
             .duration(animDuration)
             .style("opacity", (d: Link) => this.isLinkNodeSelected(d) || this.isLinkNodeMouseOver(d) ? 1 : 0)
-            .attr("d", (d: Link) => linker(d))
+            .attr("d", linker)
 
         var link = this.gLinks.selectAll('path.link')
             .interrupt()
             .data(visibleLinks, (d: Link) => d.id)
+
+        const linkClass = (d: Link) => {
+            var classes = new Array<string>()
+            var attrs = this.props.linkAttrs(d)
+            return classes.concat("link", attrs.classes, attrs.directed ? "directed" : "").join(" ")
+        }
+
         var linkEnter = link.enter()
             .append('path')
             .attr("id", (d: Link) => "link-" + d.id)
-            .attr("class", (d: Link) => "link " + this.props.linkAttrs(d).classes.join(" ") + (d.directed ? " directed" : ""))
+            .attr("class", linkClass)
             .style("opacity", 0)
         link.exit().remove()
 
@@ -2002,7 +2009,7 @@ export class Topology extends React.Component<Props, {}> {
         link.transition()
             .duration(animDuration)
             .style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : 0)
-            .attr("d", d => linker(d))
+            .attr("d", linker)
 
         var linkWrap = this.gLinkWraps.selectAll('path.link-wrap')
             .interrupt()
@@ -2027,7 +2034,7 @@ export class Topology extends React.Component<Props, {}> {
         linkWrap = linkWrap.merge(linkWrapEnter)
         linkWrap.transition()
             .duration(animDuration)
-            .attr("d", d => linker(d))
+            .attr("d", linker)
     }
 
     renderTree() {
