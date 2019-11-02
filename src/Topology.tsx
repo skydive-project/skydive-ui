@@ -397,6 +397,8 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     resetTree() {
+        this.unpinNodes()
+        this.unselectAllNodes()
         this.initTree()
         this.renderTree()
     }
@@ -1271,11 +1273,13 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     pinNode(node: Node, active) {
-        this.showNode(node)
+        if (active) {
+            this.showNode(node)
+        }
 
         var d = this.d3nodes.get(node.id)
         if (!d) {
-            return false
+            return
         }
 
         select("#node-pinned-" + node.id)
