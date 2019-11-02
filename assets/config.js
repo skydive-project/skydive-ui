@@ -101,15 +101,6 @@ var config = {
     "nodeTabTitle": function (node) {
         return node.data.Name.substring(0, 8)
     },
-    "linkAttrs": function (link) {
-        var attrs = { classes: [link.data.RelationType], directed: false }
-
-        if (link.data.Directed) {
-            attrs.directed = true
-        }
-
-        return attrs
-    },
     "groupBy": function (node) {
         return node.data.Type && node.data.Type !== "host" ? node.data.Type : null
     },
@@ -274,6 +265,26 @@ var config = {
 
                 return rows
             }
+        }
+    ],
+    "linkAttrs": function (link) {
+        var attrs = { classes: [link.data.RelationType], icon: "\uf362", directed: false }
+
+        if (link.data.Directed) {
+            attrs.directed = true
+        }
+
+        return attrs
+    },
+    "linkTabTitle": function (link) {
+        return link.id.split("-")[0]
+    },
+    "linkDataFields": [
+        {
+            field: "",
+            title: "General",
+            expanded: true,
+            icon: "\uf05a",
         }
     ]
 }

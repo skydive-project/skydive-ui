@@ -51,6 +51,7 @@ export class Node {
     state: State
     parent: Node | null
     revision: number
+    type: 'node'
 
     constructor(id: string, tags: Array<string>, data: any, state: State, weight: number | ((node: Node) => number)) {
         this.id = id
@@ -59,6 +60,7 @@ export class Node {
         this.weight = weight
         this.children = new Array<Node>()
         this.state = state
+        this.type = 'node'
     }
 
     getWeight(): number {
@@ -80,6 +82,7 @@ export class Link {
     target: Node
     data: any
     revision: number
+    type: 'link'
 
     constructor(id: string, tags: Array<string>, source: Node, target: Node, data: any) {
         this.id = id
@@ -87,6 +90,7 @@ export class Link {
         this.source = source
         this.target = target
         this.data = data
+        this.type = 'link'
     }
 }
 
@@ -157,13 +161,14 @@ interface Props {
     onClick: () => void
     sortNodesFnc: (node1: Node, node2: Node) => number
     onShowNodeContextMenu: (node: Node) => any
-    onNodeSelected: (node: Node, isSelected: boolean) => any
+    onNodeSelected: (node: Node, isSelected: boolean) => void
     className: string
     nodeAttrs: (node: Node) => NodeAttrs
     linkAttrs: (link: Link) => LinkAttrs
     weightTitles?: Map<number, string>
     groupBy?: (node: Node) => string
     groupSize?: number
+    onLinkSelected: (link: Link, isSelected: boolean) => void
 }
 
 /**
@@ -339,9 +344,7 @@ export class Topology extends React.Component<Props, {}> {
                 this.absTransformY = event.transform.y * 1 / event.transform.k
             })
             .on("end", () => {
-                window.setTimeout(function () {
-                    this.showAllLevelLabels()
-                }.bind(this), 200)
+                window.setTimeout(this.showAllLevelLabels.bind(this), 200)
             })
 
         this.svg.call(this.zoom)
@@ -1441,6 +1444,12 @@ export class Topology extends React.Component<Props, {}> {
         return this.nodesBB(d3nodes)
     }
 
+    private linkClicked(d: Link) {
+        if (this.props.onLinkSelected) {
+            this.props.onLinkSelected(d, true)
+        }
+    }
+
     private renderLevels() {
         var self = this
 
@@ -2022,6 +2031,7 @@ export class Topology extends React.Component<Props, {}> {
         var linkWrapEnter = linkWrap.enter()
             .append('path')
             .attr("class", "link-wrap")
+            .on("click", (d: Link) => this.linkClicked(d)) 
             .on("mouseover", (d: Link) => {
                 if (this.isLinkVisible(d)) {
                     select("#link-overlay-" + d.id)

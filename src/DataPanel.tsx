@@ -73,7 +73,7 @@ export class DataPanel extends React.Component<Props, State> {
         return null
     }
 
-    onExpandChange(event: object, expanded: boolean) {
+    private onExpandChange(event: object, expanded: boolean) {
         if (expanded) {
             this.setState(
                 {

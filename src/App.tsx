@@ -50,7 +50,7 @@ import { AppStyles } from './Styles'
 import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState, Link } from './Topology'
 import { mainListItems, helpListItems } from './Menu'
 import AutoCompleteInput from './AutoComplete'
-import { AppState, selectNode, unselectNode, bumpRevision, session, closeSession } from './Store'
+import { AppState, selectElement, unselectElement, bumpRevision, session, closeSession } from './Store'
 import SelectionPanel from './SelectionPanel'
 
 import './App.css'
@@ -62,8 +62,8 @@ const data = require('./dump.json')
 
 interface Props extends WithSnackbarProps {
   classes: any
-  selectNode: typeof selectNode
-  unselectNode: typeof unselectNode
+  selectElement: typeof selectElement
+  unselectElement: typeof unselectElement
   selection: Array<Node | Link>
   bumpRevision: typeof bumpRevision
   session: session
@@ -297,13 +297,22 @@ class App extends React.Component<Props, State> {
 
   onNodeSelected(node: Node, active: boolean) {
     if (active) {
-      this.props.selectNode(node)
+      this.props.selectElement(node)
       this.openSelection()
     } else {
       if (this.tc) {
         this.tc.pinNode(node, false)
       }
-      this.props.unselectNode(node)
+      this.props.unselectElement(node)
+    }
+  }
+
+  onLinkSelected(link: Link, active: boolean) {
+    if (active) {
+      this.props.selectElement(link)
+      this.openSelection()
+    } else {
+      this.props.unselectElement(link)
     }
   }
 
@@ -643,7 +652,7 @@ class App extends React.Component<Props, State> {
             <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} linkAttrs={this.linkAttrs}
               onNodeSelected={this.onNodeSelected.bind(this)} sortNodesFnc={this.sortNodesFnc}
               onShowNodeContextMenu={this.onShowNodeContextMenu.bind(this)} weightTitles={this.weightTitles()}
-              groupBy={config.groupBy} onClick={this.onTopologyClick.bind(this)} />
+              groupBy={config.groupBy} onClick={this.onTopologyClick.bind(this)} onLinkSelected={this.onLinkSelected.bind(this)} />
           </Container>
           <Container className={classes.rightPanel}>
             <Paper className={clsx(classes.rightPanelPaper, (!this.props.selection.length || !this.state.isSelectionOpen) && classes.rightPanelPaperClose)}
@@ -690,8 +699,8 @@ export const mapStateToProps = (state: AppState) => ({
 })
 
 export const mapDispatchToProps = ({
-  selectNode,
-  unselectNode,
+  selectElement,
+  unselectElement,
   bumpRevision,
   closeSession
 })

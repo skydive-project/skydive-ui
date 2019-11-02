@@ -38,8 +38,8 @@ interface Props {
   classes: any
   selection: Array<Node | Link>
   revision: number
-  onLocation?: (node: Node) => void
-  onClose?: (node: Node) => void
+  onLocation?: (node: Node | Link) => void
+  onClose?: (node: Node | Link) => void
 }
 
 interface State {
@@ -73,20 +73,34 @@ class SelectionPanel extends React.Component<Props, State> {
     }
   }
 
-  renderTabs(classes: any) {
-    return this.props.selection.map((d: Node, i: number) => {
+  private renderTabs(classes: any) {
+    return this.props.selection.map((d: Node | Link, i: number) => {
       var className = classes.tabIconFree
-      if (config.nodeAttrs(d).iconClass === "font-brands") {
-        className = classes.tabIconBrands
+
+      if (d.type === 'node') {
+        if (config.nodeAttrs(d).iconClass === "font-brands") {
+          className = classes.tabIconBrands
+        }
+
+        var icon = config.nodeAttrs(d).icon
+        var title = config.nodeTabTitle(d)
+      } else {
+        if (config.linkAttrs(d).iconClass === "font-brands") {
+          className = classes.tabIconBrands
+        }
+
+        var icon = config.linkAttrs(d).icon
+        var title = config.linkTabTitle(d)
       }
+
       return (
-        <Tab className="tab" icon={<span className={className}>{config.nodeAttrs(d).icon}</span>}
-          key={"tab-" + i} label={<span className={classes.tabTitle}>{config.nodeTabTitle(d)}</span>} {...a11yProps(i)} />
+        <Tab className="tab" icon={<span className={className}>{icon}</span>}
+          key={"tab-" + i} label={<span className={classes.tabTitle}>{title}</span>} {...a11yProps(i)} />
       )
     })
   }
 
-  showGremlin(node: Node) {
+  private showGremlin(node: Node | Link) {
     if (this.state.gremlinID) {
       this.setState({ gremlinID: "" })
     } else {
@@ -94,8 +108,16 @@ class SelectionPanel extends React.Component<Props, State> {
     }
   }
 
+  private dataFields(el: Node | Link): Array<any> {
+    if (el.type === 'node') {
+      return config.nodeDataFields
+    } else {
+      return config.linkDataFields
+    }
+  }
+
   renderTabPanels(classes: any) {
-    return this.props.selection.map((node: Node, i: number) => {
+    return this.props.selection.map((node: Node | Link, i: number) => {
       if (this.state.tab !== i) {
         return null
       }
@@ -134,25 +156,25 @@ class SelectionPanel extends React.Component<Props, State> {
             </CardContent>
           </Collapse>
           <TabPanel key={"tabpanel-" + node.id} value={this.state.tab} index={i}>
-            {config.nodeDataFields.map(cfg => {
+            {this.dataFields(node).map(entry => {
               var data = node.data
-              var exclude = []
+              var exclude = new Array<any>()
 
-              if (cfg.field) {
-                data = node.data[cfg.field]
+              if (entry.field) {
+                data = node.data[entry.field]
               } else {
-                exclude = config.nodeDataFields.filter(cfg => cfg.field).map(cfg => cfg.field)
+                exclude = this.dataFields(node).filter(cfg => cfg.field).map(cfg => cfg.field)
               }
 
               if (data) {
-                var title = cfg.title || cfg.field || "General"
-                var sortKeys = cfg.sortKeys ? cfg.sortKeys(data) : null
-                var filterKeys = cfg.filterKeys ? cfg.filterKeys(data) : null
+                var title = entry.title || entry.field || "General"
+                var sortKeys = entry.sortKeys ? entry.sortKeys(data) : null
+                var filterKeys = entry.filterKeys ? entry.filterKeys(data) : null
 
                 return (
-                  <DataPanel key={"dataviewer-" + (cfg.field || "general") + "-" + node.id} classes={classes} title={title}
-                    defaultExpanded={cfg.expanded} data={data} exclude={exclude} sortKeys={sortKeys} filterKeys={filterKeys}
-                    normalizer={cfg.normalizer} graph={cfg.graph} icon={cfg.icon} iconClass={cfg.iconClass} />
+                  <DataPanel key={"dataviewer-" + (entry.field || "general") + "-" + node.id} classes={classes} title={title}
+                    defaultExpanded={entry.expanded} data={data} exclude={exclude} sortKeys={sortKeys} filterKeys={filterKeys}
+                    normalizer={entry.normalizer} graph={entry.graph} icon={entry.icon} iconClass={entry.iconClass} />
                 )
               }
             })

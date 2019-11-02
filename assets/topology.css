@@ -1,0 +1,53 @@
+.host .node-hexagon {
+    fill: #114B5F;
+  }
+  
+  .netns .node-hexagon {
+    fill:#C6DABF;
+  }
+  
+  .bridge .node-hexagon, 
+  .ovsbridge .node-hexagon,
+  .port .node-hexagon,
+  .ovsport .node-hexagon {
+    fill: #36b791;
+  }
+  
+  .interface .node-hexagon,  
+  .device .node-hexagon, 
+  .tun .node-hexagon, 
+  .tap .node-hexagon, 
+  .veth .node-hexagon {
+    fill: #88D498;
+  }
+  
+  .down .node-hexagon {
+    fill: rgb(163, 0, 0);
+  }
+  
+  .host .node-icon {
+    fill: #eee;
+  }
+  
+  .netns .node-icon {
+    fill: #444;
+  }
+  
+  .bridge .node-icon, 
+  .ovsbridge .node-icon,
+  .port .node-icon,  
+  .ovsport .node-icon  {
+    fill: #eee;
+  }
+  
+  .interface .node-icon,  
+  .device .node-icon, 
+  .tun .node-icon, 
+  .tap .node-icon, 
+  .veth .node-icon {
+    fill: #444;
+  }
+  
+  .down .node-icon {
+    fill: #eee;
+  }

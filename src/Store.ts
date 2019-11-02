@@ -19,20 +19,20 @@ import { createStore } from 'redux'
 
 import { Node, Link } from './Topology'
 
-export const SELECT_NODE = 'SELECT_NODE'
-export const UNSELECT_NODE = 'UNSELECT_NODE'
+export const SELECT_ELEMENT = 'SELECT_ELEMENT'
+export const UNSELECT_ELEMENT = 'UNSELECT_ELEMENT'
 export const BUMP_REVISION = 'BUMP_REVISION'
 export const OPEN_SESSION = 'OPEN_SESSION'
 export const CLOSE_SESSION = 'CLOSE_SESSION'
 
-interface selectNodeAction {
-    type: typeof SELECT_NODE
-    payload: Node
+interface selectElementAction {
+    type: typeof SELECT_ELEMENT
+    payload: Node | Link
 }
 
-interface unselectNodeAction {
-    type: typeof UNSELECT_NODE
-    payload: Node
+interface unselectElementAction {
+    type: typeof UNSELECT_ELEMENT
+    payload: Node | Link
 }
 
 interface bumpRevisionAction {
@@ -58,16 +58,16 @@ interface closeSessionAction {
     payload: null
 }
 
-export function selectNode(node: Node): selectNodeAction {
+export function selectElement(node: Node | Link): selectElementAction {
     return {
-        type: SELECT_NODE,
+        type: SELECT_ELEMENT,
         payload: node
     }
 }
 
-export function unselectNode(node: Node): unselectNodeAction {
+export function unselectElement(node: Node | Link): unselectElementAction {
     return {
-        type: UNSELECT_NODE,
+        type: UNSELECT_ELEMENT,
         payload: node
     }
 }
@@ -99,7 +99,7 @@ export function closeSession(): closeSessionAction {
     }
 }
 
-export type ActionTypes = selectNodeAction | unselectNodeAction | bumpRevisionAction | openSessionAction | closeSessionAction
+export type ActionTypes = selectElementAction | unselectElementAction | bumpRevisionAction | openSessionAction | closeSessionAction
 
 const emptySession = {
     endpoint: `${window.location.protocol}//${window.location.hostname}:8082`,
@@ -129,14 +129,14 @@ const initialState = {
 
 function appReducer(state = initialState, action: ActionTypes) {
     switch (action.type) {
-        case SELECT_NODE:
+        case SELECT_ELEMENT:
             var selection = state.selection.filter(d => action.payload.id !== d.id)
             selection.push(action.payload)
             return {
                 ...state,
                 selection: selection
             }
-        case UNSELECT_NODE:
+        case UNSELECT_ELEMENT:
             var selection = state.selection.filter(d => action.payload.id !== d.id)
             return {
                 ...state,
