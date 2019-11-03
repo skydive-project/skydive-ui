@@ -117,24 +117,24 @@ class SelectionPanel extends React.Component<Props, State> {
   }
 
   renderTabPanels(classes: any) {
-    return this.props.selection.map((node: Node | Link, i: number) => {
+    return this.props.selection.map((el: Node | Link, i: number) => {
       if (this.state.tab !== i) {
         return null
       }
 
       return (
-        <React.Fragment key={node.id}>
+        <React.Fragment key={el.id}>
           <div className={classes.tabActions}>
             <Tooltip title="remove from selection" aria-label="remove from selection">
               <IconButton
-                onClick={() => this.props.onClose && this.props.onClose(node)}
+                onClick={() => this.props.onClose && this.props.onClose(el)}
                 color="inherit">
                 <CancelIcon />
               </IconButton>
             </Tooltip>
             <Tooltip title="pin node" aria-label="pin node">
               <IconButton
-                onClick={() => this.props.onLocation && this.props.onLocation(node)}
+                onClick={() => this.props.onLocation && this.props.onLocation(el)}
                 color="inherit">
                 <LocationOnIcon />
               </IconButton>
@@ -142,7 +142,7 @@ class SelectionPanel extends React.Component<Props, State> {
             <Tooltip title="gremlin expression" aria-label="gremlin expression">
               <IconButton
                 aria-label="show gremlin request"
-                onClick={() => this.showGremlin(node)}
+                onClick={() => this.showGremlin(el)}
                 color="inherit">
                 <CodeIcon />
               </IconButton>
@@ -155,15 +155,15 @@ class SelectionPanel extends React.Component<Props, State> {
                 </Highlight>
             </CardContent>
           </Collapse>
-          <TabPanel key={"tabpanel-" + node.id} value={this.state.tab} index={i}>
-            {this.dataFields(node).map(entry => {
-              var data = node.data
+          <TabPanel key={"tabpanel-" + el.id} value={this.state.tab} index={i}>
+            {this.dataFields(el).map(entry => {
+              var data = el.data
               var exclude = new Array<any>()
 
               if (entry.field) {
-                data = node.data[entry.field]
+                data = el.data[entry.field]
               } else {
-                exclude = this.dataFields(node).filter(cfg => cfg.field).map(cfg => cfg.field)
+                exclude = this.dataFields(el).filter(cfg => cfg.field).map(cfg => cfg.field)
               }
 
               if (data) {
@@ -172,7 +172,7 @@ class SelectionPanel extends React.Component<Props, State> {
                 var filterKeys = entry.filterKeys ? entry.filterKeys(data) : null
 
                 return (
-                  <DataPanel key={"dataviewer-" + (entry.field || "general") + "-" + node.id} classes={classes} title={title}
+                  <DataPanel key={"dataviewer-" + (entry.field || "general") + "-" + el.id} classes={classes} title={title}
                     defaultExpanded={entry.expanded} data={data} exclude={exclude} sortKeys={sortKeys} filterKeys={filterKeys}
                     normalizer={entry.normalizer} graph={entry.graph} icon={entry.icon} iconClass={entry.iconClass} />
                 )

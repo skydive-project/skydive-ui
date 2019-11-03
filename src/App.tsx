@@ -544,25 +544,31 @@ class App extends React.Component<Props, State> {
     this.setState({ nodeTagStates: this.tc.nodeTagStates })
   }
 
-  onLocation(node: Node) {
+  onSelectionLocation(el: Node | Link) {
     if (!this.tc) {
       return
     }
 
-    this.tc.unpinNodes()
-    this.tc.pinNode(node, true)
+    if (el.type === 'node') {
+      this.tc.unpinNodes()
+      this.tc.pinNode(el, true)
+    }
   }
 
   onTopologyClick() {
     this.setState({ isSelectionOpen: false })
   }
 
-  onSelectionClose(node: Node) {
+  onSelectionClose(el: Node | Link) {
     if (!this.tc) {
       return
     }
 
-    this.tc.selectNode(node.id, false)
+    if (el.type === 'node') {
+      this.tc.selectNode(el.id, false)
+    } else {
+      this.tc.selectLink(el.id, false)
+    }
   }
 
   openSelection() {
@@ -657,7 +663,7 @@ class App extends React.Component<Props, State> {
           <Container className={classes.rightPanel}>
             <Paper className={clsx(classes.rightPanelPaper, (!this.props.selection.length || !this.state.isSelectionOpen) && classes.rightPanelPaperClose)}
               square={true}>
-              <SelectionPanel classes={classes} onLocation={this.onLocation.bind(this)} onClose={this.onSelectionClose.bind(this)} />
+              <SelectionPanel classes={classes} onSelectionLocation={this.onSelectionLocation.bind(this)} onClose={this.onSelectionClose.bind(this)} />
             </Paper>
           </Container>
           <Container className={classes.nodeTagsPanel}>

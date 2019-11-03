@@ -34,7 +34,7 @@ export enum LinkTagState {
     Visible
 }
 
-interface State {
+interface NodeState {
     expanded: boolean
     selected: boolean
     mouseover: boolean
@@ -48,12 +48,12 @@ export class Node {
     data: any
     weight: number | ((node: Node) => number)
     children: Array<Node>
-    state: State
+    state: NodeState
     parent: Node | null
     revision: number
     type: 'node'
 
-    constructor(id: string, tags: Array<string>, data: any, state: State, weight: number | ((node: Node) => number)) {
+    constructor(id: string, tags: Array<string>, data: any, state: NodeState, weight: number | ((node: Node) => number)) {
         this.id = id
         this.tags = tags
         this.data = data
@@ -75,22 +75,28 @@ export class Node {
     }
 }
 
+interface LinkState {
+    selected: boolean
+}
+
 export class Link {
     id: string
     tags: Array<string>
     source: Node
     target: Node
     data: any
+    state: LinkState
     revision: number
     type: 'link'
 
-    constructor(id: string, tags: Array<string>, source: Node, target: Node, data: any) {
+    constructor(id: string, tags: Array<string>, source: Node, target: Node, data: any, state: LinkState) {
         this.id = id
         this.tags = tags
         this.source = source
         this.target = target
         this.data = data
         this.type = 'link'
+        this.state = state
     }
 }
 
@@ -196,7 +202,6 @@ export class Topology extends React.Component<Props, {}> {
     private liner: line
     private nodeClickedID: number
     private d3nodes: Map<string, D3Node>
-    private links: Array<Link>
     private absTransformX: number
     private absTransformY: number
     private nodeTagCount: Map<string, number>
@@ -204,12 +209,13 @@ export class Topology extends React.Component<Props, {}> {
     private invalidated: boolean
     private levelRects: Array<LevelRect>
     private groups: Map<string, NodeWrapper>
-    private groupStates: Map<string, State>
+    private groupStates: Map<string, NodeState>
     private nodeGroup: Map<string, NodeWrapper>
     private weights: Array<number>
 
     root: Node
     nodes: Map<string, Node>
+    links: Map<string, Link>
     nodeTagStates: Map<string, boolean>
     linkTagStates: Map<string, LinkTagState>
     weightTitles: Map<number, string>
@@ -395,7 +401,7 @@ export class Topology extends React.Component<Props, {}> {
             .curve(curveCardinalClosed.tension(0.7))
     }
 
-    private defaultState(): State {
+    private defaultState(): NodeState {
         return { expanded: false, selected: false, mouseover: false, groupOffset: 0, groupFullSize: false }
     }
 
@@ -414,7 +420,7 @@ export class Topology extends React.Component<Props, {}> {
         this.nodes = new Map<string, Node>()
         this.nodeTagStates = new Map<string, boolean>()
 
-        this.links = new Array<Link>()
+        this.links = new Map<string, Link>()
         this.linkTagStates = new Map<string, LinkTagState>()
 
         this.nodeTagCount = new Map<string, number>()
@@ -423,7 +429,7 @@ export class Topology extends React.Component<Props, {}> {
         this.levelRects = new Array<LevelRect>()
 
         this.groups = new Map<string, NodeWrapper>()
-        this.groupStates = new Map<string, State>()
+        this.groupStates = new Map<string, NodeState>()
         this.nodeGroup = new Map<string, NodeWrapper>()
 
         this.weights = new Array<number>()
@@ -509,9 +515,9 @@ export class Topology extends React.Component<Props, {}> {
             node.parent.children = node.parent.children.filter(c => node && c.id !== node.id)
         }
 
-        for (let link of this.links) {
+        for (const [id, link] of this.links.entries()) {
             if (link.source === node || link.target === node) {
-                this.links = this.links.filter(c => c === link)
+                this.links.delete(id)
             }
         }
 
@@ -544,7 +550,7 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     addLink(id: string, node1: Node, node2: Node, tags: Array<string>, data: any) {
-        this.links.push(new Link(id, tags, node1, node2, data))
+        this.links.set(id, new Link(id, tags, node1, node2, data, { selected: false }))
 
         tags.forEach(tag => {
             var count = this.linkTagCount.get(tag) || 0
@@ -556,39 +562,35 @@ export class Topology extends React.Component<Props, {}> {
         })
     }
 
-    updateLink(id: string, data: any) {
-        this.links.some(link => {
-            if (link.id === id) {
-                link.data = data
+    updateLink(id: string, data: any): boolean {
+        var link = this.links.get(id)
+        if (link) {
+            link.data = data
 
-                // just increase for now, do not use real revision number                
-                link.revision++
+            // just increase for now, do not use real revision number
+            link.revision++
 
-                return true
-            }
-            return false
-        })
+            return true
+        }
+        return false
     }
 
     delLink(id: string) {
-        this.links = this.links.filter(link => {
-            if (link.id !== id) {
-                return true
-            }
+        var link = this.links.get(id)
+        if (link) {
+            this.links.delete(id)
 
             // remove tags if needed
             link.tags.forEach(tag => {
-                var count = this.nodeTagCount.get(tag) || 0
+                var count = this.linkTagCount.get(tag) || 0
                 if (!count) {
-                    this.nodeTagCount.delete(tag)
-                    this.nodeTagStates.delete(tag)
+                    this.linkTagCount.delete(tag)
+                    this.linkTagStates.delete(tag)
                 } else {
-                    this.nodeTagCount.set(tag, count - 1)
+                    this.linkTagCount.set(tag, count - 1)
                 }
             })
-
-            return false
-        })
+        }
     }
 
     // group nodes using groupBy and groupSize
@@ -856,11 +858,17 @@ export class Topology extends React.Component<Props, {}> {
                 return
             }
 
-            let source = findVisible(link.source)
-            let target = findVisible(link.target)
+            var source = findVisible(link.source)
+            var target = findVisible(link.target)
 
             if (source && target && source !== target) {
-                links.push(new Link(source.id + "_" + target.id, link.tags, source, target, link.data))
+                if (source === link.source && target === link.target) {
+                    var id = link.id
+                } else {
+                    var id = source.id + "_" + target.id
+                }
+
+                links.push(new Link(id, link.tags, source, target, link.data, { selected: false }))
             }
         })
 
@@ -1059,6 +1067,24 @@ export class Topology extends React.Component<Props, {}> {
             this.selectNode(id, false)
         } else {
             this.selectNode(id, true)
+        }
+    }
+
+    selectLink(id: string, active: boolean) {
+        if (!this.isCtrlPressed && active) {
+            this.unselectAllNodes()
+        }
+        console.log(id)
+        console.log(this.links)
+
+        let l = this.links.get(id)
+        if (!l) {
+            return
+        }
+        l.state.selected = active
+
+        if (this.props.onLinkSelected) {
+            this.props.onLinkSelected(l, active)
         }
     }
 
@@ -1445,9 +1471,10 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     private linkClicked(d: Link) {
-        if (this.props.onLinkSelected) {
-            this.props.onLinkSelected(d, true)
-        }
+        event.stopPropagation()
+
+        this.hideNodeContextMenu()
+        this.selectLink(d.id, true)
     }
 
     private renderLevels() {
@@ -2031,7 +2058,7 @@ export class Topology extends React.Component<Props, {}> {
         var linkWrapEnter = linkWrap.enter()
             .append('path')
             .attr("class", "link-wrap")
-            .on("click", (d: Link) => this.linkClicked(d)) 
+            .on("click", (d: Link) => this.linkClicked(d))
             .on("mouseover", (d: Link) => {
                 if (this.isLinkVisible(d)) {
                     select("#link-overlay-" + d.id)
