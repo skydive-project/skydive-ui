@@ -35,8 +35,18 @@ svg {
     marker-end: url(#link-overlay-marker);
 }
 
+.link-overlay-selected {
+    stroke: #5097c7;
+    marker-start: url(#link-overlay-selected-marker);
+    marker-end: url(#link-overlay-selected-marker);
+}
+
 .link-overlay-marker {
     fill: #ffeb3b;
+}
+
+.link-overlay-selected-marker {
+    fill: #5097c7;
 }
 
 .links {

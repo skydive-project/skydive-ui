@@ -408,6 +408,7 @@ export class Topology extends React.Component<Props, {}> {
     resetTree() {
         this.unpinNodes()
         this.unselectAllNodes()
+        this.unselectAllLinks()
         this.initTree()
         this.renderTree()
     }
@@ -862,13 +863,7 @@ export class Topology extends React.Component<Props, {}> {
             var target = findVisible(link.target)
 
             if (source && target && source !== target) {
-                if (source === link.source && target === link.target) {
-                    var id = link.id
-                } else {
-                    var id = source.id + "_" + target.id
-                }
-
-                links.push(new Link(id, link.tags, source, target, link.data, { selected: false }))
+                links.push(new Link(link.id, link.tags, source, target, link.data, link.state))
             }
         })
 
@@ -1023,14 +1018,16 @@ export class Topology extends React.Component<Props, {}> {
                 self.props.onNodeSelected(n, false)
             }
         })
-        this.unHighlightNeighborLinks()
+
+        this.hideLinks()
     }
 
-    private unHighlightNeighborLinks() {
+    private hideLinks() {
         var self = this
 
-        selectAll("path.link-overlay")
-            .style("opacity", 0)
+        selectAll("path.link-overlay").each(function (d: Link) {
+            select(this).style("opacity", self.isLinkVisible(d) ? 1 : 0)
+        })
 
         selectAll("path.link").each(function (d: Link) {
             select(this).style("opacity", self.isLinkVisible(d) ? 1 : 0)
@@ -1040,6 +1037,7 @@ export class Topology extends React.Component<Props, {}> {
     selectNode(id: string, active: boolean) {
         if (!this.isCtrlPressed && active) {
             this.unselectAllNodes()
+            this.unselectAllLinks()
         }
         let n = this.nodes.get(id)
         if (!n) {
@@ -1070,18 +1068,51 @@ export class Topology extends React.Component<Props, {}> {
         }
     }
 
-    selectLink(id: string, active: boolean) {
-        if (!this.isCtrlPressed && active) {
-            this.unselectAllNodes()
-        }
-        console.log(id)
-        console.log(this.links)
+    private unselectAllLinks() {
+        var self = this
 
+        this.gNodes.selectAll(".link-overlay-selected").each(function () {
+            var link = select(this)
+            if (!link) {
+                return
+            }
+            link.classed("link-overlay-selected", false)
+
+            var id = link.attr("id")
+            if (!id) {
+                return
+            }
+            id = id.replace(/^link-overlay-/, '')
+
+            let l = self.links.get(id)
+            if (!l) {
+                return
+            }
+            l.state.selected = false
+
+            if (self.props.onLinkSelected) {
+                self.props.onLinkSelected(l, false)
+            }
+        })
+    }
+
+    selectLink(id: string, active: boolean) {
         let l = this.links.get(id)
         if (!l) {
             return
         }
         l.state.selected = active
+
+        if (!this.isCtrlPressed && active) {
+            this.unselectAllNodes()
+            this.unselectAllLinks()
+        }
+
+        if (!active) {
+            this.hideLinks()
+        }
+
+        select("#link-overlay-" + id).classed("link-overlay-selected", active)
 
         if (this.props.onLinkSelected) {
             this.props.onLinkSelected(l, active)
@@ -1231,7 +1262,7 @@ export class Topology extends React.Component<Props, {}> {
 
             this.hideNodeContextMenu()
             this.selectNode(d.data.id, true)
-        }, 150)
+        }, 170)
     }
 
     private nodeDoubleClicked(d: D3Node) {
@@ -1301,6 +1332,27 @@ export class Topology extends React.Component<Props, {}> {
         }
     }
 
+    private moveTo(x: number, y: number) {
+        var scale = 0.8
+        var viewSize = this.viewSize()
+
+        var t = zoomIdentity
+            .translate(viewSize.width / 2 - scale * x, viewSize.height / 2 - scale * y)
+            .scale(scale)
+        this.svg
+            .transition()
+            .duration(800)
+            .call(this.zoom.transform, t)
+    }
+
+    centerLink(link: Link) {
+        var el = select("#link-" + link.id).node()
+        var bb = el.getBBox()
+
+        var x = bb.x + (bb.width / 2), y = bb.y + (bb.height / 2)
+        this.moveTo(x, y)
+    }
+
     pinNode(node: Node, active) {
         if (active) {
             this.showNode(node)
@@ -1318,16 +1370,7 @@ export class Topology extends React.Component<Props, {}> {
             return
         }
 
-        var scale = 0.8
-        var viewSize = this.viewSize()
-
-        var t = zoomIdentity
-            .translate(viewSize.width / 2 - scale * d.x, viewSize.height / 2 - scale * d.y)
-            .scale(scale)
-        this.svg
-            .transition()
-            .duration(800)
-            .call(this.zoom.transform, t)
+        this.moveTo(d.x, d.y)
     }
 
     unpinNodes() {
@@ -1351,7 +1394,7 @@ export class Topology extends React.Component<Props, {}> {
                 select("#link-" + link.id)
                     .style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : opacity)
                 select("#link-overlay-" + link.id)
-                    .style("opacity", opacity)
+                    .style("opacity", link.state.selected || opacity)
             }
         }
     }
@@ -1373,7 +1416,11 @@ export class Topology extends React.Component<Props, {}> {
         }
     }
 
-    private isLinkVisible(link: Link) {
+    private isLinkVisible(link: Link): boolean {
+        if (link.state.selected) {
+            return true
+        }
+
         return link.tags.some(tag => (this.linkTagStates.get(tag) === LinkTagState.Visible) ||
             this.linkTagStates.get(tag) === LinkTagState.EventBased &&
             (link.source.state.selected || link.target.state.selected ||
@@ -2013,20 +2060,24 @@ export class Topology extends React.Component<Props, {}> {
 
         var visibleLinks = this.visibleLinks()
 
+        const linkOverlayClass = (d: Link) => new Array<string>().concat("link-overlay",
+            this.props.linkAttrs(d).classes,
+            d.state.selected ? "link-overlay-selected" : "").join(" ")
+
         var linkOverlay = this.gLinkOverlays.selectAll('path.link-overlay')
             .interrupt()
             .data(visibleLinks, (d: Link) => d.id)
         var linkOverlayEnter = linkOverlay.enter()
             .append('path')
             .attr("id", (d: Link) => "link-overlay-" + d.id)
-            .attr("class", "link-overlay")
+            .attr("class", linkOverlayClass)
             .style("opacity", 0)
         linkOverlay.exit().remove()
 
         linkOverlay = linkOverlay.merge(linkOverlayEnter)
         linkOverlay.transition()
             .duration(animDuration)
-            .style("opacity", (d: Link) => this.isLinkNodeSelected(d) || this.isLinkNodeMouseOver(d) ? 1 : 0)
+            .style("opacity", (d: Link) => d.state.selected || this.isLinkNodeSelected(d) || this.isLinkNodeMouseOver(d) ? 1 : 0)
             .attr("d", linker)
 
         var link = this.gLinks.selectAll('path.link')
@@ -2068,7 +2119,7 @@ export class Topology extends React.Component<Props, {}> {
             .on("mouseout", (d: Link) => {
                 if (!d.source.state.selected && !d.target.state.selected) {
                     select("#link-overlay-" + d.id)
-                        .style("opacity", 0)
+                        .style("opacity", (d: Link) => d.state.selected ? 1 : 0)
                 }
             })
         linkWrap.exit().remove()

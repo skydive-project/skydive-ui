@@ -552,6 +552,8 @@ class App extends React.Component<Props, State> {
     if (el.type === 'node') {
       this.tc.unpinNodes()
       this.tc.pinNode(el, true)
+    } else {
+      this.tc.centerLink(el)
     }
   }
 
@@ -663,7 +665,7 @@ class App extends React.Component<Props, State> {
           <Container className={classes.rightPanel}>
             <Paper className={clsx(classes.rightPanelPaper, (!this.props.selection.length || !this.state.isSelectionOpen) && classes.rightPanelPaperClose)}
               square={true}>
-              <SelectionPanel classes={classes} onSelectionLocation={this.onSelectionLocation.bind(this)} onClose={this.onSelectionClose.bind(this)} />
+              <SelectionPanel classes={classes} onLocation={this.onSelectionLocation.bind(this)} onClose={this.onSelectionClose.bind(this)} />
             </Paper>
           </Container>
           <Container className={classes.nodeTagsPanel}>

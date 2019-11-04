@@ -44,7 +44,7 @@ interface Props {
 
 interface State {
   tab: number
-  gremlinID: string
+  gremlin: string
 }
 
 class SelectionPanel extends React.Component<Props, State> {
@@ -56,7 +56,7 @@ class SelectionPanel extends React.Component<Props, State> {
 
     this.state = {
       tab: 0,
-      gremlinID: ""
+      gremlin: ""
     }
   }
 
@@ -100,11 +100,15 @@ class SelectionPanel extends React.Component<Props, State> {
     })
   }
 
-  private showGremlin(node: Node | Link) {
-    if (this.state.gremlinID) {
-      this.setState({ gremlinID: "" })
+  private showGremlin(el: Node | Link) {
+    if (this.state.gremlin) {
+      this.setState({ gremlin: "" })
     } else {
-      this.setState({ gremlinID: node.id })
+      if (el.type === 'node') {
+        this.setState({ gremlin: `G.V('${el.id}')` })
+      } else {
+        this.setState({ gremlin: `G.E('${el.id}')` })
+      }
     }
   }
 
@@ -148,10 +152,10 @@ class SelectionPanel extends React.Component<Props, State> {
               </IconButton>
             </Tooltip>
           </div>
-          <Collapse in={this.state.gremlinID !== ""} timeout="auto" unmountOnExit>
+          <Collapse in={this.state.gremlin !== ""} timeout="auto" unmountOnExit>
             <CardContent className={classes.gremlinCardContent}>
               <Highlight language="bash">
-                G.V('{this.state.gremlinID}')
+                {this.state.gremlin}
                 </Highlight>
             </CardContent>
           </Collapse>
@@ -186,7 +190,7 @@ class SelectionPanel extends React.Component<Props, State> {
   }
 
   onTabChange(event: React.ChangeEvent<{}>, value: number) {
-    this.setState({ tab: value, gremlinID: "" })
+    this.setState({ tab: value, gremlin: "" })
   }
 
   render() {
