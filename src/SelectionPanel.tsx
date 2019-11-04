@@ -121,6 +121,17 @@ class SelectionPanel extends React.Component<Props, State> {
   }
 
   renderTabPanels(classes: any) {
+    const dataByPath = (data: any, path: string): any => {
+      for (let key of path.split(".")) {
+        data = data[key]
+        if (!data) {
+          break
+        }
+      }
+
+      return data
+    }
+
     return this.props.selection.map((el: Node | Link, i: number) => {
       if (this.state.tab !== i) {
         return null
@@ -156,7 +167,7 @@ class SelectionPanel extends React.Component<Props, State> {
             <CardContent className={classes.gremlinCardContent}>
               <Highlight language="bash">
                 {this.state.gremlin}
-                </Highlight>
+              </Highlight>
             </CardContent>
           </Collapse>
           <TabPanel key={"tabpanel-" + el.id} value={this.state.tab} index={i}>
@@ -165,10 +176,15 @@ class SelectionPanel extends React.Component<Props, State> {
               var exclude = new Array<any>()
 
               if (entry.field) {
-                data = el.data[entry.field]
-              } else {
-                exclude = this.dataFields(el).filter(cfg => cfg.field).map(cfg => cfg.field)
+                data = dataByPath(el.data, entry.field)
               }
+              exclude = this.dataFields(el).filter(cfg => cfg.field).map(cfg => {
+                if (entry.field) {
+                  return cfg.field.replace(entry.field + ".", "")
+                } else {
+                  return cfg.field
+                }
+              })
 
               if (data) {
                 var title = entry.title || entry.field || "General"

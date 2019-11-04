@@ -285,6 +285,30 @@ var config = {
             title: "General",
             expanded: true,
             icon: "\uf05a",
-        }
+        },
+        {
+            field: "NSM",
+            title: "Network Service Mesh",
+            expanded: true,
+            icon: "\uf542",
+        },
+        {
+            field: "NSM.Source",
+            title: "Source",
+            expanded: false,
+            icon: "\uf018",
+        },
+        {
+            field: "NSM.Via",
+            title: "Via",
+            expanded: false,
+            icon: "\uf018",
+        },
+        {
+            field: "NSM.Destination",
+            title: "Destination",
+            expanded: false,
+            icon: "\uf018",
+        },
     ]
 }
