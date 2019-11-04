@@ -1071,7 +1071,7 @@ export class Topology extends React.Component<Props, {}> {
     private unselectAllLinks() {
         var self = this
 
-        this.gNodes.selectAll(".link-overlay-selected").each(function () {
+        this.gLinkOverlays.selectAll(".link-overlay-selected").each(function () {
             var link = select(this)
             if (!link) {
                 return
@@ -1089,6 +1089,9 @@ export class Topology extends React.Component<Props, {}> {
                 return
             }
             l.state.selected = false
+
+            select("#link-overlay-" + id).style("opacity", self.isLinkVisible(l) ? 1 : 0)
+            select("#link-" + id).style("opacity", self.isLinkVisible(l) ? 1 : 0)
 
             if (self.props.onLinkSelected) {
                 self.props.onLinkSelected(l, false)
