@@ -171,19 +171,19 @@ svg {
     stroke-width: 2px;
 }
 
-.group .curly-icon text {
+.group-button .curly-icon text {
     font-family: 'Font Awesome 5 Free' !important;
     fill: #444;
     font-weight: 900;
     font-size: 24px;
 }
 
-.group .curly-icon rect {
+.group-button .curly-icon rect {
     stroke: none;
     fill: #eee;
 }
 
-.group .curly-icon:disabled {
+.group-button .curly-icon:disabled {
     fill: #bbb;
 }  
 

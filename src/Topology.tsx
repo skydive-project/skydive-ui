@@ -196,6 +196,7 @@ export class Topology extends React.Component<Props, {}> {
     private gLinks: Selection<SVGGraphicsElement, {}, null, undefined>
     private gLinkWraps: Selection<SVGGraphicsElement, {}, null, undefined>
     private gGroups: Selection<SVGGraphicsElement, {}, null, undefined>
+    private gGroupButtons: Selection<SVGGraphicsElement, {}, null, undefined>
     private gNodes: Selection<SVGGraphicsElement, {}, null, undefined>
     private gContextMenu: Selection<SVGGraphicsElement, {}, null, undefined>
     private zoom: zoom
@@ -382,6 +383,10 @@ export class Topology extends React.Component<Props, {}> {
         // link wrapper group, used to catch mouse event
         this.gLinkWraps = this.g.append("g")
             .attr("class", "link-wraps")
+
+        // groups group, yes read it correctly groups group
+        this.gGroupButtons = this.g.append("g")
+            .attr("class", "group-buttons")
 
         // nodes group
         this.gNodes = this.g.append("g")
@@ -992,6 +997,18 @@ export class Topology extends React.Component<Props, {}> {
         return levels
     }
 
+    private nodeByID(id: string): Node | undefined {
+        let n = this.nodes.get(id)
+        if (!n) {
+            let g = this.groups.get(id)
+            if (!g) {
+                return g
+            }
+            n = g.wrapped
+        }
+        return n
+    }
+
     private unselectAllNodes() {
         var self = this
 
@@ -1008,7 +1025,7 @@ export class Topology extends React.Component<Props, {}> {
             }
             id = id.replace(/^node-/, '')
 
-            let n = self.nodes.get(id)
+            let n = self.nodeByID(id)
             if (!n) {
                 return
             }
@@ -1039,7 +1056,7 @@ export class Topology extends React.Component<Props, {}> {
             this.unselectAllNodes()
             this.unselectAllLinks()
         }
-        let n = this.nodes.get(id)
+        let n = this.nodeByID(id)
         if (!n) {
             return
         }
@@ -1636,7 +1653,7 @@ export class Topology extends React.Component<Props, {}> {
                 " T " + x2 + " " + y2
         }
 
-        var curlyBraces = (g: any, d: NodeWrapper, animated: boolean) => {
+        const handleCurlyBraces = (g: any, d: NodeWrapper, animated: boolean) => {
             var bb = this.groupBB(d)
             if (!bb) {
                 return
@@ -1701,43 +1718,6 @@ export class Topology extends React.Component<Props, {}> {
                         junction +
                         " L " + x1 + " " + y1 + " ")
             }
-
-            let handleIcon = (gIcon: any, dy: number, disabled: boolean) => {
-                if (!d3node) {
-                    return
-                }
-
-                var text = gIcon.select("text")
-                    .attr("x", 0)
-                    .attr("y", 0)
-                var bb = text.node().getBBox()
-
-                gIcon.select("rect")
-                    .attr("x", bb.x + 2)
-                    .attr("y", bb.y + 2)
-                    .attr("width", bb.width - 4)
-                    .attr("height", bb.height - 4)
-
-                if (animated) {
-                    gIcon = gIcon.transition()
-                        .duration(animDuration)
-                }
-
-                var opacity = 0
-                if (d.wrapped.state.expanded) {
-                    opacity = disabled ? 0.5 : 1
-                }
-
-                gIcon
-                    .style("opacity", opacity)
-                    .attr("transform", (d: D3Node) => d3node ? `translate(${d3node.x + this.nodeWidth / 2},${y1 + dy})` : ``)
-            }
-
-            var size = this.props.groupSize || defaultGroupSize
-
-            handleIcon(g.select("g.curly-left-icon"), 50, d.wrapped.state.groupOffset == 0)
-            handleIcon(g.select("g.curly-right-icon"), 25, d.wrapped.state.groupOffset + size >= d.wrapped.children.length)
-            handleIcon(g.select("g.curly-full-icon"), 75, d.wrapped.state.groupOffset + size >= d.wrapped.children.length)
         }
 
         groupEnter.transition()
@@ -1757,7 +1737,58 @@ export class Topology extends React.Component<Props, {}> {
         groupEnter.append("path")
             .attr("class", "curly-brace curly-brace-right")
 
-        var leftIcon = groupEnter.append("g")
+        groupEnter.each(function (d) { handleCurlyBraces(select(this), d, false) })
+        group.each(function (d) { handleCurlyBraces(select(this), d, true) })
+
+        group.transition()
+            .duration(animDuration)
+            .style("opacity", 1)
+
+        const handleIcon = (gIcon: any, d: NodeWrapper, dy: number, animated: boolean, disabled: boolean) => {
+            let d3node = this.d3nodes.get(d.id)
+            if (!d3node) {
+                return
+            }
+
+            var y = d3node.y - this.nodeWidth / 2 + 20
+
+            var text = gIcon.select("text")
+                .attr("x", 0)
+                .attr("y", 0)
+            var bb = text.node().getBBox()
+
+            gIcon.select("rect")
+                .attr("x", bb.x + 2)
+                .attr("y", bb.y + 2)
+                .attr("width", bb.width - 4)
+                .attr("height", bb.height - 4)
+
+            if (animated) {
+                gIcon = gIcon.transition()
+                    .duration(animDuration)
+            }
+
+            var opacity = 0
+            if (d.wrapped.state.expanded) {
+                opacity = disabled ? 0.5 : 1
+            }
+
+            gIcon
+                .style("opacity", opacity)
+                .attr("transform", (d: D3Node) => d3node ? `translate(${d3node.x + this.nodeWidth / 2},${y + dy})` : ``)
+        }
+
+        var groupButton = this.gGroupButtons.selectAll('g.group-button')
+            .interrupt()
+            .data(Array.from(this.groups.values()), (d: NodeWrapper) => d.id)
+        var groupButtonEnter = groupButton.enter()
+            .append("g")
+            .attr("class", "group-button")
+            .attr("id", (d: Group) => d.id)
+            .style("opacity", 0)
+        groupButton.exit().remove()
+
+        var leftIcon = groupButtonEnter.append("g")
             .attr("class", "curly-icon curly-left-icon")
             .style("opacity", 0)
         leftIcon.append("rect")
@@ -1776,7 +1807,7 @@ export class Topology extends React.Component<Props, {}> {
                 }
             })
 
-        var rightIcon = groupEnter.append("g")
+        var rightIcon = groupButtonEnter.append("g")
             .attr("class", "curly-icon curly-right-icon")
             .style("opacity", 0)
         rightIcon.append("rect")
@@ -1796,7 +1827,7 @@ export class Topology extends React.Component<Props, {}> {
                 }
             })
 
-        var fullIcon = groupEnter.append("g")
+        var fullIcon = groupButtonEnter.append("g")
             .attr("class", "curly-icon curly-full-icon")
             .style("opacity", 0)
         fullIcon.append("rect")
@@ -1816,11 +1847,18 @@ export class Topology extends React.Component<Props, {}> {
                 self.renderTree()
             })
 
-        groupEnter.each(function (d) { curlyBraces(select(this), d, false) })
+        const handleIcons = (g: any, d: NodeWrapper, animated: boolean) => {
+            var size = this.props.groupSize || defaultGroupSize
 
-        group.each(function (d) { curlyBraces(select(this), d, true) })
+            handleIcon(g.select("g.curly-left-icon"), d, 50, animated, d.wrapped.state.groupOffset == 0)
+            handleIcon(g.select("g.curly-right-icon"), d, 25, animated, d.wrapped.state.groupOffset + size >= d.wrapped.children.length)
+            handleIcon(g.select("g.curly-full-icon"), d, 75, animated, false)
+        }
 
-        group.transition()
+        groupButtonEnter.each(function (d) { handleIcons(select(this), d, true) })
+        groupButton.each(function (d) { handleIcons(select(this), d, true) })
+
+        groupButton.transition()
             .duration(animDuration)
             .style("opacity", 1)
     }
