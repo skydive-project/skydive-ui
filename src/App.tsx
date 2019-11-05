@@ -79,7 +79,7 @@ interface State {
   nodeTagStates: Map<string, boolean>
   linkTagStates: Map<string, LinkTagState>
   suggestions: Array<string>
-  anchorEl: null | HTMLElement
+  anchorEl: Map<string, null | HTMLElement>
   isSelectionOpen: boolean
 }
 
@@ -104,7 +104,7 @@ class App extends React.Component<Props, State> {
       nodeTagStates: new Map<string, boolean>(),
       linkTagStates: new Map<string, LinkTagState>(),
       suggestions: new Array<string>(),
-      anchorEl: null,
+      anchorEl: new Map<string, null | HTMLElement>(),
       isSelectionOpen: false
     }
 
@@ -522,12 +522,14 @@ class App extends React.Component<Props, State> {
     return url.toString()
   }
 
-  openProfileMenu(event: React.MouseEvent<HTMLElement>) {
-    this.setState({ anchorEl: event.currentTarget })
+  openMenu(id: string, event: React.MouseEvent<HTMLElement>) {
+    this.state.anchorEl.set(id, event.currentTarget)
+    this.setState({ anchorEl: this.state.anchorEl })
   }
 
-  closeProfileMenu() {
-    this.setState({ anchorEl: null })
+  closeMenu(id) {
+    this.state.anchorEl.set(id, null)
+    this.setState({ anchorEl: this.state.anchorEl })
   }
 
   logout() {
@@ -562,6 +564,10 @@ class App extends React.Component<Props, State> {
   }
 
   onSelectionClose(el: Node | Link) {
+    this.selectionClose(el)
+  }
+
+  selectionClose(el: Node | Link) {
     if (!this.tc) {
       return
     }
@@ -575,6 +581,12 @@ class App extends React.Component<Props, State> {
 
   openSelection() {
     this.setState({ isSelectionOpen: true })
+  }
+
+  unselectAll() {
+    this.props.selection.forEach(el => {
+      this.selectionClose(el)
+    })
   }
 
   render() {
@@ -592,7 +604,7 @@ class App extends React.Component<Props, State> {
               edge="start"
               color="inherit"
               aria-label="open drawer"
-              onClick={() => this.openDrawer()}
+              onClick={this.openDrawer.bind(this)}
               className={clsx(classes.menuButton, this.state.isNavOpen && classes.menuButtonHidden)}>
               <MenuIcon />
             </IconButton>
@@ -605,23 +617,17 @@ class App extends React.Component<Props, State> {
             <div className={classes.grow} />
             <div>
               <IconButton
-                onClick={this.openSelection.bind(this)}
+                aria-controls="menu-selection"
+                aria-haspopup="true"
+                onClick={(event: React.MouseEvent<HTMLElement>) => this.props.selection.length > 0 && this.openMenu("selection", event)}
                 color="inherit">
                 <Badge badgeContent={this.props.selection.length} color="secondary">
                   <ShoppingCartIcon />
                 </Badge>
               </IconButton>
-              <IconButton
-                aria-label="account of current user"
-                aria-controls="menu-appbar"
-                aria-haspopup="true"
-                onClick={this.openProfileMenu.bind(this)}
-                color="inherit">
-                <AccountCircle />
-              </IconButton>
               <Menu
-                id="menu-appbar"
-                anchorEl={this.state.anchorEl}
+                id="menu-selection"
+                anchorEl={this.state.anchorEl.get("selection")}
                 anchorOrigin={{
                   vertical: 'top',
                   horizontal: 'right',
@@ -631,8 +637,33 @@ class App extends React.Component<Props, State> {
                   vertical: 'top',
                   horizontal: 'right',
                 }}
-                open={this.state.anchorEl !== null}
-                onClose={this.closeProfileMenu.bind(this)}>
+                open={Boolean(this.state.anchorEl.get("selection"))}
+                onClose={this.closeMenu.bind(this, "selection")}>
+                <MenuItem onClick={() => { this.closeMenu("selection"); this.openSelection() }}>Show selection</MenuItem>
+                <MenuItem onClick={() => { this.closeMenu("selection"); this.unselectAll() }}>Unselect all</MenuItem>
+              </Menu>
+              <IconButton
+                aria-label="account of current user"
+                aria-controls="menu-profile"
+                aria-haspopup="true"
+                onClick={this.openMenu.bind(this, "profile")}
+                color="inherit">
+                <AccountCircle />
+              </IconButton>
+              <Menu
+                id="menu-profile"
+                anchorEl={this.state.anchorEl.get("profile")}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={Boolean(this.state.anchorEl.get("profile"))}
+                onClose={this.closeMenu.bind(this, "profile")}>
                 <MenuItem onClick={this.logout.bind(this)}>Logout</MenuItem>
               </Menu>
             </div>
