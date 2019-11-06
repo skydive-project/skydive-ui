@@ -18,11 +18,7 @@
 import * as React from "react"
 import Tabs from '@material-ui/core/Tabs'
 import Tab from '@material-ui/core/Tab'
-import { AppState } from './Store'
 import { connect } from 'react-redux'
-import { Node, Link } from './Topology'
-import { DataPanel } from './DataPanel'
-import { a11yProps, TabPanel } from './Tabs'
 import IconButton from '@material-ui/core/IconButton'
 import LocationOnIcon from '@material-ui/icons/LocationOn'
 import CodeIcon from '@material-ui/icons/Code'
@@ -33,6 +29,13 @@ import CancelIcon from '@material-ui/icons/Cancel'
 import Tooltip from '@material-ui/core/Tooltip'
 import AlbumIcon from '@material-ui/icons/Album'
 import CaptureForm from "./CaptureForm"
+import { withStyles } from '@material-ui/core/styles'
+
+import { Node, Link } from './Topology'
+import DataPanel from './DataPanel'
+import { a11yProps, TabPanel } from './Tabs'
+import { AppState } from './Store'
+import { styles } from './SelectionPanelStyles'
 
 declare var config: any
 
@@ -214,7 +217,7 @@ class SelectionPanel extends React.Component<Props, State> {
                 var filterKeys = entry.filterKeys ? entry.filterKeys(data) : null
 
                 return (
-                  <DataPanel key={"dataviewer-" + (entry.field || "general") + "-" + el.id} classes={classes} title={title}
+                  <DataPanel key={"dataviewer-" + (entry.field || "general") + "-" + el.id} title={title}
                     defaultExpanded={entry.expanded} data={data} exclude={exclude} sortKeys={sortKeys} filterKeys={filterKeys}
                     normalizer={entry.normalizer} graph={entry.graph} icon={entry.icon} iconClass={entry.iconClass} />
                 )
@@ -261,4 +264,4 @@ export const mapStateToProps = (state: AppState) => ({
 export const mapDispatchToProps = ({
 })
 
-export default connect(mapStateToProps, mapDispatchToProps)(SelectionPanel)
+export default withStyles(styles)(connect(mapStateToProps, mapDispatchToProps)(SelectionPanel))

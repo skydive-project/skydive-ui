@@ -23,7 +23,9 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import Typography from '@material-ui/core/Typography'
 import { DataViewer } from './DataViewer'
 import { DataNormalizer, Result, Graph } from './DataNormalizer'
+import { withStyles } from '@material-ui/core/styles'
 
+import { styles } from './DataPanelStyles'
 import './DataPanel.css'
 
 interface Props {
@@ -46,7 +48,7 @@ interface State {
     data: Result
 }
 
-export class DataPanel extends React.Component<Props, State> {
+class DataPanel extends React.Component<Props, State> {
 
     state: State
 
@@ -98,7 +100,7 @@ export class DataPanel extends React.Component<Props, State> {
                     aria-controls="panel1a-content"
                     id="panel1a-header">
                     <Typography className={iconClass}>{this.props.icon}</Typography>
-                    <Typography className={classes.heading}>{this.props.title}</Typography>
+                    <Typography>{this.props.title}</Typography>
                 </ExpansionPanelSummary>
                 <ExpansionPanelDetails>
                     {
@@ -113,3 +115,5 @@ export class DataPanel extends React.Component<Props, State> {
         )
     }
 }
+
+export default withStyles(styles)(DataPanel)

@@ -25,10 +25,10 @@ import TextField from '@material-ui/core/TextField'
 import { withStyles } from '@material-ui/core/styles'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Checkbox from '@material-ui/core/Checkbox'
-import { AppState, openSession, session } from './Store'
 import { withRouter } from 'react-router-dom'
 
-import { LoginStyles } from './Styles'
+import { AppState, openSession, session } from './Store'
+import { styles } from './LoginStyles'
 
 import Logo from '../assets/Logo-large.png'
 
@@ -223,4 +223,4 @@ export const mapDispatchToProps = ({
     openSession
 })
 
-export default withStyles(LoginStyles)(connect(mapStateToProps, mapDispatchToProps)(withRouter(Login)))
+export default withStyles(styles)(connect(mapStateToProps, mapDispatchToProps)(withRouter(Login)))

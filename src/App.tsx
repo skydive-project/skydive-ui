@@ -46,7 +46,7 @@ import { withRouter } from 'react-router-dom'
 import Badge from '@material-ui/core/Badge'
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart'
 
-import { AppStyles } from './Styles'
+import { styles } from './AppStyles'
 import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState, Link } from './Topology'
 import { mainListItems, helpListItems } from './Menu'
 import AutoCompleteInput from './AutoComplete'
@@ -696,7 +696,7 @@ class App extends React.Component<Props, State> {
           <Container className={classes.rightPanel}>
             <Paper className={clsx(classes.rightPanelPaper, (!this.props.selection.length || !this.state.isSelectionOpen) && classes.rightPanelPaperClose)}
               square={true}>
-              <SelectionPanel classes={classes} onLocation={this.onSelectionLocation.bind(this)} onClose={this.onSelectionClose.bind(this)} />
+              <SelectionPanel onLocation={this.onSelectionLocation.bind(this)} onClose={this.onSelectionClose.bind(this)} />
             </Paper>
           </Container>
           <Container className={classes.nodeTagsPanel}>
@@ -744,4 +744,4 @@ export const mapDispatchToProps = ({
   closeSession
 })
 
-export default withStyles(AppStyles)(connect(mapStateToProps, mapDispatchToProps)(withSnackbar(withRouter(App))))
+export default withStyles(styles)(connect(mapStateToProps, mapDispatchToProps)(withSnackbar(withRouter(App))))

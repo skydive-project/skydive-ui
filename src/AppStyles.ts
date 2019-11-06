@@ -17,12 +17,12 @@ import { minWidth, borderRadius } from "@material-ui/system";
  *
  */
 
-import { createStyles, makeStyles, Theme } from '@material-ui/core';
+import { createStyles, Theme } from '@material-ui/core';
 import { fade } from '@material-ui/core/styles'
 
 const drawerWidth = 300
 
-export const AppStyles = (theme: Theme) => createStyles({
+export const styles = (theme: Theme) => createStyles({
   app: {
     display: 'flex',
   },
@@ -142,14 +142,6 @@ export const AppStyles = (theme: Theme) => createStyles({
       width: theme.spacing(0),
     },
   },
-  rightPanelPaperContent: {
-    padding: theme.spacing(2),
-    width: `100%`,
-    height: `100%`
-  },
-  jsonTree: {
-    backgroundColor: 'unset'
-  },
   nodeTagsPanel: {
     position: 'absolute',
     left: 20,
@@ -202,129 +194,5 @@ export const AppStyles = (theme: Theme) => createStyles({
       marginLeft: theme.spacing(3),
       width: 'auto',
     },
-  },
-  tabs: {
-    height: `100%`
-  },
-  tabIconFree: {
-    fontFamily: `"Font Awesome 5 Free" !important`,
-    fontWeight: 900,
-    fontSize: 24,
-    marginBottom: `0 !important`
-  },
-  tabIconBrands: {
-    fontFamily: `"Font Awesome 5 Brands" !important`,
-    fontWeight: 900,
-    fontSize: 24,
-    marginBottom: `0 !important`
-  },
-  tabTitle: {
-    fontSize: 18
-  },
-  panelIconFree: {
-    fontFamily: `"Font Awesome 5 Free" !important`,
-    fontWeight: 900,
-    fontSize: 20,
-    marginBottom: `0 !important`,
-    paddingRight: 8
-  },
-  panelIconBrands: {
-    fontFamily: `"Font Awesome 5 Brands" !important`,
-    fontWeight: 900,
-    fontSize: 20,
-    marginBottom: `0 !important`,
-    paddingRight: 8
-  },
-  tabActions: {
-    display: 'flex',
-    flexDirection: 'row-reverse',
-    marginBottom: theme.spacing(1)
-  },
-  gremlinCardContent: {
-    fontSize: '16px',
-    padding: 0
-  },
-  actionPanel: {
-    marginBottom: 16
-  }
-})
-
-export const AutoCompleteStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    root: {
-      flexGrow: 1,
-      height: 250,
-    },
-    container: {
-      flexGrow: 1,
-      position: 'relative',
-    },
-    paper: {
-      position: 'absolute',
-      zIndex: 1,
-      marginTop: theme.spacing(1),
-      left: 0,
-      right: 0,
-    },
-    chip: {
-      margin: theme.spacing(0.5, 0.25),
-    },
-    inputRoot: {
-      flexWrap: 'wrap',
-      color: 'inherit',
-    },
-    inputInput: {
-      transition: theme.transitions.create('width'),
-      width: '100%',
-      [theme.breakpoints.up('md')]: {
-        width: 200,
-      },
-    }
-  })
-)
-
-export const LoginStyles = (theme: Theme) => createStyles({
-  '@global': {
-    body: {
-      backgroundColor: theme.palette.common.black
-    }
-  },
-  paper: {
-    padding: theme.spacing(4),
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    backgroundColor: theme.palette.common.white,
-    borderRadius: 5
-  },
-  form: {
-    width: '100%',
-    marginTop: theme.spacing(1)
-  },
-  submit: {
-    margin: theme.spacing(3, 0, 2)
-  },
-  error: {
-    color: '#bb2c2c'
-  },
-  failure: {
-    color: '#bb2c2c',
-    fontSize: 18
-  },
-  logo: {
-    marginTop: theme.spacing(12),
-    marginBottom: theme.spacing(2),
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  logoImg: {
-    width: '40%',
-    height: 'auto'
-  },
-  logoTitle: {
-    color: theme.palette.common.white,
-    fontStyle: 'italic',
-    fontWeight: 400
   }
 })

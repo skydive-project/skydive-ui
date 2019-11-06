@@ -24,10 +24,11 @@ import MenuItem, { MenuItemProps } from '@material-ui/core/MenuItem'
 import Chip from '@material-ui/core/Chip'
 import InputAdornment from '@material-ui/core/InputAdornment'
 import SearchIcon from '@material-ui/icons/Search'
-import { AutoCompleteStyles } from './Styles'
+
+import { styles } from './AutoCompleteStyles'
 
 type RenderInputProps = StandardTextFieldProps & {
-  classes: ReturnType<typeof AutoCompleteStyles>
+  classes: ReturnType<typeof styles>
   ref?: React.Ref<HTMLDivElement>
 }
 
@@ -106,7 +107,7 @@ interface AutocompleteProps {
 export default function Autocomplete(props: AutocompleteProps) {
   const { placeholder, suggestions, onChange } = props
 
-  const classes = AutoCompleteStyles({})
+  const classes = styles({})
   const [inputValue, setInputValue] = React.useState('')
   const [selectedItem, setSelectedItem] = React.useState<Array<string>>([])
 
