@@ -31,6 +31,8 @@ import Collapse from '@material-ui/core/Collapse'
 import Highlight from 'react-highlight'
 import CancelIcon from '@material-ui/icons/Cancel'
 import Tooltip from '@material-ui/core/Tooltip'
+import AlbumIcon from '@material-ui/icons/Album'
+import CaptureForm from "./CaptureForm"
 
 declare var config: any
 
@@ -45,6 +47,7 @@ interface Props {
 interface State {
   tab: number
   gremlin: string
+  captureForm: boolean
 }
 
 class SelectionPanel extends React.Component<Props, State> {
@@ -56,7 +59,8 @@ class SelectionPanel extends React.Component<Props, State> {
 
     this.state = {
       tab: 0,
-      gremlin: ""
+      gremlin: "",
+      captureForm: false
     }
   }
 
@@ -100,7 +104,7 @@ class SelectionPanel extends React.Component<Props, State> {
     })
   }
 
-  private showGremlin(el: Node | Link) {
+  private toggleGremlinExpr(el: Node | Link) {
     if (this.state.gremlin) {
       this.setState({ gremlin: "" })
     } else {
@@ -110,6 +114,10 @@ class SelectionPanel extends React.Component<Props, State> {
         this.setState({ gremlin: `G.E('${el.id}')` })
       }
     }
+  }
+
+  private toggleCaptureForm(node: Node) {
+    this.setState({ captureForm: !this.state.captureForm })
   }
 
   private dataFields(el: Node | Link): Array<any> {
@@ -140,35 +148,49 @@ class SelectionPanel extends React.Component<Props, State> {
       return (
         <React.Fragment key={el.id}>
           <div className={classes.tabActions}>
-            <Tooltip title="remove from selection" aria-label="remove from selection">
+            <Tooltip title="Remove from selection" aria-label="Remove from selection">
               <IconButton
                 onClick={() => this.props.onClose && this.props.onClose(el)}
                 color="inherit">
                 <CancelIcon />
               </IconButton>
             </Tooltip>
-            <Tooltip title="pin node" aria-label="pin node">
+            <Tooltip title="Pin node" aria-label="pin node">
               <IconButton
                 onClick={() => this.props.onLocation && this.props.onLocation(el)}
                 color="inherit">
                 <LocationOnIcon />
               </IconButton>
             </Tooltip>
-            <Tooltip title="gremlin expression" aria-label="gremlin expression">
+            <Tooltip title="Gremlin expression" aria-label="Gremlin expression">
               <IconButton
-                aria-label="show gremlin request"
-                onClick={() => this.showGremlin(el)}
+                aria-label="Show gremlin expression"
+                onClick={() => this.toggleGremlinExpr(el)}
                 color="inherit">
                 <CodeIcon />
               </IconButton>
             </Tooltip>
+            {el.type === 'node' &&
+              <Tooltip title="Packet capture" aria-label="Packet capture">
+                <IconButton
+                  aria-label="Packet capture"
+                  onClick={() => this.toggleCaptureForm(el)}
+                  color="inherit">
+                  <AlbumIcon />
+                </IconButton>
+              </Tooltip>
+            }
           </div>
-          <Collapse in={this.state.gremlin !== ""} timeout="auto" unmountOnExit>
+          <Collapse in={this.state.gremlin !== ""} timeout="auto" unmountOnExit className={classes.actionPanel}>
             <CardContent className={classes.gremlinCardContent}>
               <Highlight language="bash">
                 {this.state.gremlin}
               </Highlight>
             </CardContent>
+          </Collapse>
+          <Collapse in={this.state.captureForm} timeout="auto" unmountOnExit className={classes.actionPanel}>
+            <CaptureForm />
+            <div />
           </Collapse>
           <TabPanel key={"tabpanel-" + el.id} value={this.state.tab} index={i}>
             {this.dataFields(el).map(entry => {

@@ -243,6 +243,9 @@ export const AppStyles = (theme: Theme) => createStyles({
   gremlinCardContent: {
     fontSize: '16px',
     padding: 0
+  },
+  actionPanel: {
+    marginBottom: 16
   }
 })
 
@@ -279,7 +282,6 @@ export const AutoCompleteStyles = makeStyles((theme: Theme) =>
     }
   })
 )
-
 
 export const LoginStyles = (theme: Theme) => createStyles({
   '@global': {
