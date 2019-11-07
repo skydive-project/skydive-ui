@@ -29,6 +29,8 @@ import { withRouter } from 'react-router-dom'
 
 import { AppState, openSession, session } from './Store'
 import { styles } from './LoginStyles'
+import { Configuration } from './api/configuration'
+import { LoginApi } from './api'
 
 import Logo from '../assets/Logo-large.png'
 
@@ -93,32 +95,31 @@ class Login extends React.Component<Props, State> {
             return
         }
 
-        const encode = (data) => Object.keys(data).map(key => {
-            return encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
-        }).join('&')
+        var endpoint = this.state.endpoint || this.props.session.endpoint
 
-        const requestOptions = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-            },
-            body: encode({ username: this.state.username, "password": this.state.password })
-        }
-
-        return fetch(`${this.state.endpoint}/login`, requestOptions)
+        var conf = new Configuration({ basePath: endpoint })
+        var api = new LoginApi(conf)
+        
+        api.login(this.state.username, this.state.password)
+            .catch(() => {
+                this.setState({ failure: true })
+            })
             .then(response => {
-                if (response.status !== 200) {
-                    this.setState({ failure: true })
-                } else {
+                if (response) {
                     this.setState({ failure: false })
                     return response.json()
+                } else {
+                    this.setState({ failure: true })
                 }
             })
             .then(data => {
                 if (data) {
-                    this.props.openSession(this.state.endpoint, this.state.username, data.Token, data.Permissions, this.state.persistent)
+                    this.props.openSession(endpoint, this.state.username, data.Token, data.Permissions, this.state.persistent)
 
-                    const { from } = this.props.location.state || { from: { pathname: "/" } }
+                    var from = "/"
+                    if (this.props.location.state && this.props.location.state.from !== "/login") {
+                        from = this.props.location.state.from
+                    }
                     this.props.history.push(from)
                 }
             })

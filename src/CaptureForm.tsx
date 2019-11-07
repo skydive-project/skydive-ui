@@ -17,13 +17,18 @@
 
 import * as React from 'react'
 import TextField from '@material-ui/core/TextField'
-import Paper from '@material-ui/core/Paper'
 import Button from '@material-ui/core/Button'
 import { withStyles } from '@material-ui/core/styles'
+import AlbumIcon from '@material-ui/icons/Album'
+
+import { Configuration } from './api/configuration'
+import ActionPanel from './ActionPanel'
+import { CapturesApi } from './api'
 import { styles } from './CaptureFormStyles'
 
 interface Props {
     classes: any
+    gremlinExpr: string
 }
 
 interface State {
@@ -40,15 +45,21 @@ class CaptureForm extends React.Component<Props, State> {
         }
     }
 
+    onClick() {
+        var conf = new Configuration({ username: "admin", password: "password" })
+        var api = new CapturesApi(conf)
+
+        api.createCapture({GremlinQuery: this.props.gremlinExpr}).then(result => {
+            console.log(result)
+        })
+    }
+
     render() {
         const { classes } = this.props
 
         return (
-            <div className={classes.container}>
-                <div className={classes.header}>
-
-                </div>
-                <Paper className={classes.paper}>
+            <ActionPanel icon={<AlbumIcon />} title="Packet capture" content={
+                <React.Fragment>
                     <TextField
                         id="standard-basic"
                         className={classes.textField}
@@ -71,11 +82,11 @@ class CaptureForm extends React.Component<Props, State> {
                         margin="normal"
                         fullWidth
                     />
-                    <Button variant="contained" className={classes.button} color="primary">
+                    <Button variant="contained" className={classes.button} color="primary" onClick={this.onClick.bind(this)}>
                         Start
-                </Button>
-                </Paper>
-            </div>
+                    </Button>
+                </React.Fragment>
+            } />
         )
     }
 }

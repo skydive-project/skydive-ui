@@ -18,11 +18,31 @@
 import { createStyles, Theme } from '@material-ui/core/styles'
 
 export const styles = (theme: Theme) => createStyles({
-    textField: {
-        marginLeft: theme.spacing(1),
-        marginRight: theme.spacing(1)
+    header: {
+        display: 'flex',
+        minHeight: 64,
+        backgroundColor: '#757575 !important',
+        padding: '0 24px 0 24px',
+        borderTopLeftRadius: 4,
+        borderTopRightRadius: 4,
+        color: 'white'
     },
-    button: {
-        margin: theme.spacing(1),
+    headerContent: {
+        alignItems: 'center',
+        margin: '20px 0',
+        display: 'flex',
+        flexGrow: 1,
+        verticalAlign: 'middle'
+    },
+    icon: {
+        paddingRight: 8,
+        lineHeight: 0
+    },
+    paper: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        padding: theme.spacing(2),
+        marginLeft: 1,
+        marginRight: 1
     }
 })

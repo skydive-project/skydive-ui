@@ -22,7 +22,6 @@ import { connect } from 'react-redux'
 import IconButton from '@material-ui/core/IconButton'
 import LocationOnIcon from '@material-ui/icons/LocationOn'
 import CodeIcon from '@material-ui/icons/Code'
-import CardContent from '@material-ui/core/CardContent'
 import Collapse from '@material-ui/core/Collapse'
 import Highlight from 'react-highlight'
 import CancelIcon from '@material-ui/icons/Cancel'
@@ -36,6 +35,7 @@ import DataPanel from './DataPanel'
 import { a11yProps, TabPanel } from './Tabs'
 import { AppState } from './Store'
 import { styles } from './SelectionPanelStyles'
+import ActionPanel from './ActionPanel'
 
 declare var config: any
 
@@ -185,15 +185,16 @@ class SelectionPanel extends React.Component<Props, State> {
             }
           </div>
           <Collapse in={this.state.gremlin !== ""} timeout="auto" unmountOnExit className={classes.actionPanel}>
-            <CardContent className={classes.gremlinCardContent}>
-              <Highlight language="bash">
-                {this.state.gremlin}
-              </Highlight>
-            </CardContent>
+            <ActionPanel icon={<CodeIcon />} title="Gremlin expression" content={
+              <div className={classes.gremlinExpr}>
+                <Highlight language="bash">
+                  {this.state.gremlin}
+                </Highlight>
+              </div>
+            } />
           </Collapse>
           <Collapse in={this.state.captureForm} timeout="auto" unmountOnExit className={classes.actionPanel}>
-            <CaptureForm />
-            <div />
+            <CaptureForm gremlinExpr={`G.V().Has('TID', '${el.data.TID}')`} />
           </Collapse>
           <TabPanel key={"tabpanel-" + el.id} value={this.state.tab} index={i}>
             {this.dataFields(el).map(entry => {

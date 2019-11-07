@@ -51,7 +51,7 @@ export const styles = (theme: Theme) => createStyles({
     flexDirection: 'row-reverse',
     marginBottom: theme.spacing(1)
   },
-  gremlinCardContent: {
+  gremlinExpr: {
     fontSize: '16px',
     padding: 0
   },
