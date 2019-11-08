@@ -28,10 +28,14 @@ import { styles } from './CaptureFormStyles'
 
 interface Props {
     classes: any
+    defaultName: string
     gremlinExpr: string
 }
 
 interface State {
+    name: string
+    description: string
+    bpf: string
 }
 
 class CaptureForm extends React.Component<Props, State> {
@@ -42,6 +46,9 @@ class CaptureForm extends React.Component<Props, State> {
         super(props)
 
         this.state = {
+            name: "",
+            description: "",
+            bpf: ""
         }
     }
 
@@ -66,6 +73,7 @@ class CaptureForm extends React.Component<Props, State> {
                         label="Name"
                         margin="normal"
                         fullWidth
+                        value={this.props.defaultName}
                     />
                     <TextField
                         id="standard-basic"

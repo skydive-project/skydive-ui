@@ -81,23 +81,23 @@ class SelectionPanel extends React.Component<Props, State> {
   }
 
   private renderTabs(classes: any) {
-    return this.props.selection.map((d: Node | Link, i: number) => {
+    return this.props.selection.map((el: Node | Link, i: number) => {
       var className = classes.tabIconFree
 
-      if (d.type === 'node') {
-        if (config.nodeAttrs(d).iconClass === "font-brands") {
+      if (el.type === 'node') {
+        if (config.nodeAttrs(el).iconClass === "font-brands") {
           className = classes.tabIconBrands
         }
 
-        var icon = config.nodeAttrs(d).icon
-        var title = config.nodeTabTitle(d)
+        var icon = config.nodeAttrs(el).icon
+        var title = config.nodeTabTitle(el)
       } else {
-        if (config.linkAttrs(d).iconClass === "font-brands") {
+        if (config.linkAttrs(el).iconClass === "font-brands") {
           className = classes.tabIconBrands
         }
 
-        var icon = config.linkAttrs(d).icon
-        var title = config.linkTabTitle(d)
+        var icon = config.linkAttrs(el).icon
+        var title = config.linkTabTitle(el)
       }
 
       return (
@@ -128,6 +128,14 @@ class SelectionPanel extends React.Component<Props, State> {
       return config.nodeDataFields
     } else {
       return config.linkDataFields
+    }
+  }
+
+  private dataAttrs(el: Node | Link): any {
+    if (el.type === 'node') {
+      return config.nodeAttrs(el)
+    } else {
+      return config.linkAttrs(el)
     }
   }
 
@@ -194,7 +202,7 @@ class SelectionPanel extends React.Component<Props, State> {
             } />
           </Collapse>
           <Collapse in={this.state.captureForm} timeout="auto" unmountOnExit className={classes.actionPanel}>
-            <CaptureForm gremlinExpr={`G.V().Has('TID', '${el.data.TID}')`} />
+            <CaptureForm defaultName={this.dataAttrs(el).name} gremlinExpr={`G.V().Has('TID', '${el.data.TID}')`} />
           </Collapse>
           <TabPanel key={"tabpanel-" + el.id} value={this.state.tab} index={i}>
             {this.dataFields(el).map(entry => {
