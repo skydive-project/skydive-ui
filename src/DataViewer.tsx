@@ -22,6 +22,9 @@ import TableCell from "@material-ui/core/TableCell"
 import { Chart } from 'react-google-charts'
 import JSONTree from 'react-json-tree'
 import { Column, Graph } from './DataNormalizer'
+import FilterNoneIcon from '@material-ui/icons/FilterNone'
+import IconButton from '@material-ui/core/IconButton'
+import Tooltip from '@material-ui/core/Tooltip'
 
 import './DataViewer.css'
 
@@ -32,6 +35,7 @@ interface Props {
     graph?: Graph
     details: Map<number, any>
     filterKeys?: Array<string>
+    onFilterReset?: () => void
 }
 
 interface State {
@@ -69,6 +73,14 @@ export class DataViewer extends React.Component<Props, State> {
         return null
     }
 
+    private resetFilter() {
+        this.setState({ filterList: new Map<string, Array<any>>() })
+
+        if (this.props.onFilterReset) {
+            this.props.onFilterReset()
+        }
+    }
+
     render() {
         const options = {
             filterType: 'multiselect',
@@ -76,6 +88,15 @@ export class DataViewer extends React.Component<Props, State> {
             responsive: 'stacked',
             print: false,
             download: false,
+            customToolbar: () => {
+                return (
+                    <Tooltip title="Apply default filters" aria-label="Apply default filters">
+                        <IconButton onClick={this.resetFilter.bind(this)}>
+                            <FilterNoneIcon />
+                        </IconButton>
+                    </Tooltip>
+                )
+            },
             setRowProps: (row, dataIndex) => {
                 if (!this.props.details.get(dataIndex)) {
                     return { "className": "not-expandable" }

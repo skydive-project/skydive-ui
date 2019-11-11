@@ -89,13 +89,23 @@ class DataPanel extends React.Component<Props, State> {
         if (expanded) {
             this.setState(
                 {
-                    data: DataPanel.normalizeData(this.props.data, this.props.normalizer, this.props.graph, this.props.exclude, this.props.sortKeys),
+                    data: DataPanel.normalizeData(this.state.data, this.props.normalizer, this.props.graph, this.props.exclude, this.props.sortKeys),
+                    filterKeys:  DataPanel.normalizeFilterKeys(this.state.data, this.props.filterKeys),
                     isExpanded: expanded
                 }
             )
         } else {
             this.setState({ isExpanded: expanded })
         }
+    }
+
+    private onFilterReset() {
+        this.setState(
+            {
+                data: DataPanel.normalizeData(this.state.data, this.props.normalizer, this.props.graph, this.props.exclude, this.props.sortKeys),
+                filterKeys:  DataPanel.normalizeFilterKeys(this.state.data, this.props.filterKeys),
+            }
+        )
     }
 
     render() {
@@ -117,7 +127,7 @@ class DataPanel extends React.Component<Props, State> {
                         this.state.data.rows.length && this.state.isExpanded &&
                         (
                             <DataViewer columns={this.state.data.columns} data={this.state.data.rows} filterKeys={this.state.filterKeys}
-                                graph={this.state.data.graph} details={this.state.data.details} />
+                                graph={this.state.data.graph} details={this.state.data.details} onFilterReset={this.onFilterReset.bind(this)}/>
                         )
                     }
                 </ExpansionPanelDetails>
