@@ -46,6 +46,7 @@ interface Props {
 interface State {
     isExpanded: boolean
     data: Result
+    filterKeys?: Array<string>
 }
 
 class DataPanel extends React.Component<Props, State> {
@@ -54,10 +55,11 @@ class DataPanel extends React.Component<Props, State> {
 
     constructor(props) {
         super(props)
-
+ 
         this.state = {
             isExpanded: props.defaultExpanded,
-            data: DataPanel.normalizeData(props.data, props.normalizer)
+            data: DataPanel.normalizeData(props.data, props.normalizer),
+            filterKeys: DataPanel.normalizeFilterKeys(props.data, props.filterKeys)
         }
     }
 
@@ -66,10 +68,18 @@ class DataPanel extends React.Component<Props, State> {
         return dataNormalizer.normalize(data)
     }
 
+    static normalizeFilterKeys(data: any, filterKeys: Array<string>|undefined): Array<string>|undefined {
+        if (!filterKeys) {
+            return
+        }
+        return filterKeys.filter(key => Boolean(data[key]))
+    }
+
     static getDerivedStateFromProps(props, state) {
         if (state.isExpanded) {
             return {
-                data: DataPanel.normalizeData(props.data, props.normalizer, props.graph, props.exclude, props.sortKeys)
+                data: DataPanel.normalizeData(props.data, props.normalizer, props.graph, props.exclude, props.sortKeys),
+                filterKeys:  DataPanel.normalizeFilterKeys(props.data, props.filterKeys)
             }
         }
         return null
@@ -106,7 +116,7 @@ class DataPanel extends React.Component<Props, State> {
                     {
                         this.state.data.rows.length && this.state.isExpanded &&
                         (
-                            <DataViewer columns={this.state.data.columns} data={this.state.data.rows} filterKeys={this.props.filterKeys}
+                            <DataViewer columns={this.state.data.columns} data={this.state.data.rows} filterKeys={this.state.filterKeys}
                                 graph={this.state.data.graph} details={this.state.data.details} />
                         )
                     }

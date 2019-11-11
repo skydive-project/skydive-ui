@@ -132,7 +132,7 @@ var config = {
             filterKeys: function (data) {
                 switch (data.Type) {
                     case "host":
-                        return null
+                        return ['Name']
                     default:
                         return ['Name', 'Type', 'MAC', 'Driver', 'State']
                 }
