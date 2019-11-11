@@ -1,4 +1,4 @@
-import { Node, Link } from './Topology'
+import { Node, NodeWrapper, Link } from './Topology'
 import Tools from './Tools'
 
 var DefaultConfig = {
@@ -177,8 +177,49 @@ var DefaultConfig = {
         return node.data.Name.substring(0, 8)
     },
     groupSize: 5,
-    groupBy: function (node: Node) {
-        return node.data.Type && node.data.Type !== "host" ? node.data.Type : null
+    groupGid: function (node: NodeWrapper, child: NodeWrapper) {
+        var gid = node.id
+
+        // group only nodes of same type
+        var nodeType = child.wrapped.data.Type
+        gid += "_" + nodeType
+
+        // group only nodes being at the same level, meaning weight
+        var weight = child.wrapped.getWeight()
+        gid += "_" + weight
+
+        // group only nodes with the same gorup name
+        var name = this.groupName(child)
+        if (!name) {
+            return null
+        }
+        gid += "_" + name
+
+        return gid
+    },
+    groupName: function (child: NodeWrapper) {
+        var nodeType = child.wrapped.data.Type
+        if (!nodeType) {
+            return null
+        }
+
+        var name = nodeType + "(s)"
+
+        var labels = child.wrapped.data.K8s.Labels
+        if (!labels) {
+            return name
+        }
+        var app = labels["k8s-app"] || labels["app"]
+        if (!app) {
+            return name
+        }
+        name = app
+        var hash = labels["pod-template-hash"]
+        if (hash) {
+            name += "-" + hash
+        }
+
+        return name
     },
     weightTitles: {
         0: "Not classified",

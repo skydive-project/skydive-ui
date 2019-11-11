@@ -708,9 +708,14 @@ class App extends React.Component<Props, State> {
           <div className={classes.appBarSpacer} />
           <Container maxWidth="xl" className={classes.container}>
             <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} linkAttrs={this.linkAttrs}
-              onNodeSelected={this.onNodeSelected.bind(this)} sortNodesFnc={this.sortNodesFnc}
-              onShowNodeContextMenu={this.onShowNodeContextMenu.bind(this)} weightTitles={this.weightTitles()}
-              groupBy={config.groupBy} groupSize={config.groupSize} onClick={this.onTopologyClick.bind(this)} 
+              onNodeSelected={this.onNodeSelected.bind(this)}
+              sortNodesFnc={this.sortNodesFnc}
+              onShowNodeContextMenu={this.onShowNodeContextMenu.bind(this)}
+              weightTitles={this.weightTitles()}
+              groupSize={config.groupSize} 
+              groupGid={config.groupGid}
+              groupName={config.groupName}
+              onClick={this.onTopologyClick.bind(this)}
               onLinkSelected={this.onLinkSelected.bind(this)} />
           </Container>
           <Container className={classes.rightPanel}>
