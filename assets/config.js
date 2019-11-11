@@ -62,6 +62,69 @@ var config = {
                 attrs.icon = "\uf109"
                 attrs.weight = 19
                 break
+            case "cluster":
+                attrs.icon = "/assets/icons/cluster.png"
+                break
+            case "configmap":
+                attrs.icon = "/assets/icons/configmap.png"
+                break
+            case "container":
+                attrs.icon = "/assets/icons/container.png"
+                break
+            case "cronjob":
+                attrs.icon = "/assets/icons/cronjob.png"
+                break
+            case "daemonset":
+                attrs.icon = "/assets/icons/daemonset.png"
+                break
+            case "deployment":
+                attrs.icon = "/assets/icons/deployment.png"
+                break
+            case "endpoints":
+                attrs.icon = "/assets/icons/endpoints.png"
+                break
+            case "ingress":
+                attrs.icon = "/assets/icons/ingress.png"
+                break
+            case "job":
+                attrs.icon = "/assets/icons/job.png"
+                break
+            case "node":
+                attrs.icon = "\uf109"
+                break
+            case "persistentvolume":
+                attrs.icon = "/assets/icons/persistentvolume.png"
+                break
+            case "persistentvolumeclaim":
+                attrs.icon = "/assets/icons/persistentvolumeclaim.png"
+                break
+            case "pod":
+                attrs.icon = "/assets/icons/pod.png"
+                break
+            case "networkpolicy":
+                attrs.icon = "/assets/icons/networkpolicy.png"
+                break
+            case "namespace":
+                attrs.icon = "\uf24d"
+                break
+            case "replicaset":
+                attrs.icon = "/assets/icons/replicaset.png"
+                break
+            case "replicationcontroller":
+                attrs.icon = "/assets/icons/replicationcontroller.png"
+                break
+            case "secret":
+                attrs.icon = "/assets/icons/secret.png"
+                break
+            case "service":
+                attrs.icon = "/assets/icons/service.png"
+                break
+            case "statefulset":
+                attrs.icon = "/assets/icons/statefulset.png"
+                break
+            case "storageclass":
+                attrs.icon = "/assets/icons/storageclass.png"
+                break
             default:
                 attrs.icon = "\uf192"
                 break
@@ -85,6 +148,7 @@ var config = {
         }
 
         if (node.data.Manager === "k8s") {
+            attrs.icon = "/assets/icons/k8s.png"
             attrs.weight = 1
         }
 
