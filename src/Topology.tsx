@@ -1930,10 +1930,24 @@ export class Topology extends React.Component<Props, {}> {
             .attr("class", "node-hexagon")
             .attr("d", (d: D3Node) => this.liner(this.hexagon(d, hexSize)))
 
-        nodeEnter.append("text")
+        const isImgIcon = (d: D3Node):boolean => {
+            var icon = this.props.nodeAttrs(d.data.wrapped).icon
+            return icon.startsWith("/") || icon.startsWith("http") || icon.startsWith("data:")
+        }
+
+        nodeEnter.filter((d: D3Node) => !isImgIcon(d))
+            .append("text")
             .attr("class", (d: D3Node) => "node-icon " + this.props.nodeAttrs(d.data.wrapped).iconClass)
             .attr("dy", 9)
             .text((d: D3Node) => this.props.nodeAttrs(d.data.wrapped).icon)
+
+        nodeEnter.filter((d: D3Node) => isImgIcon(d))
+            .append("image")
+            .attr("class", (d: D3Node) => "node-icon " + this.props.nodeAttrs(d.data.wrapped).iconClass)
+            .attr("transform", "translate(-16,-16)")
+            .attr("width", 32)
+            .attr("heigh", 32)
+            .attr("xlink:href", (d: D3Node) => this.props.nodeAttrs(d.data.wrapped).icon)
 
         var wrapText = (text, lineHeight, width) => {
             text.each(function () {
