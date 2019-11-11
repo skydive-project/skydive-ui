@@ -341,6 +341,11 @@ var config = {
         return attrs
     },
     "linkTabTitle": function (link) {
+        var src = link.source.data.Name
+        var dst = link.target.data.Name
+        if (src && dst) {
+            return src.substring(0, 8) + " / " + dst.substring(0, 8)
+        }
         return link.id.split("-")[0]
     },
     "linkDataFields": [
