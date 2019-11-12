@@ -867,7 +867,7 @@ export class Topology extends React.Component<Props, {}> {
             var source = findVisible(link.source)
             var target = findVisible(link.target)
 
-            if (source && target && source !== target) {
+            if (source && target && source.id !== "root" && target.id !== "root" && source !== target) {
                 links.push(new Link(link.id, link.tags, source, target, link.data, link.state))
             }
         })
@@ -964,7 +964,7 @@ export class Topology extends React.Component<Props, {}> {
         levels.reverse().forEach(levelNodes => {
             var rect = this.levelRect(levelNodes)
             if (rect) {
-                // ensure there is no overlap between no zone
+                // ensure there is no overlap between two zones
                 if (prevY && rect.bb.y + rect.bb.height > prevY) {
                     rect.bb.height = prevY - rect.bb.y
                 }
