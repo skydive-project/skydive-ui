@@ -11,6 +11,11 @@ var config = {
             attrs.weight = 15
         }
 
+        if (node.data.Manager === "k8s") {
+            attrs.icon = "/assets/icons/k8s.png"
+            attrs.weight = 1
+        }
+
         switch (node.data.Type) {
             case "host":
                 attrs.icon = "\uf109"
@@ -145,11 +150,6 @@ var config = {
 
         if (node.data.Probe === "fabric") {
             attrs.weight = 10
-        }
-
-        if (node.data.Manager === "k8s") {
-            attrs.icon = "/assets/icons/k8s.png"
-            attrs.weight = 1
         }
 
         return attrs
