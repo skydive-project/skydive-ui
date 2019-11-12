@@ -57,5 +57,10 @@ export const styles = (theme: Theme) => createStyles({
   },
   actionPanel: {
     marginBottom: 16
+  },
+  iconImg: {
+    maxWidth: 32,
+    maxHeight: 32,
+    verticalAlign: 'middle'
   }
 })

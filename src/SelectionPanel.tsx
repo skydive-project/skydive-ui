@@ -100,8 +100,17 @@ class SelectionPanel extends React.Component<Props, State> {
         var title = config.linkTabTitle(el)
       }
 
+      const iconRender = () => {
+        if (icon.startsWith("/") || icon.startsWith("http") || icon.startsWith("data:")) {
+          return (
+            <img src={icon} className={classes.iconImg} />
+          )
+        }
+        return icon
+      }
+
       return (
-        <Tab className="tab" icon={<span className={className}>{icon}</span>}
+        <Tab className="tab" icon={<span className={className}>{iconRender()}</span>}
           key={"tab-" + i} label={<span className={classes.tabTitle}>{title}</span>} {...a11yProps(i)} />
       )
     })
