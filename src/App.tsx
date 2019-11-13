@@ -58,7 +58,7 @@ import Logo from '../assets/Logo.png'
 
 declare var config: any
 
-const data = require('./dump.json')
+const queryString = require('query-string')
 
 interface Props extends WithSnackbarProps {
   classes: any
@@ -92,6 +92,7 @@ class App extends React.Component<Props, State> {
   refreshTopology: any
   bumpRevision: typeof bumpRevision
   checkAuthID: number
+  staticDataURL: string
 
   constructor(props) {
     super(props)
@@ -114,14 +115,32 @@ class App extends React.Component<Props, State> {
 
     // we will refresh info each 1s
     this.bumpRevision = debounce(this.props.bumpRevision.bind(this), 1000)
+
+    const parsed = queryString.parse(props.location.search)
+    if (parsed.data) {
+      this.staticDataURL = parsed.data
+    }
   }
 
   componentDidMount() {
-    //this.parseTopology(data)
-
     this.checkAuthID = window.setInterval(() => {
       this.checkAuth()
     }, 2000)
+
+    if (this.staticDataURL) {
+      fetch(this.staticDataURL).then(resp => {
+        if (resp.status === 200) {
+          return resp.json().then(data => {
+            if (!Array.isArray(data)) {
+              throw "topology schema error"
+            }
+            this.parseTopology(data[0])
+          })
+        } else {
+          this.notify("Unable to load or parse topology data", "error")
+        }
+      })
+    }
   }
 
   componentWillUnmount() {
@@ -595,9 +614,11 @@ class App extends React.Component<Props, State> {
     return (
       <div className={classes.app}>
         <CssBaseline />
-        <Websocket ref={node => this.websocket = node} url={this.subscriberURL()} onOpen={this.onWebSocketOpen.bind(this)}
-          onMessage={this.onWebSocketMessage.bind(this)} onClose={this.onWebSocketClose.bind(this)}
-          reconnectIntervalInMilliSeconds={2500} />
+        {!this.staticDataURL &&
+          <Websocket ref={node => this.websocket = node} url={this.subscriberURL()} onOpen={this.onWebSocketOpen.bind(this)}
+            onMessage={this.onWebSocketMessage.bind(this)} onClose={this.onWebSocketClose.bind(this)}
+            reconnectIntervalInMilliSeconds={2500} />
+        }
         <AppBar position="absolute" className={clsx(classes.appBar, this.state.isNavOpen && classes.appBarShift)}>
           <Toolbar className={classes.toolbar}>
             <IconButton

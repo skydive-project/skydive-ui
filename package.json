@@ -22,7 +22,6 @@
     "clsx": "^1.0.4",
     "copy-webpack-plugin": "^5.0.4",
     "css-loader": "^3.2.0",
-    "d3-geom": "0.0.0",
     "d3-hierarchy": "^1.1.8",
     "d3-polygon": "^1.0.5",
     "d3-selection": "^1.4.0",
@@ -40,6 +39,7 @@
     "notistack": "^0.8.9",
     "nyc": "^14.1.1",
     "portable-fetch": "^3.0.0",
+    "query-string": "^6.9.0",
     "react": "^16.8.6",
     "react-docgen": "^4.1.1",
     "react-dom": "^16.8.6",
@@ -63,7 +63,7 @@
     "webpack-dev-server": "^3.8.0"
   },
   "scripts": {
-    "start": "webpack-dev-server --mode development --host 0.0.0.0 --open",
+    "start": "webpack-dev-server --mode development --host 0.0.0.0 --open-page=$PAGE",
     "build": "webpack --mode production",
     "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' mocha -r ts-node/register tests/**/*.test.ts",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test"

@@ -14,6 +14,18 @@ is currently provided for testing purpose.
 docker run -p 8080:8080 skydive/skydive-ui
 ```
 
+In order to load a local topology dump
+
+```
+docker run -p 8080:8080 -v dump.json:/usr/src/skydive-ui/assets/dump.json skydive/skydive-ui
+```
+
+then open your browser with the following address
+
+```
+http://127.0.0.1:8080/?data=/assets/dump.json
+```
+
 ## Dev mode
 
 ```
@@ -21,4 +33,8 @@ npm install
 npm start
 ```
 
+In order to load a local topology dump
 
+```
+PAGE="?data=/assets/dump.json" npm start 
+```
