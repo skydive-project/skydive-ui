@@ -43,6 +43,7 @@ interface State {
     sortDirection: string
     filterList: Map<string, Array<any>>
     graph?: Graph
+    rowsExpanded: Array<number>
 }
 
 export class DataViewer extends React.Component<Props, State> {
@@ -55,7 +56,8 @@ export class DataViewer extends React.Component<Props, State> {
         this.state = {
             sortField: "",
             sortDirection: "none",
-            filterList: new Map<string, Array<any>>()
+            filterList: new Map<string, Array<any>>(),
+            rowsExpanded: new Array<number>()
         }
     }
 
@@ -123,6 +125,10 @@ export class DataViewer extends React.Component<Props, State> {
                     </TableRow>
                 )
             },
+            rowsExpanded: this.state.rowsExpanded,
+            onRowsExpand: (currentRowsExpanded, allRowsExpanded) => {
+                this.setState({ rowsExpanded: allRowsExpanded.map(entry => entry.dataIndex) })
+            },
             onColumnSortChange: (field: string, direction: string) => {
                 this.setState({ sortField: field, sortDirection: direction })
             },
@@ -137,7 +143,7 @@ export class DataViewer extends React.Component<Props, State> {
 
                 this.state.filterList.set(field, newList)
                 this.setState({ filterList: this.state.filterList })
-            }
+            },
         };
 
         // re-apply sort and filter if need
