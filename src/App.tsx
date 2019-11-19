@@ -52,13 +52,16 @@ import { mainListItems, helpListItems } from './Menu'
 import AutoCompleteInput from './AutoComplete'
 import { AppState, selectElement, unselectElement, bumpRevision, session, closeSession } from './Store'
 import SelectionPanel from './SelectionPanel'
+import DefaultConfig from './Config'
 
 import './App.css'
 import Logo from '../assets/Logo.png'
 
-declare var config: any
-
 const queryString = require('query-string')
+
+// merge default config and the one from assets
+declare var config: typeof DefaultConfig
+config = { ...DefaultConfig, ...config }
 
 interface Props extends WithSnackbarProps {
   classes: any
@@ -348,13 +351,8 @@ class App extends React.Component<Props, State> {
     return a.data.Name.localeCompare(b.data.Name)
   }
 
-  onShowNodeContextMenu(node) {
-    return [
-      { class: "", text: "Capture", disabled: false, callback: () => { console.log("Capture") } },
-      { class: "", text: "Capture all", disabled: true, callback: () => { console.log("Capture all") } },
-      { class: "", text: "Injection", disabled: false, callback: () => { console.log("Injection") } },
-      { class: "", text: "Flows", disabled: false, callback: () => { console.log("Flows") } }
-    ]
+  onShowNodeContextMenu(node: Node) {
+    return config.nodeMenu(node)
   }
 
   _refreshTopology() {

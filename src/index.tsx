@@ -27,6 +27,13 @@ import { AppState, store } from './Store'
 import { Router, Route, Redirect, Switch } from 'react-router-dom'
 import Login from './Login'
 import App from './App'
+import Tools from './Tools'
+
+// expose some tools
+declare global {
+  interface Window { Tools: any }
+}
+window.Tools = Tools
 
 const history = createBrowserHistory()
 
