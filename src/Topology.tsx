@@ -1930,7 +1930,7 @@ export class Topology extends React.Component<Props, {}> {
             .attr("class", "node-hexagon")
             .attr("d", (d: D3Node) => this.liner(this.hexagon(d, hexSize)))
 
-        const isImgIcon = (d: D3Node):boolean => {
+        const isImgIcon = (d: D3Node): boolean => {
             var icon = this.props.nodeAttrs(d.data.wrapped).icon
             return icon.startsWith("/") || icon.startsWith("http") || icon.startsWith("data:")
         }
@@ -2070,9 +2070,18 @@ export class Topology extends React.Component<Props, {}> {
             var y = source.y + d.source.dy
 
             if (Math.abs(x1 - x2) > this.nodeWidth) {
+                if (x1 > x2) {
+                    let t = x1
+                    x1 = x2
+                    x2 = t
+                }
+
+                let len = x2 - x1
+
                 var points = [
                     { x: x1, y: y + 10 },
-                    { x: (x1 + x2) / 2, y: y + 40 },
+                    { x: x1 + len / 4, y: y + 40 + 0.05 * len },
+                    { x: x2 - len / 4, y: y + 40 + 0.05 * len },
                     { x: x2, y: y + 10 }
                 ]
             } else {
@@ -2085,7 +2094,7 @@ export class Topology extends React.Component<Props, {}> {
             const liner = line()
                 .x(d => d.x)
                 .y(d => d.y)
-                .curve(curveCatmullRom.alpha(0.5))
+                .curve(curveCatmullRom.alpha(0.01))
 
             return liner(points)
         }
