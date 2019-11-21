@@ -1,0 +1,5 @@
+Name,CPUs,Memory,DataCenter
+Host1,4,64,DataCenter1
+Host2,4,64,DataCenter1
+Host3,4,128,DataCenter2
+Host4,16,64,DataCenter2

@@ -1,0 +1,3 @@
+Name,Broker,Location,PodCidr,ServiceCidr
+Cluster1,Broker1,East,10.95.0.0/16,10.245.0.0/16
+Cluster2,Broker1,West,10.96.0.0/16,10.246.0.0/16

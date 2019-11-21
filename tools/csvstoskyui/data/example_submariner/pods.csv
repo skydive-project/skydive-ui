@@ -1,0 +1,8 @@
+Name,Node,Rule,ipsec,vxlan
+0_nginx,Node11,nginx,0,0
+1_routeagent,Node11,routeagent,1,vxlan1
+2_gateway11,Node11,gateway,ipsec_VPN1,2
+3_gateway21,Node21,gateway,ipsec_VPN1,3
+4_routeagent,Node21,routeagent,4,vxlan2
+5_routeagent,Node22,routeagent,5,vxlan2
+6_Busybox,Node22,usybox,6,6
