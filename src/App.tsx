@@ -719,7 +719,14 @@ class App extends React.Component<Props, State> {
             </Paper>
           </Container>
           <Container className={classes.nodeTagsPanel}>
-            {Array.from(this.state.nodeTagStates.keys()).map((tag) => (
+            {Array.from(this.state.nodeTagStates.keys()).sort((a, b) => {
+              if (a === config.defaultNodeTag) {
+                return -1
+              } else if (b === config.defaultNodeTag) {
+                return 1
+              }
+              return 0
+            }).map((tag) => (
               <Fab key={tag} variant="extended" aria-label="delete" size="small"
                 color={this.state.nodeTagStates.get(tag) ? "primary" : "default"}
                 className={classes.nodeTagsFab}
