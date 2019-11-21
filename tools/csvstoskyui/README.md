@@ -1,4 +1,4 @@
-# skynet
+# csvtoskyui
 
 ## Tool to visualize topology from CSVs Using Modern Skydive UI
 - - - -
@@ -6,8 +6,9 @@
 ![](https://github.com/skydive-project/skydive-ui/blob/master/tools/csvstoskyui/images/readme_screenshot.jpg?raw=true)
 
 ### Data sources (examples) :
-- data/example_datacenter
-- data/example_submariner
+1. data/example_datacenter
+1. data/example_submariner
+1. data/example_scale
 
 ### Note: this project is using [Skydive UI](https://github.com/skydive-project/skydive-ui)
 
