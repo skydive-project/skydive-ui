@@ -710,7 +710,8 @@ class App extends React.Component<Props, State> {
             <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} linkAttrs={this.linkAttrs}
               onNodeSelected={this.onNodeSelected.bind(this)} sortNodesFnc={this.sortNodesFnc}
               onShowNodeContextMenu={this.onShowNodeContextMenu.bind(this)} weightTitles={this.weightTitles()}
-              groupBy={config.groupBy} onClick={this.onTopologyClick.bind(this)} onLinkSelected={this.onLinkSelected.bind(this)} />
+              groupBy={config.groupBy} groupSize={config.groupSize} onClick={this.onTopologyClick.bind(this)} 
+              onLinkSelected={this.onLinkSelected.bind(this)} />
           </Container>
           <Container className={classes.rightPanel}>
             <Paper className={clsx(classes.rightPanelPaper, (!this.props.selection.length || !this.state.isSelectionOpen) && classes.rightPanelPaperClose)}

@@ -176,6 +176,7 @@ var DefaultConfig = {
     nodeTabTitle: function (node: Node) {
         return node.data.Name.substring(0, 8)
     },
+    groupSize: 5,
     groupBy: function (node: Node) {
         return node.data.Type && node.data.Type !== "host" ? node.data.Type : null
     },
