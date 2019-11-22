@@ -86,17 +86,7 @@ class DataPanel extends React.Component<Props, State> {
     }
 
     private onExpandChange(event: object, expanded: boolean) {
-        if (expanded) {
-            this.setState(
-                {
-                    data: DataPanel.normalizeData(this.state.data, this.props.normalizer, this.props.graph, this.props.exclude, this.props.sortKeys),
-                    filterKeys:  DataPanel.normalizeFilterKeys(this.state.data, this.props.filterKeys),
-                    isExpanded: expanded
-                }
-            )
-        } else {
-            this.setState({ isExpanded: expanded })
-        }
+        this.setState({ isExpanded: expanded })
     }
 
     private onFilterReset() {
