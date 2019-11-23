@@ -157,13 +157,13 @@ var DefaultConfig = {
 
         return attrs
     },
-    nodeMenu: function(node: Node) {
+    nodeMenu: function (node: Node) {
         return [
             { class: "", text: "Capture", disabled: false, callback: () => { console.log("Capture") } },
             { class: "", text: "Capture all", disabled: true, callback: () => { console.log("Capture all") } },
             { class: "", text: "Injection", disabled: false, callback: () => { console.log("Injection") } },
             { class: "", text: "Flows", disabled: false, callback: () => { console.log("Flows") } }
-          ]
+        ]
     },
     nodeTags: function (data) {
         if (data.Manager && data.Manager === "k8s") {

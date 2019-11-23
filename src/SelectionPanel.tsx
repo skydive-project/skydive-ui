@@ -220,7 +220,10 @@ class SelectionPanel extends React.Component<Props, State> {
 
               if (entry.field) {
                 data = dataByPath(el.data, entry.field)
+              } else if (entry.data) {
+                data = entry.data(el)
               }
+
               exclude = this.dataFields(el).filter(cfg => cfg.field).map(cfg => {
                 if (entry.field) {
                   return cfg.field.replace(entry.field + ".", "")
@@ -234,8 +237,9 @@ class SelectionPanel extends React.Component<Props, State> {
                 var sortKeys = entry.sortKeys ? entry.sortKeys(data) : null
                 var filterKeys = entry.filterKeys ? entry.filterKeys(data) : null
 
+                var suffix = title.toLowerCase().replace(" ", "-")
                 return (
-                  <DataPanel key={"dataviewer-" + (entry.field || "general") + "-" + el.id} title={title}
+                  <DataPanel key={"dataviewer-" + el.id + "-" + suffix} title={title}
                     defaultExpanded={entry.expanded} data={data} exclude={exclude} sortKeys={sortKeys} filterKeys={filterKeys}
                     normalizer={entry.normalizer} graph={entry.graph} icon={entry.icon} iconClass={entry.iconClass} />
                 )
