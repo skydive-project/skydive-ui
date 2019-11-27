@@ -1,6 +1,19 @@
 import { Node, Link } from './Topology'
 import Tools from './Tools'
 
+const WEIGHT_NONE = 0
+const WEIGHT_FABRIC = 10
+const WEIGHT_PHYSICAL = 13
+const WEIGHT_BRIDGES = 14
+const WEIGHT_PORTS = 15
+const WEIGHT_VIRTUAL = 17
+const WEIGHT_NAMESPACES = 18
+const WEIGHT_VMS = 19
+const WEIGHT_K8S_FEDERATION = 100
+const WEIGHT_K8S_CLUSTER = 101
+const WEIGHT_K8S_NODE = 102
+const WEIGHT_K8S_POD = 103
+
 var DefaultConfig = {
     subTitle: "",
     filters: [
@@ -18,7 +31,7 @@ var DefaultConfig = {
         }
     ],
     defaultFilter: 'default',
-    nodeAttrs: function (node: Node) {
+    newAttrs: function (node: Node) {
         var name = node.data.Name
         if (name.length > 24) {
             name = node.data.Name.substring(0, 24) + "."
@@ -26,19 +39,114 @@ var DefaultConfig = {
 
         var attrs = { classes: [node.data.Type], name: name, icon: "\uf192", href: '', iconClass: '', weight: 0 }
 
-        if (node.data.OfPort) {
-            attrs.weight = 15
+        return attrs
+    },
+    nodeAttrsK8s: function (node: Node) {
+        var attrs = this.newAttrs(node)
+
+        switch (node.data.Type) {
+            case "cluster":
+                attrs.href = "assets/icons/cluster.png"
+                attrs.weight = WEIGHT_K8S_CLUSTER
+                break
+            case "configmap":
+                attrs.href = "assets/icons/configmap.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "container":
+                attrs.href = "assets/icons/container.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "cronjob":
+                attrs.href = "assets/icons/cronjob.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "daemonset":
+                attrs.href = "assets/icons/daemonset.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "deployment":
+                attrs.href = "assets/icons/deployment.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "endpoints":
+                attrs.href = "assets/icons/endpoints.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "ingress":
+                attrs.href = "assets/icons/ingress.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "job":
+                attrs.href = "assets/icons/job.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "node":
+                attrs.icon = "\uf109"
+                attrs.weight = WEIGHT_K8S_NODE
+                break
+            case "persistentvolume":
+                attrs.href = "assets/icons/persistentvolume.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "persistentvolumeclaim":
+                attrs.href = "assets/icons/persistentvolumeclaim.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "pod":
+                attrs.href = "assets/icons/pod.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "networkpolicy":
+                attrs.href = "assets/icons/networkpolicy.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "namespace":
+                attrs.icon = "\uf24d"
+                attrs.weight = WEIGHT_K8S_NODE
+                break
+            case "replicaset":
+                attrs.href = "assets/icons/replicaset.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "replicationcontroller":
+                attrs.href = "assets/icons/replicationcontroller.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "secret":
+                attrs.href = "assets/icons/secret.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "service":
+                attrs.href = "assets/icons/service.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "statefulset":
+                attrs.href = "assets/icons/statefulset.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
+            case "storageclass":
+                attrs.href = "assets/icons/storageclass.png"
+                attrs.weight = WEIGHT_K8S_NODE
+                break
+            default:
+                attrs.href = "assets/icons/k8s.png"
+                attrs.weight = WEIGHT_K8S_POD
         }
 
-        if (node.data.Manager === "k8s") {
-            attrs.href = "assets/icons/k8s.png"
-            attrs.weight = 1
+        return attrs
+    },
+    nodeAttrsInfra: function (node: Node) {
+        var attrs = this.newAttrs(node)
+
+        if (node.data.OfPort) {
+            attrs.weight = WEIGHT_PORTS
         }
 
         switch (node.data.Type) {
             case "host":
                 attrs.icon = "\uf109"
-                attrs.weight = 13
+                attrs.weight = WEIGHT_PHYSICAL
                 break
             case "switch":
                 attrs.icon = "\uf6ff"
@@ -46,7 +154,7 @@ var DefaultConfig = {
             case "bridge":
             case "ovsbridge":
                 attrs.icon = "\uf6ff"
-                attrs.weight = 14
+                attrs.weight = WEIGHT_BRIDGES
                 break
             case "erspan":
                 attrs.icon = "\uf1e0"
@@ -63,11 +171,11 @@ var DefaultConfig = {
             case "tun":
             case "tap":
                 attrs.icon = "\uf796"
-                attrs.weight = 17
+                attrs.weight = WEIGHT_VIRTUAL
                 break
             case "veth":
                 attrs.icon = "\uf4d7"
-                attrs.weight = 17
+                attrs.weight = WEIGHT_VIRTUAL
                 break
             case "switchport":
                 attrs.icon = "\uf0e8"
@@ -76,81 +184,15 @@ var DefaultConfig = {
             case "port":
             case "ovsport":
                 attrs.icon = "\uf0e8"
-                attrs.weight = 15
+                attrs.weight = WEIGHT_PORTS
                 break
             case "netns":
                 attrs.icon = "\uf24d"
-                attrs.weight = 18
+                attrs.weight = WEIGHT_NAMESPACES
                 break
             case "libvirt":
                 attrs.icon = "\uf109"
-                attrs.weight = 19
-                break
-            case "cluster":
-                attrs.href = "assets/icons/cluster.png"
-                break
-            case "configmap":
-                attrs.href = "assets/icons/configmap.png"
-                break
-            case "container":
-                attrs.href = "assets/icons/container.png"
-                break
-            case "cronjob":
-                attrs.href = "assets/icons/cronjob.png"
-                break
-            case "daemonset":
-                attrs.href = "assets/icons/daemonset.png"
-                break
-            case "deployment":
-                attrs.href = "assets/icons/deployment.png"
-                break
-            case "endpoints":
-                attrs.href = "assets/icons/endpoints.png"
-                break
-            case "ingress":
-                attrs.href = "assets/icons/ingress.png"
-                break
-            case "job":
-                attrs.href = "assets/icons/job.png"
-                break
-            case "node":
-                attrs.icon = "\uf109"
-                break
-            case "persistentvolume":
-                attrs.href = "assets/icons/persistentvolume.png"
-                break
-            case "persistentvolumeclaim":
-                attrs.href = "assets/icons/persistentvolumeclaim.png"
-                break
-            case "pod":
-                attrs.href = "assets/icons/pod.png"
-                break
-            case "networkpolicy":
-                attrs.href = "assets/icons/networkpolicy.png"
-                break
-            case "namespace":
-                attrs.icon = "\uf24d"
-                break
-            case "replicaset":
-                attrs.href = "assets/icons/replicaset.png"
-                break
-            case "replicationcontroller":
-                attrs.href = "assets/icons/replicationcontroller.png"
-                break
-            case "secret":
-                attrs.href = "assets/icons/secret.png"
-                break
-            case "service":
-                attrs.href = "assets/icons/service.png"
-                break
-            case "statefulset":
-                attrs.href = "assets/icons/statefulset.png"
-                break
-            case "storageclass":
-                attrs.href = "assets/icons/storageclass.png"
-                break
-            default:
-                attrs.icon = "\uf192"
+                attrs.weight = WEIGHT_VMS
                 break
         }
 
@@ -160,18 +202,26 @@ var DefaultConfig = {
         }
 
         if (node.data.IPV4 && node.data.IPV4.length) {
-            attrs.weight = 13
+            attrs.weight = WEIGHT_PHYSICAL
         }
 
         if (node.data.Driver && ["tap", "veth", "tun", "openvswitch"].indexOf(node.data.Driver) < 0) {
-            attrs.weight = 13
+            attrs.weight = WEIGHT_PHYSICAL
         }
 
         if (node.data.Probe === "fabric") {
-            attrs.weight = 10
+            attrs.weight = WEIGHT_FABRIC
         }
 
         return attrs
+    },
+    nodeAttrs: function (node: Node) {
+        switch (node.data.Manager) {
+            case "k8s":
+                return this.nodeAttrsK8s(node)
+            default:
+                return this.nodeAttrsInfra(node)
+        }
     },
     nodeSortFnc: function (a: Node, b: Node) {
         return a.data.Name.localeCompare(b.data.Name)
@@ -270,16 +320,21 @@ var DefaultConfig = {
 
         return nodeType + "(s)"
     },
-    weightTitles: {
-        0: "Not classified",
-        1: "Kubernetes",
-        10: "Fabric",
-        13: "Physical",
-        14: "Bridges",
-        15: "Ports",
-        17: "Virtual",
-        18: "Namespaces",
-        19: "VMs"
+    weightTitles: function() {
+        return {
+            [WEIGHT_NONE]: "Not classified",
+            [WEIGHT_FABRIC]: "Fabric",
+            [WEIGHT_PHYSICAL]: "Physical",
+            [WEIGHT_BRIDGES]: "Bridges",
+            [WEIGHT_PORTS]: "Ports",
+            [WEIGHT_VIRTUAL]: "Virtual",
+            [WEIGHT_NAMESPACES]: "Namespaces",
+            [WEIGHT_VMS]: "VMs",
+            [WEIGHT_K8S_FEDERATION]: "Federations",
+            [WEIGHT_K8S_CLUSTER]: "Clusters",
+            [WEIGHT_K8S_NODE]: "Nodes",
+            [WEIGHT_K8S_POD]: "Pods"
+        }
     },
     suggestions: [
         "data.IPV4",

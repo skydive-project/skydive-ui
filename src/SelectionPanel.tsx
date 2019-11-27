@@ -87,8 +87,8 @@ class SelectionPanel extends React.Component<Props, State> {
 
       if (el.type === 'node') {
         let attrs = this.props.config.nodeAttrs(el)
-        var icon = attrs.icon
-        var href = attrs.href
+        var icon: string = attrs.icon
+        var href: string = attrs.href
 
         if (attrs.iconClass === "font-brands") {
           className = classes.tabIconBrands
@@ -97,8 +97,8 @@ class SelectionPanel extends React.Component<Props, State> {
         var title = this.props.config.nodeTabTitle(el)
       } else {
         let attrs = this.props.config.linkAttrs(el)
-        var icon = attrs.icon
-        var href = attrs.href
+        var icon: string = attrs.icon
+        var href: string = attrs.href
 
         if (attrs.iconClass === "font-brands") {
           className = classes.tabIconBrands
