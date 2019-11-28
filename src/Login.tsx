@@ -59,7 +59,7 @@ class Login extends React.Component<Props, State> {
         super(props)
 
         this.state = {
-            endpoint: "",
+            endpoint: this.props.session.endpoint,
             username: "",
             password: "",
             submitted: false,
@@ -155,7 +155,7 @@ class Login extends React.Component<Props, State> {
                             name="endpoint"
                             autoComplete="endpoint"
                             autoFocus
-                            value={this.props.session.endpoint}
+                            value={this.state.endpoint}
                             onChange={this.handleChange.bind(this)}
                         />
                         {this.state.submitted && !this.state.endpoint &&
