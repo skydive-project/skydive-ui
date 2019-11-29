@@ -1,0 +1,9 @@
+Name,Host,Application
+VM1,Host1,Web
+VM2,Host1,Database
+VM3,Host2,Database
+VM4,Host2,Database
+VM5,Host3,Database
+VM6,Host4,Web
+VM7,Host4,Database
+
