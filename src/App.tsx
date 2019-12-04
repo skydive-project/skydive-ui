@@ -347,8 +347,8 @@ class App extends React.Component<Props, State> {
     return map
   }
 
-  sortNodesFnc(a, b) {
-    return a.data.Name.localeCompare(b.data.Name)
+  sortNodesFnc(a: Node, b: Node) {
+    return config.nodeSortFnc(a, b)
   }
 
   onShowNodeContextMenu(node: Node) {

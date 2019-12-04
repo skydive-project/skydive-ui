@@ -157,6 +157,9 @@ var DefaultConfig = {
 
         return attrs
     },
+    nodeSortFnc: function(a: Node, b: Node) {
+        return a.data.Name.localeCompare(b.data.Name)
+    },
     nodeMenu: function (node: Node) {
         return [
             { class: "", text: "Capture", disabled: false, callback: () => { console.log("Capture") } },
