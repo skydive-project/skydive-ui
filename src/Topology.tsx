@@ -214,6 +214,7 @@ export class Topology extends React.Component<Props, {}> {
     private groupStates: Map<string, NodeState>
     private nodeGroup: Map<string, NodeWrapper>
     private weights: Array<number>
+    private visibleLinksCache: Array<Link> | undefined
 
     root: Node
     nodes: Map<string, Node>
@@ -445,13 +446,16 @@ export class Topology extends React.Component<Props, {}> {
 
     setLinkTagState(tag: string, state: LinkTagState) {
         this.linkTagStates.set(tag, state)
+
+        // invalidate link cache
+        this.visibleLinksCache = undefined
+
         this.renderTree()
     }
 
     showNodeTag(tag: string, active: boolean) {
         this.nodeTagStates.set(tag, active)
-        this.invalidated = true
-        this.renderTree()
+        this.invalidate()
     }
 
     activeNodeTag(tag: string) {
@@ -459,7 +463,16 @@ export class Topology extends React.Component<Props, {}> {
             this.nodeTagStates.set(key, false)
         }
         this.nodeTagStates.set(tag, true)
+        this.invalidate()
+    }
+
+    private invalidate() {
+        // invalidate link cache
+        this.visibleLinksCache = undefined
+
+        // invalidate the whole topology
         this.invalidated = true
+
         this.renderTree()
     }
 
@@ -566,6 +579,9 @@ export class Topology extends React.Component<Props, {}> {
                 this.linkTagStates.set(tag, LinkTagState.EventBased)
             }
         })
+
+        // invalidate link cache
+        this.visibleLinksCache = undefined
     }
 
     updateLink(id: string, data: any): boolean {
@@ -575,6 +591,9 @@ export class Topology extends React.Component<Props, {}> {
 
             // just increase for now, do not use real revision number
             link.revision++
+
+            // invalidate link cache
+            this.visibleLinksCache = undefined
 
             return true
         }
@@ -814,6 +833,10 @@ export class Topology extends React.Component<Props, {}> {
             node.wrapped.state.expanded = true
         }
 
+        // invalidate link cache
+        this.visibleLinksCache = undefined
+
+        // invalidate the whole topology rendering
         this.invalidated = true
 
         this.renderTree()
@@ -836,8 +859,12 @@ export class Topology extends React.Component<Props, {}> {
         ]
     }
 
-    private visibleLinks() {
-        var links = Array<Link>()
+    private visibleLinks(): Array<Link> {
+        if (this.visibleLinksCache) {
+            return this.visibleLinksCache
+        }
+
+        var links = new Array<Link>()
 
         var findVisible = (node: Node | null) => {
             while (node) {
@@ -888,6 +915,9 @@ export class Topology extends React.Component<Props, {}> {
         })
 
         this.props.onLinkTagChange(tags)
+
+        // set the cache
+        this.visibleLinksCache = links
 
         return links
     }
