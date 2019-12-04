@@ -175,6 +175,7 @@ interface Props {
     groupBy?: (node: Node) => string
     groupSize?: number
     onLinkSelected: (link: Link, isSelected: boolean) => void
+    onLinkTagChange: (tags: Map<string, LinkTagState>) => void
 }
 
 /**
@@ -425,11 +426,10 @@ export class Topology extends React.Component<Props, {}> {
 
         this.nodes = new Map<string, Node>()
         this.nodeTagStates = new Map<string, boolean>()
+        this.nodeTagCount = new Map<string, number>()
 
         this.links = new Map<string, Link>()
         this.linkTagStates = new Map<string, LinkTagState>()
-
-        this.nodeTagCount = new Map<string, number>()
         this.linkTagCount = new Map<string, number>()
 
         this.levelRects = new Array<LevelRect>()
@@ -859,6 +859,9 @@ export class Topology extends React.Component<Props, {}> {
             }
         }
 
+        // clear present tags map
+        var tagPresent = new Map<string, boolean>()
+
         this.links.forEach((link: Link) => {
             if (!(link.tags.some(tag => this.linkTagStates.get(tag) !== LinkTagState.Hidden))) {
                 return
@@ -868,9 +871,23 @@ export class Topology extends React.Component<Props, {}> {
             var target = findVisible(link.target)
 
             if (source && target && source.id !== "root" && target.id !== "root" && source !== target) {
+                for (let tag of link.tags) {
+                    tagPresent.set(tag, true)
+                }
+
                 links.push(new Link(link.id, link.tags, source, target, link.data, link.state))
             }
         })
+
+        // build link tag present on the current topology view
+        var tags = new Map<string, LinkTagState>()
+        this.linkTagStates.forEach((v, k) => {
+            if (tagPresent.get(k)) {
+                tags.set(k, v)
+            }
+        })
+
+        this.props.onLinkTagChange(tags)
 
         return links
     }

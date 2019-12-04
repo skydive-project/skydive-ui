@@ -299,7 +299,7 @@ class App extends React.Component<Props, State> {
 
     this.tc.activeNodeTag(config.defaultNodeTag)
 
-    this.setState({ nodeTagStates: this.tc.nodeTagStates, linkTagStates: this.tc.linkTagStates })
+    this.setState({ nodeTagStates: this.tc.nodeTagStates })
 
     this.tc.zoomFit()
   }
@@ -495,7 +495,7 @@ class App extends React.Component<Props, State> {
     this.setState({ isNavOpen: false })
   }
 
-  onLayerLinkStateChange(event) {
+  onLinkTagStateChange(event) {
     if (!this.tc) {
       return
     }
@@ -511,8 +511,10 @@ class App extends React.Component<Props, State> {
         this.tc.setLinkTagState(event.target.value, LinkTagState.Hidden)
         break
     }
+  }
 
-    this.setState({ linkTagStates: this.tc.linkTagStates })
+  onLinkTagChange(tags: Map<string, LinkTagState>) {
+    this.setState({ linkTagStates: tags })
   }
 
   onSearchChange(selected: Array<string>) {
@@ -711,7 +713,8 @@ class App extends React.Component<Props, State> {
               onNodeSelected={this.onNodeSelected.bind(this)} sortNodesFnc={this.sortNodesFnc}
               onShowNodeContextMenu={this.onShowNodeContextMenu.bind(this)} weightTitles={this.weightTitles()}
               groupBy={config.groupBy} groupSize={config.groupSize} onClick={this.onTopologyClick.bind(this)}
-              onLinkSelected={this.onLinkSelected.bind(this)} />
+              onLinkSelected={this.onLinkSelected.bind(this)}
+              onLinkTagChange={this.onLinkTagChange.bind(this)} />
           </Container>
           <Container className={classes.rightPanel}>
             <Paper className={clsx(classes.rightPanelPaper, (!this.props.selection.length || !this.state.isSelectionOpen) && classes.rightPanelPaperClose)}
@@ -736,23 +739,25 @@ class App extends React.Component<Props, State> {
               </Fab>
             ))}
           </Container>
-          <Container className={classes.linkTagsPanel}>
-            <Paper className={classes.linkTagsPanelPaper}>
-              <Typography component="h6" color="primary" gutterBottom>
-                Link types
+          {this.state.linkTagStates.size !== 0 &&
+            <Container className={classes.linkTagsPanel}>
+              <Paper className={classes.linkTagsPanelPaper}>
+                <Typography component="h6" color="primary" gutterBottom>
+                  Link types
                 </Typography>
-              <FormGroup>
-                {Array.from(this.state.linkTagStates.keys()).map((key) => (
-                  <FormControlLabel key={key} control={
-                    <Checkbox value={key} color="primary" onChange={this.onLayerLinkStateChange.bind(this)}
-                      checked={this.state.linkTagStates.get(key) === LinkTagState.Visible}
-                      indeterminate={this.state.linkTagStates.get(key) === LinkTagState.EventBased} />
-                  }
-                    label={key} />
-                ))}
-              </FormGroup>
-            </Paper>
-          </Container>
+                <FormGroup>
+                  {Array.from(this.state.linkTagStates.keys()).map((key) => (
+                    <FormControlLabel key={key} control={
+                      <Checkbox value={key} color="primary" onChange={this.onLinkTagStateChange.bind(this)}
+                        checked={this.state.linkTagStates.get(key) === LinkTagState.Visible}
+                        indeterminate={this.state.linkTagStates.get(key) === LinkTagState.EventBased} />
+                    }
+                      label={key} />
+                  ))}
+                </FormGroup>
+              </Paper>
+            </Container>
+          }
         </main>
       </div>
     )
