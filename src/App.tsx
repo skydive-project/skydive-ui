@@ -126,10 +126,6 @@ class App extends React.Component<Props, State> {
   }
 
   componentDidMount() {
-    this.checkAuthID = window.setInterval(() => {
-      this.checkAuth()
-    }, 2000)
-
     if (this.staticDataURL) {
       fetch(this.staticDataURL).then(resp => {
         if (resp.status === 200) {
@@ -143,6 +139,10 @@ class App extends React.Component<Props, State> {
           this.notify("Unable to load or parse topology data", "error")
         }
       })
+    } else {
+      this.checkAuthID = window.setInterval(() => {
+        this.checkAuth()
+      }, 2000)
     }
   }
 
@@ -612,8 +612,8 @@ class App extends React.Component<Props, State> {
     return (
       <div className={classes.app}>
         <CssBaseline />
-        {!this.staticDataURL &&
-          <Websocket ref={node => this.websocket = node} url={this.subscriberURL()} onOpen={this.onWebSocketOpen.bind(this)}
+        {this.staticDataURL === "" &&
+          < Websocket ref={node => this.websocket = node} url={this.subscriberURL()} onOpen={this.onWebSocketOpen.bind(this)}
             onMessage={this.onWebSocketMessage.bind(this)} onClose={this.onWebSocketClose.bind(this)}
             reconnectIntervalInMilliSeconds={2500} />
         }
@@ -710,7 +710,7 @@ class App extends React.Component<Props, State> {
             <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} linkAttrs={this.linkAttrs}
               onNodeSelected={this.onNodeSelected.bind(this)} sortNodesFnc={this.sortNodesFnc}
               onShowNodeContextMenu={this.onShowNodeContextMenu.bind(this)} weightTitles={this.weightTitles()}
-              groupBy={config.groupBy} groupSize={config.groupSize} onClick={this.onTopologyClick.bind(this)} 
+              groupBy={config.groupBy} groupSize={config.groupSize} onClick={this.onTopologyClick.bind(this)}
               onLinkSelected={this.onLinkSelected.bind(this)} />
           </Container>
           <Container className={classes.rightPanel}>
