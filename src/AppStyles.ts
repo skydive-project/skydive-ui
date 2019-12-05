@@ -72,6 +72,10 @@ export const styles = (theme: Theme) => createStyles({
       display: 'block',
     },
   },
+  subTitle: {
+    fontStyle: 'italic',
+    color: '#ddd'
+  },
   drawerPaper: {
     position: 'relative',
     whiteSpace: 'nowrap',

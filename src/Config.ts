@@ -2,6 +2,7 @@ import { Node, Link } from './Topology'
 import Tools from './Tools'
 
 var DefaultConfig = {
+    subTitle: "",
     nodeAttrs: function (node: Node) {
         var name = node.data.Name
         if (name.length > 24) {

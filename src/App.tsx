@@ -58,6 +58,7 @@ import './App.css'
 import Logo from '../assets/Logo.png'
 
 const queryString = require('query-string')
+const fetchJsonp = require('fetch-jsonp')
 
 // merge default config and the one from assets
 declare var config: typeof DefaultConfig
@@ -127,18 +128,23 @@ class App extends React.Component<Props, State> {
 
   componentDidMount() {
     if (this.staticDataURL) {
-      fetch(this.staticDataURL).then(resp => {
-        if (resp.status === 200) {
-          return resp.json().then(data => {
-            if (!Array.isArray(data)) {
-              throw "topology schema error"
-            }
-            this.parseTopology(data[0])
-          })
-        } else {
-          this.notify("Unable to load or parse topology data", "error")
-        }
+      var fetcher = fetch(this.staticDataURL)
+      if (this.staticDataURL.startsWith("http")) {
+        fetcher = fetchJsonp(this.staticDataURL, {
+          jsonpCallbackFunction: 'jsonp_callback'
+        })
+      }
+      fetcher.then(resp => {
+        return resp.json().then(data => {
+          if (!Array.isArray(data)) {
+            throw "topology schema error"
+          }
+          this.parseTopology(data[0])
+        })
       })
+        .catch(() => {
+          this.notify("Unable to load or parse topology data", "error")
+        })
     } else {
       this.checkAuthID = window.setInterval(() => {
         this.checkAuth()
@@ -632,6 +638,9 @@ class App extends React.Component<Props, State> {
             <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
               <img src={Logo} alt="logo" />
             </Typography>
+            {config.subTitle &&
+              <Typography className={classes.subTitle} variant="caption">{config.subTitle}</Typography>
+            }
             <div className={classes.search}>
               <AutoCompleteInput placeholder="metadata value" suggestions={this.state.suggestions} onChange={this.onSearchChange.bind(this)} />
             </div>
