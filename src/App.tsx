@@ -120,6 +120,8 @@ class App extends React.Component<Props, State> {
     // we will refresh info each 1s
     this.bumpRevision = debounce(this.props.bumpRevision.bind(this), 1000)
 
+    this.staticDataURL = ""
+
     const parsed = queryString.parse(props.location.search)
     if (parsed.data) {
       this.staticDataURL = parsed.data
@@ -621,7 +623,7 @@ class App extends React.Component<Props, State> {
       <div className={classes.app}>
         <CssBaseline />
         {this.staticDataURL === "" &&
-          < Websocket ref={node => this.websocket = node} url={this.subscriberURL()} onOpen={this.onWebSocketOpen.bind(this)}
+          <Websocket ref={node => this.websocket = node} url={this.subscriberURL()} onOpen={this.onWebSocketOpen.bind(this)}
             onMessage={this.onWebSocketMessage.bind(this)} onClose={this.onWebSocketClose.bind(this)}
             reconnectIntervalInMilliSeconds={2500} />
         }

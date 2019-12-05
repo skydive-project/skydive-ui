@@ -5,6 +5,11 @@ Not all the features of the legacy version are implemented yet.
 
 ![](https://raw.githubusercontent.com/skydive-project/skydive-ui/master/screenshot.png)
 
+## Live demo
+
+* [1 TOR, 2 hosts, 2 namespace per host topology](https://skydive-project.github.io/skydive-ui/?data=/skydive-ui/assets/simple.json)
+* [Minikube topology](https://skydive-project.github.io/skydive-ui/?data=/skydive-ui/assets/kubernetes.json)
+
 ## Quick start
 
 A docker image is available with the latest version. Please note that this image

@@ -60,7 +60,7 @@ ReactDOM.render(
         <Switch>
           <PrivateRoute path="/" component={App} exact />
           <Route path="/login" component={Login} />
-          <Redirect from="*" to="/" />
+          <Redirect from="*" to={"/" + history.location.search} />
         </Switch>
       </Router>
     </SnackbarProvider>
