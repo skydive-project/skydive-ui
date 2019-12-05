@@ -8,7 +8,7 @@ The content of topologyrules.conf file includes a python dictionary with the fol
 
 filename    - The name of the file to read the csv information from
               example: "netbox/netbox_sites.csv"
-show        - Boolean that enables or disable usage of this csv source
+show        - Boolean that enables or disables usage of this csv source
               example: False --> will result in skipping this csv source  
 valuesmappingcopy - dictionary of csv values to copy from csv to json
               example: {"group_name": "Name"} --> Copy csv values from column 'group_name' to be called 'Name' in json 
@@ -19,6 +19,7 @@ edges        - Create edges between nodes (list of edges)
               an edge from every entry in csv having 'site' field that is equal to field 'name' in the csv source
               'site' and set RelationType of the edge to be ownership (Note: can be list of fields to compare as needed)
 """
+
 
 ## build nodes
 def buildNodes(netboxtopologyfiles):
@@ -31,7 +32,7 @@ def buildNodes(netboxtopologyfiles):
         csv_reader = csv.DictReader(open(netboxtopologyfiles[key]["filename"]))
         for idx, raw in enumerate(csv_reader):
             jsondump = {"Metadata": raw,
-                        "ID": (key + "-" + str(idx)).encode("hex"),
+                        "ID": (key + "-" + str(idx)),
                         "Origin": "SoftLayer"}
             jsondump["Metadata"].update({"Type": key})
             if "valuesfilter" in netboxtopologyfiles[key]:
@@ -53,7 +54,7 @@ def buildNodes(netboxtopologyfiles):
 
 
 ## build edges
-def buildEdges(netboxtopologyfiles,jsonnodes):
+def buildEdges(netboxtopologyfiles, jsonnodes):
     jsonedges = []
     for key in netboxtopologyfiles:
         jsontopology = []
@@ -79,18 +80,22 @@ def buildEdges(netboxtopologyfiles,jsonnodes):
                             match = True
                             for idx, fromvalue in enumerate(fromvalues):
                                 tovalue = tovalues[idx]
-                                if tovalue not in dst["Metadata"] or fromvalue not in src["Metadata"] or dst["Metadata"][
-                                    tovalue] != \
+                                if tovalue not in dst["Metadata"] or fromvalue not in src["Metadata"] or \
+                                        dst["Metadata"][
+                                            tovalue] != \
                                         src["Metadata"][fromvalue]:
                                     match = False
                             if match:
                                 jsondump = {"Metadata": {"RelationType": relationType},
-                                            "ID": (str("Edge-" + dst["ID"] + src["ID"] + fromtype + totype)).encode("hex"),
+                                            "ID": (str(
+                                                "Edge-" + "(" + fromtype + ")" + src["ID"] + "-(" + totype + ")" +
+                                                dst["ID"]+"["+relationType+"]")),
                                             "Parent": dst["ID"],
                                             "Child": src["ID"],
                                             "Origin": "SoftLayer"}
                                 jsonedges.append(jsondump)
     return jsonedges
+
 
 def readconfiguration(topologyrulesfile):
     dict = eval(topologyrulesfile.read())
@@ -108,9 +113,10 @@ def main():
 
     topologyrules = readconfiguration(args.topologyrulesfile)
     jsonnodes = buildNodes(topologyrules)
-    jsonedges = buildEdges(topologyrules,jsonnodes)
+    jsonedges = buildEdges(topologyrules, jsonnodes)
     skydiveuijson = [{"Nodes": jsonnodes, "Edges": jsonedges}]
     print json.dumps(skydiveuijson, indent=4, sort_keys=True)
+
 
 """
 Example (minimal) for format of output json to be used by Skydive
