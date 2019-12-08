@@ -60,6 +60,11 @@ import Logo from '../assets/Logo.png'
 const queryString = require('query-string')
 const fetchJsonp = require('fetch-jsonp')
 
+// expose app ouside
+declare global {
+  interface Window { App: any }
+}
+
 // merge default config and the one from assets
 declare var config: typeof DefaultConfig
 config = { ...DefaultConfig, ...config }
@@ -152,6 +157,9 @@ class App extends React.Component<Props, State> {
         this.checkAuth()
       }, 2000)
     }
+
+    // make the application available globally
+    window.App = this
   }
 
   componentWillUnmount() {
