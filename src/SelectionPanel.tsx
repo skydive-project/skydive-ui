@@ -85,28 +85,30 @@ class SelectionPanel extends React.Component<Props, State> {
       var className = classes.tabIconFree
 
       if (el.type === 'node') {
-        if (config.nodeAttrs(el).iconClass === "font-brands") {
+        var attrs = config.nodeAttrs(el)
+
+        if (attrs.iconClass === "font-brands") {
           className = classes.tabIconBrands
         }
 
-        var icon = config.nodeAttrs(el).icon
         var title = config.nodeTabTitle(el)
       } else {
-        if (config.linkAttrs(el).iconClass === "font-brands") {
+        var attrs = config.linkAttrs(el)
+
+        if (attrs.iconClass === "font-brands") {
           className = classes.tabIconBrands
         }
 
-        var icon = config.linkAttrs(el).icon
         var title = config.linkTabTitle(el)
       }
 
       const iconRender = () => {
-        if (icon.startsWith("/") || icon.startsWith("http") || icon.startsWith("data:")) {
+        if (attrs.href) {
           return (
-            <img src={icon} className={classes.iconImg} />
+            <img src={attrs.href} className={classes.iconImg} />
           )
         }
-        return icon
+        return attrs.icon
       }
 
       return (

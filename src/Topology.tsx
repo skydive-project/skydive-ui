@@ -156,6 +156,7 @@ export interface NodeAttrs {
     classes: Array<string>
     icon: string
     iconClass: string
+    href: string
 }
 
 export interface LinkAttrs {
@@ -1978,8 +1979,10 @@ export class Topology extends React.Component<Props, {}> {
             .attr("d", (d: D3Node) => this.liner(this.hexagon(d, hexSize)))
 
         const isImgIcon = (d: D3Node): boolean => {
-            var icon = this.props.nodeAttrs(d.data.wrapped).icon
-            return icon.startsWith("/") || icon.startsWith("http") || icon.startsWith("data:")
+            if (this.props.nodeAttrs(d.data.wrapped).href) {
+                return true
+            }
+            return false
         }
 
         nodeEnter.filter((d: D3Node) => !isImgIcon(d))
@@ -1994,7 +1997,7 @@ export class Topology extends React.Component<Props, {}> {
             .attr("transform", "translate(-16,-16)")
             .attr("width", 32)
             .attr("heigh", 32)
-            .attr("xlink:href", (d: D3Node) => this.props.nodeAttrs(d.data.wrapped).icon)
+            .attr("xlink:href", (d: D3Node) => this.props.nodeAttrs(d.data.wrapped).href)
 
         var wrapText = (text, lineHeight, width) => {
             text.each(function () {

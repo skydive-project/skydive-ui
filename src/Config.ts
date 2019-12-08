@@ -9,14 +9,14 @@ var DefaultConfig = {
             name = node.data.Name.substring(0, 24) + "."
         }
 
-        var attrs = { classes: [node.data.Type], name: name, icon: "\uf192", iconClass: '', weight: 0 }
+        var attrs = { classes: [node.data.Type], name: name, icon: "\uf192", href: '', iconClass: '', weight: 0 }
 
         if (node.data.OfPort) {
             attrs.weight = 15
         }
 
         if (node.data.Manager === "k8s") {
-            attrs.icon = "/assets/icons/k8s.png"
+            attrs.href = "assets/icons/k8s.png"
             attrs.weight = 1
         }
 
@@ -72,67 +72,67 @@ var DefaultConfig = {
                 attrs.weight = 19
                 break
             case "cluster":
-                attrs.icon = "/assets/icons/cluster.png"
+                attrs.href = "assets/icons/cluster.png"
                 break
             case "configmap":
-                attrs.icon = "/assets/icons/configmap.png"
+                attrs.href = "assets/icons/configmap.png"
                 break
             case "container":
-                attrs.icon = "/assets/icons/container.png"
+                attrs.href = "assets/icons/container.png"
                 break
             case "cronjob":
-                attrs.icon = "/assets/icons/cronjob.png"
+                attrs.href = "assets/icons/cronjob.png"
                 break
             case "daemonset":
-                attrs.icon = "/assets/icons/daemonset.png"
+                attrs.href = "assets/icons/daemonset.png"
                 break
             case "deployment":
-                attrs.icon = "/assets/icons/deployment.png"
+                attrs.href = "assets/icons/deployment.png"
                 break
             case "endpoints":
-                attrs.icon = "/assets/icons/endpoints.png"
+                attrs.href = "assets/icons/endpoints.png"
                 break
             case "ingress":
-                attrs.icon = "/assets/icons/ingress.png"
+                attrs.href = "assets/icons/ingress.png"
                 break
             case "job":
-                attrs.icon = "/assets/icons/job.png"
+                attrs.href = "assets/icons/job.png"
                 break
             case "node":
                 attrs.icon = "\uf109"
                 break
             case "persistentvolume":
-                attrs.icon = "/assets/icons/persistentvolume.png"
+                attrs.href = "assets/icons/persistentvolume.png"
                 break
             case "persistentvolumeclaim":
-                attrs.icon = "/assets/icons/persistentvolumeclaim.png"
+                attrs.href = "assets/icons/persistentvolumeclaim.png"
                 break
             case "pod":
-                attrs.icon = "/assets/icons/pod.png"
+                attrs.href = "assets/icons/pod.png"
                 break
             case "networkpolicy":
-                attrs.icon = "/assets/icons/networkpolicy.png"
+                attrs.href = "assets/icons/networkpolicy.png"
                 break
             case "namespace":
                 attrs.icon = "\uf24d"
                 break
             case "replicaset":
-                attrs.icon = "/assets/icons/replicaset.png"
+                attrs.href = "assets/icons/replicaset.png"
                 break
             case "replicationcontroller":
-                attrs.icon = "/assets/icons/replicationcontroller.png"
+                attrs.href = "assets/icons/replicationcontroller.png"
                 break
             case "secret":
-                attrs.icon = "/assets/icons/secret.png"
+                attrs.href = "assets/icons/secret.png"
                 break
             case "service":
-                attrs.icon = "/assets/icons/service.png"
+                attrs.href = "assets/icons/service.png"
                 break
             case "statefulset":
-                attrs.icon = "/assets/icons/statefulset.png"
+                attrs.href = "assets/icons/statefulset.png"
                 break
             case "storageclass":
-                attrs.icon = "/assets/icons/storageclass.png"
+                attrs.href = "assets/icons/storageclass.png"
                 break
             default:
                 attrs.icon = "\uf192"
