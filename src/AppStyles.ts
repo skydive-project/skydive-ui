@@ -129,6 +129,9 @@ export const styles = (theme: Theme) => createStyles({
     display: 'flex',
     flexDirection: 'column',
     width: 600,
+    [theme.breakpoints.down('xl')]: {
+      width: 500
+    },
     height: `100%`,
     transition: theme.transitions.create('width', {
       easing: theme.transitions.easing.sharp,
