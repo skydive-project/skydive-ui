@@ -53,10 +53,11 @@ class CaptureForm extends React.Component<Props, State> {
     }
 
     onClick() {
+        // TODO use token instead of hard coded values
         var conf = new Configuration({ username: "admin", password: "password" })
         var api = new CapturesApi(conf)
 
-        api.createCapture({GremlinQuery: this.props.gremlinExpr}).then(result => {
+        api.createCapture({ GremlinQuery: this.props.gremlinExpr }).then(result => {
             console.log(result)
         })
     }

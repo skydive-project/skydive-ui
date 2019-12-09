@@ -53,6 +53,8 @@ import AutoCompleteInput from './AutoComplete'
 import { AppState, selectElement, unselectElement, bumpRevision, session, closeSession } from './Store'
 import SelectionPanel from './SelectionPanel'
 import DefaultConfig from './Config'
+import { Configuration } from './api/configuration'
+import * as api from './api/api'
 
 import './App.css'
 import Logo from '../assets/Logo.png'
@@ -62,8 +64,12 @@ const fetchJsonp = require('fetch-jsonp')
 
 // expose app ouside
 declare global {
-  interface Window { App: any }
+  interface Window {
+    API: any,
+    App: any
+  }
 }
+window.API = api
 
 // merge default config and the one from assets
 declare var config: typeof DefaultConfig
@@ -102,6 +108,7 @@ class App extends React.Component<Props, State> {
   bumpRevision: typeof bumpRevision
   checkAuthID: number
   staticDataURL: string
+  apiConf: Configuration
 
   constructor(props) {
     super(props)
@@ -490,6 +497,9 @@ class App extends React.Component<Props, State> {
     this.tc.resetTree()
     this.sync()
     this.notify("Synchronized", "info")
+
+    // set API configuration
+    this.apiConf = new Configuration({ accessToken: this.props.session.token })
   }
 
   notify(msg, variant) {

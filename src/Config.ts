@@ -158,12 +158,19 @@ var DefaultConfig = {
 
         return attrs
     },
-    nodeSortFnc: function(a: Node, b: Node) {
+    nodeSortFnc: function (a: Node, b: Node) {
         return a.data.Name.localeCompare(b.data.Name)
     },
     nodeMenu: function (node: Node) {
         return [
-            { class: "", text: "Capture", disabled: false, callback: () => { console.log("Capture") } },
+            {
+                class: "", text: "Capture", disabled: false, callback: () => {
+                    var api = new window.API.CapturesApi(window.App.apiConf)
+                    api.createCapture({ GremlinQuery: `G.V('${node.id}')` }).then(result => {
+                        console.log(result)
+                    })
+                }
+            },
             { class: "", text: "Capture all", disabled: true, callback: () => { console.log("Capture all") } },
             { class: "", text: "Injection", disabled: false, callback: () => { console.log("Injection") } },
             { class: "", text: "Flows", disabled: false, callback: () => { console.log("Flows") } }
