@@ -173,7 +173,9 @@ interface Props {
     nodeAttrs: (node: Node) => NodeAttrs
     linkAttrs: (link: Link) => LinkAttrs
     weightTitles?: Map<number, string>
-    groupBy?: (node: Node) => string
+    groupType?: (child: Node) => string
+    groupName?: (child: Node) => string
+    groupGID?: (node: Node, child: Node) => string
     groupSize?: number
     onLinkSelected: (link: Link, isSelected: boolean) => void
     onLinkTagChange: (tags: Map<string, LinkTagState>) => void
@@ -619,34 +621,25 @@ export class Topology extends React.Component<Props, {}> {
         }
     }
 
-    // group nodes using groupBy and groupSize
+    // group nodes
     private groupify(node: NodeWrapper): Map<string, NodeWrapper> {
         var groups = new Map<string, NodeWrapper>()
 
-        if (!this.props.groupBy) {
-            return groups
-        }
-
         // dispatch node per groups
         node.children.forEach(child => {
-            var field = child.wrapped.data.Type
-            if (!field) {
+            var nodeType = this.props.groupType!(child.wrapped)
+            if (!nodeType) {
                 return
             }
 
-            var weight = child.wrapped.getWeight()
-
-            // group only nodes being at the same level, meaning weight
-            var gid = node.id + "_" + field + "_" + weight
-
-            var name = field + '(s)'
-
+            var gid = this.props.groupGID!(node.wrapped, child.wrapped)
             var wrapper = groups.get(gid)
             if (!wrapper) {
                 var state = this.groupStates.get(gid) || { expanded: false, selected: false, mouseover: false, groupOffset: 0, groupFullSize: false }
                 this.groupStates.set(gid, state)
 
-                var wrapped = new Node(gid, [], { Name: name, "Type": field }, state, () => { return child.wrapped.getWeight() })
+                var name = this.props.groupName!(child.wrapped)
+                var wrapped = new Node(gid, [], { Name: name, "Type": nodeType }, state, () => { return child.wrapped.getWeight() })
                 wrapper = new NodeWrapper(gid, WrapperType.Group, wrapped, node)
             }
 
@@ -666,19 +659,20 @@ export class Topology extends React.Component<Props, {}> {
 
         var children = new Array<NodeWrapper>()
         node.children.forEach(child => {
-            var field = child.wrapped.data.Type
-            if (!field) {
+            var nodeType = child.wrapped.data.Type
+            if (!nodeType) {
                 children.push(child)
                 return
             }
 
-            var gid = node.id + "_" + field + "_" + child.wrapped.getWeight()
+            var gid = this.props.groupGID!(node.wrapped, child.wrapped)
             if (pushed.has(gid)) {
                 return
             }
 
             var wrapper = groups.get(gid)
-            if (wrapper && wrapper.wrapped.children.length > 5) {
+            var groupSize = this.props.groupSize || defaultGroupSize
+            if (wrapper && wrapper.wrapped.children.length > groupSize) {
                 children.push(wrapper)
                 if (wrapper.wrapped.state.expanded) {
                     if (wrapper.wrapped.state.groupFullSize) {

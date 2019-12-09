@@ -181,8 +181,70 @@ var DefaultConfig = {
         return node.data.Name.substring(0, 8)
     },
     groupSize: 5,
-    groupBy: function (node: Node) {
-        return node.data.Type && node.data.Type !== "host" ? node.data.Type : null
+    groupType: function (child: Node) {
+        var nodeType = child.data.Type
+        if (!nodeType) {
+            return nodeType
+        }
+
+        switch (nodeType) {
+            case "configmap":
+            case "cronjob":
+            case "daemonset":
+            case "deployment":
+            case "endpoints":
+            case "ingress":
+            case "job":
+            case "persistentvolume":
+            case "persistentvolumeclaim":
+            case "pod":
+            case "networkpolicy":
+            case "replicaset":
+            case "replicationcontroller":
+            case "secret":
+            case "service":
+            case "statefulset":
+                return "app"
+            default:
+                return nodeType
+        }
+    },
+    groupGID: function (node: Node, child: Node) {
+        var gid = node.id
+
+        // group only nodes of same type
+        var nodeType = this.groupType(node)
+        gid += "_" + nodeType
+
+        // group only nodes being at the same level, meaning weight
+        var weight = child.getWeight()
+        gid += "_" + weight
+
+        // group only nodes with the same gorup name
+        var name = this.groupName(child)
+        gid += "_" + name
+
+        return gid
+    },
+    groupName: function (child: Node) {
+        var nodeType = this.groupType(child)
+        if (!nodeType) {
+            return !nodeType
+        }
+        if (nodeType != "app") {
+            return nodeType + "(s)"
+        }
+
+        var labels = child.data.K8s.Labels
+        if (!labels) {
+            return name
+        }
+
+        var app = labels["k8s-app"] || labels["app"]
+        if (!app) {
+            return "default"
+        }
+        return app
     },
     weightTitles: {
         0: "Not classified",
