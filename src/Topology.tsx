@@ -627,19 +627,25 @@ export class Topology extends React.Component<Props, {}> {
 
         // dispatch node per groups
         node.children.forEach(child => {
-            var nodeType = this.props.groupType!(child.wrapped)
+            var nodeType = this.props.groupType ? this.props.groupType(child.wrapped) : child.wrapped.data.Type
             if (!nodeType) {
                 return
             }
 
-            var gid = this.props.groupGID!(node.wrapped, child.wrapped)
+            if (this.props.groupGID) {
+                var gid = this.props.groupGID!(node.wrapped, child.wrapped)
+            } else {
+                var gid = node.id + "_" + nodeType + "_" + child.wrapped.getWeight()
+            }
+
             var wrapper = groups.get(gid)
             if (!wrapper) {
                 var state = this.groupStates.get(gid) || { expanded: false, selected: false, mouseover: false, groupOffset: 0, groupFullSize: false }
                 this.groupStates.set(gid, state)
 
-                var name = this.props.groupName!(child.wrapped)
-                var wrapped = new Node(gid, [], { Name: name, "Type": nodeType }, state, () => { return child.wrapped.getWeight() })
+                var name = this.props.groupName ? this.props.groupName(child.wrapped) : nodeType + '(s)'
+
+                var wrapped = new Node(gid, [], { Name: name, Type: nodeType }, state, () => { return child.wrapped.getWeight() })
                 wrapper = new NodeWrapper(gid, WrapperType.Group, wrapped, node)
             }
 
@@ -679,7 +685,7 @@ export class Topology extends React.Component<Props, {}> {
                         children = children.concat(wrapper.children)
                     } else {
                         children = children.concat(
-                            wrapper.children.splice(wrapper.wrapped.state.groupOffset, this.props.groupSize || defaultGroupSize)
+                            wrapper.children.splice(wrapper.wrapped.state.groupOffset, groupSize)
                         )
                     }
                 }

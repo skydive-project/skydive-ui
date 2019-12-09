@@ -213,7 +213,7 @@ var DefaultConfig = {
         var gid = node.id
 
         // group only nodes of same type
-        var nodeType = this.groupType(node)
+        var nodeType = DefaultConfig.groupType(node)
         gid += "_" + nodeType
 
         // group only nodes being at the same level, meaning weight
@@ -221,13 +221,13 @@ var DefaultConfig = {
         gid += "_" + weight
 
         // group only nodes with the same gorup name
-        var name = this.groupName(child)
+        var name = DefaultConfig.groupName(child)
         gid += "_" + name
 
         return gid
     },
     groupName: function (child: Node) {
-        var nodeType = this.groupType(child)
+        var nodeType = DefaultConfig.groupType(child)
         if (!nodeType) {
             return !nodeType
         }

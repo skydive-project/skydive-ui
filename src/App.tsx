@@ -736,6 +736,7 @@ class App extends React.Component<Props, State> {
               groupSize={config.groupSize}
               groupType={config.groupType}
               groupGID={config.groupGID}
+              groupName={config.groupName}
               onClick={this.onTopologyClick.bind(this)}
               onLinkSelected={this.onLinkSelected.bind(this)}
               onLinkTagChange={this.onLinkTagChange.bind(this)} />
