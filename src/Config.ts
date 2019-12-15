@@ -238,20 +238,21 @@ var DefaultConfig = {
         if (!nodeType) {
             return !nodeType
         }
-        if (nodeType != "app") {
-            return nodeType + "(s)"
+
+        if (child.data.K8s) {
+            var labels = child.data.K8s.Labels
+            if (!labels) {
+                return name
+            }
+
+            var app = labels["k8s-app"] || labels["app"]
+            if (!app) {
+                return "default"
+            }
+            return app
         }
 
-        var labels = child.data.K8s.Labels
-        if (!labels) {
-            return name
-        }
-
-        var app = labels["k8s-app"] || labels["app"]
-        if (!app) {
-            return "default"
-        }
-        return app
+        return nodeType + "(s)"
     },
     weightTitles: {
         0: "Not classified",
