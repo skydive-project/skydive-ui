@@ -1,4 +1,3 @@
-jsonp_callback(
 [
 	{
 		"Nodes": [
@@ -7273,4 +7272,4 @@ jsonp_callback(
 			}
 		]
 	}
-]);
+]
