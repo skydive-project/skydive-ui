@@ -1,0 +1,318 @@
+[
+    {
+        "Edges": [
+            {
+                "Child": "host-0", 
+                "ID": "Edge-host-host-0-data_center-data_center-0-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "data_center-0"
+            }, 
+            {
+                "Child": "host-1", 
+                "ID": "Edge-host-host-1-data_center-data_center-0-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "data_center-0"
+            }, 
+            {
+                "Child": "host-2", 
+                "ID": "Edge-host-host-2-data_center-data_center-1-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "data_center-1"
+            }, 
+            {
+                "Child": "host-3", 
+                "ID": "Edge-host-host-3-data_center-data_center-1-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "data_center-1"
+            }, 
+            {
+                "Child": "vm-0", 
+                "ID": "Edge-vm-vm-0-host-host-0-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "host-0"
+            }, 
+            {
+                "Child": "vm-1", 
+                "ID": "Edge-vm-vm-1-host-host-0-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "host-0"
+            }, 
+            {
+                "Child": "vm-2", 
+                "ID": "Edge-vm-vm-2-host-host-1-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "host-1"
+            }, 
+            {
+                "Child": "vm-3", 
+                "ID": "Edge-vm-vm-3-host-host-1-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "host-1"
+            }, 
+            {
+                "Child": "vm-4", 
+                "ID": "Edge-vm-vm-4-host-host-2-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "host-2"
+            }, 
+            {
+                "Child": "vm-5", 
+                "ID": "Edge-vm-vm-5-host-host-3-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "host-3"
+            }, 
+            {
+                "Child": "vm-6", 
+                "ID": "Edge-vm-vm-6-host-host-3-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "host-3"
+            }, 
+            {
+                "Child": "vm-0", 
+                "ID": "Edge-vm-vm-0-application-application-1-application", 
+                "Metadata": {
+                    "RelationType": "application"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "application-1"
+            }, 
+            {
+                "Child": "vm-1", 
+                "ID": "Edge-vm-vm-1-application-application-0-application", 
+                "Metadata": {
+                    "RelationType": "application"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "application-0"
+            }, 
+            {
+                "Child": "vm-2", 
+                "ID": "Edge-vm-vm-2-application-application-0-application", 
+                "Metadata": {
+                    "RelationType": "application"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "application-0"
+            }, 
+            {
+                "Child": "vm-3", 
+                "ID": "Edge-vm-vm-3-application-application-0-application", 
+                "Metadata": {
+                    "RelationType": "application"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "application-0"
+            }, 
+            {
+                "Child": "vm-4", 
+                "ID": "Edge-vm-vm-4-application-application-0-application", 
+                "Metadata": {
+                    "RelationType": "application"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "application-0"
+            }, 
+            {
+                "Child": "vm-5", 
+                "ID": "Edge-vm-vm-5-application-application-1-application", 
+                "Metadata": {
+                    "RelationType": "application"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "application-1"
+            }, 
+            {
+                "Child": "vm-6", 
+                "ID": "Edge-vm-vm-6-application-application-0-application", 
+                "Metadata": {
+                    "RelationType": "application"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "application-0"
+            }
+        ], 
+        "Nodes": [
+            {
+                "ID": "application-0", 
+                "Metadata": {
+                    "Name": "Database", 
+                    "Type": "application"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "application-1", 
+                "Metadata": {
+                    "Name": "Web", 
+                    "Type": "application"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "host-0", 
+                "Metadata": {
+                    "CPUs": "4", 
+                    "DataCenter": "DataCenter1", 
+                    "Memory": "64", 
+                    "Name": "Host1", 
+                    "Type": "host"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "host-1", 
+                "Metadata": {
+                    "CPUs": "4", 
+                    "DataCenter": "DataCenter1", 
+                    "Memory": "64", 
+                    "Name": "Host2", 
+                    "Type": "host"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "host-2", 
+                "Metadata": {
+                    "CPUs": "4", 
+                    "DataCenter": "DataCenter2", 
+                    "Memory": "128", 
+                    "Name": "Host3", 
+                    "Type": "host"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "host-3", 
+                "Metadata": {
+                    "CPUs": "16", 
+                    "DataCenter": "DataCenter2", 
+                    "Memory": "64", 
+                    "Name": "Host4", 
+                    "Type": "host"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "vm-0", 
+                "Metadata": {
+                    "Application": "Web", 
+                    "Host": "Host1", 
+                    "Name": "VM1", 
+                    "Type": "vm"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "vm-1", 
+                "Metadata": {
+                    "Application": "Database", 
+                    "Host": "Host1", 
+                    "Name": "VM2", 
+                    "Type": "vm"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "vm-2", 
+                "Metadata": {
+                    "Application": "Database", 
+                    "Host": "Host2", 
+                    "Name": "VM3", 
+                    "Type": "vm"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "vm-3", 
+                "Metadata": {
+                    "Application": "Database", 
+                    "Host": "Host2", 
+                    "Name": "VM4", 
+                    "Type": "vm"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "vm-4", 
+                "Metadata": {
+                    "Application": "Database", 
+                    "Host": "Host3", 
+                    "Name": "VM5", 
+                    "Type": "vm"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "vm-5", 
+                "Metadata": {
+                    "Application": "Web", 
+                    "Host": "Host4", 
+                    "Name": "VM6", 
+                    "Type": "vm"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "vm-6", 
+                "Metadata": {
+                    "Application": "Database", 
+                    "Host": "Host4", 
+                    "Name": "VM7", 
+                    "Type": "vm"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "data_center-0", 
+                "Metadata": {
+                    "Location": "East", 
+                    "Name": "DataCenter1", 
+                    "Type": "data_center"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "data_center-1", 
+                "Metadata": {
+                    "Location": "West", 
+                    "Name": "DataCenter2", 
+                    "Type": "data_center"
+                }, 
+                "Origin": "SoftLayer"
+            }
+        ]
+    }
+]

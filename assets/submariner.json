@@ -1,0 +1,421 @@
+[
+    {
+        "Edges": [
+            {
+                "Child": "node-0", 
+                "ID": "Edge-node-node-0-cluster-cluster-0-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "cluster-0"
+            }, 
+            {
+                "Child": "node-1", 
+                "ID": "Edge-node-node-1-cluster-cluster-1-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "cluster-1"
+            }, 
+            {
+                "Child": "node-2", 
+                "ID": "Edge-node-node-2-cluster-cluster-1-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "cluster-1"
+            }, 
+            {
+                "Child": "cluster-0", 
+                "ID": "Edge-cluster-cluster-0-broker-broker-0-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "broker-0"
+            }, 
+            {
+                "Child": "cluster-1", 
+                "ID": "Edge-cluster-cluster-1-broker-broker-0-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "broker-0"
+            }, 
+            {
+                "Child": "pod-0", 
+                "ID": "Edge-pod-pod-0-node-node-0-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "node-0"
+            }, 
+            {
+                "Child": "pod-1", 
+                "ID": "Edge-pod-pod-1-node-node-0-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "node-0"
+            }, 
+            {
+                "Child": "pod-2", 
+                "ID": "Edge-pod-pod-2-node-node-0-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "node-0"
+            }, 
+            {
+                "Child": "pod-3", 
+                "ID": "Edge-pod-pod-3-node-node-1-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "node-1"
+            }, 
+            {
+                "Child": "pod-4", 
+                "ID": "Edge-pod-pod-4-node-node-1-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "node-1"
+            }, 
+            {
+                "Child": "pod-5", 
+                "ID": "Edge-pod-pod-5-node-node-2-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "node-2"
+            }, 
+            {
+                "Child": "pod-6", 
+                "ID": "Edge-pod-pod-6-node-node-2-ownership", 
+                "Metadata": {
+                    "RelationType": "ownership"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "node-2"
+            }, 
+            {
+                "Child": "pod-0", 
+                "ID": "Edge-pod-pod-0-pod-pod-0-ipsec", 
+                "Metadata": {
+                    "RelationType": "ipsec"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-0"
+            }, 
+            {
+                "Child": "pod-1", 
+                "ID": "Edge-pod-pod-1-pod-pod-1-ipsec", 
+                "Metadata": {
+                    "RelationType": "ipsec"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-1"
+            }, 
+            {
+                "Child": "pod-2", 
+                "ID": "Edge-pod-pod-2-pod-pod-2-ipsec", 
+                "Metadata": {
+                    "RelationType": "ipsec"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-2"
+            }, 
+            {
+                "Child": "pod-2", 
+                "ID": "Edge-pod-pod-2-pod-pod-3-ipsec", 
+                "Metadata": {
+                    "RelationType": "ipsec"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-3"
+            }, 
+            {
+                "Child": "pod-3", 
+                "ID": "Edge-pod-pod-3-pod-pod-2-ipsec", 
+                "Metadata": {
+                    "RelationType": "ipsec"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-2"
+            }, 
+            {
+                "Child": "pod-3", 
+                "ID": "Edge-pod-pod-3-pod-pod-3-ipsec", 
+                "Metadata": {
+                    "RelationType": "ipsec"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-3"
+            }, 
+            {
+                "Child": "pod-4", 
+                "ID": "Edge-pod-pod-4-pod-pod-4-ipsec", 
+                "Metadata": {
+                    "RelationType": "ipsec"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-4"
+            }, 
+            {
+                "Child": "pod-5", 
+                "ID": "Edge-pod-pod-5-pod-pod-5-ipsec", 
+                "Metadata": {
+                    "RelationType": "ipsec"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-5"
+            }, 
+            {
+                "Child": "pod-6", 
+                "ID": "Edge-pod-pod-6-pod-pod-6-ipsec", 
+                "Metadata": {
+                    "RelationType": "ipsec"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-6"
+            }, 
+            {
+                "Child": "pod-0", 
+                "ID": "Edge-pod-pod-0-pod-pod-0-vxlan", 
+                "Metadata": {
+                    "RelationType": "vxlan"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-0"
+            }, 
+            {
+                "Child": "pod-1", 
+                "ID": "Edge-pod-pod-1-pod-pod-1-vxlan", 
+                "Metadata": {
+                    "RelationType": "vxlan"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-1"
+            }, 
+            {
+                "Child": "pod-2", 
+                "ID": "Edge-pod-pod-2-pod-pod-2-vxlan", 
+                "Metadata": {
+                    "RelationType": "vxlan"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-2"
+            }, 
+            {
+                "Child": "pod-3", 
+                "ID": "Edge-pod-pod-3-pod-pod-3-vxlan", 
+                "Metadata": {
+                    "RelationType": "vxlan"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-3"
+            }, 
+            {
+                "Child": "pod-4", 
+                "ID": "Edge-pod-pod-4-pod-pod-4-vxlan", 
+                "Metadata": {
+                    "RelationType": "vxlan"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-4"
+            }, 
+            {
+                "Child": "pod-4", 
+                "ID": "Edge-pod-pod-4-pod-pod-5-vxlan", 
+                "Metadata": {
+                    "RelationType": "vxlan"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-5"
+            }, 
+            {
+                "Child": "pod-5", 
+                "ID": "Edge-pod-pod-5-pod-pod-4-vxlan", 
+                "Metadata": {
+                    "RelationType": "vxlan"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-4"
+            }, 
+            {
+                "Child": "pod-5", 
+                "ID": "Edge-pod-pod-5-pod-pod-5-vxlan", 
+                "Metadata": {
+                    "RelationType": "vxlan"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-5"
+            }, 
+            {
+                "Child": "pod-6", 
+                "ID": "Edge-pod-pod-6-pod-pod-6-vxlan", 
+                "Metadata": {
+                    "RelationType": "vxlan"
+                }, 
+                "Origin": "SoftLayer", 
+                "Parent": "pod-6"
+            }
+        ], 
+        "Nodes": [
+            {
+                "ID": "node-0", 
+                "Metadata": {
+                    "Cluster": "Cluster1", 
+                    "Name": "Node11", 
+                    "Type": "node"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "node-1", 
+                "Metadata": {
+                    "Cluster": "Cluster2", 
+                    "Name": "Node21", 
+                    "Type": "node"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "node-2", 
+                "Metadata": {
+                    "Cluster": "Cluster2", 
+                    "Name": "Node22", 
+                    "Type": "node"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "cluster-0", 
+                "Metadata": {
+                    "Broker": "Broker1", 
+                    "Location": "East", 
+                    "Name": "Cluster1", 
+                    "PodCidr": "10.95.0.0/16", 
+                    "ServiceCidr": "10.245.0.0/16", 
+                    "Type": "cluster"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "cluster-1", 
+                "Metadata": {
+                    "Broker": "Broker1", 
+                    "Location": "West", 
+                    "Name": "Cluster2", 
+                    "PodCidr": "10.96.0.0/16", 
+                    "ServiceCidr": "10.246.0.0/16", 
+                    "Type": "cluster"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "pod-0", 
+                "Metadata": {
+                    "Name": "0_nginx", 
+                    "Node": "Node11", 
+                    "Rule": "nginx", 
+                    "Type": "pod", 
+                    "ipsec": "0", 
+                    "vxlan": "0"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "pod-1", 
+                "Metadata": {
+                    "Name": "1_routeagent", 
+                    "Node": "Node11", 
+                    "Rule": "routeagent", 
+                    "Type": "pod", 
+                    "ipsec": "1", 
+                    "vxlan": "vxlan1"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "pod-2", 
+                "Metadata": {
+                    "Name": "2_gateway11", 
+                    "Node": "Node11", 
+                    "Rule": "gateway", 
+                    "Type": "pod", 
+                    "ipsec": "ipsec_VPN1", 
+                    "vxlan": "2"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "pod-3", 
+                "Metadata": {
+                    "Name": "3_gateway21", 
+                    "Node": "Node21", 
+                    "Rule": "gateway", 
+                    "Type": "pod", 
+                    "ipsec": "ipsec_VPN1", 
+                    "vxlan": "3"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "pod-4", 
+                "Metadata": {
+                    "Name": "4_routeagent", 
+                    "Node": "Node21", 
+                    "Rule": "routeagent", 
+                    "Type": "pod", 
+                    "ipsec": "4", 
+                    "vxlan": "vxlan2"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "pod-5", 
+                "Metadata": {
+                    "Name": "5_routeagent", 
+                    "Node": "Node22", 
+                    "Rule": "routeagent", 
+                    "Type": "pod", 
+                    "ipsec": "5", 
+                    "vxlan": "vxlan2"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "pod-6", 
+                "Metadata": {
+                    "Name": "6_Busybox", 
+                    "Node": "Node22", 
+                    "Rule": "usybox", 
+                    "Type": "pod", 
+                    "ipsec": "6", 
+                    "vxlan": "6"
+                }, 
+                "Origin": "SoftLayer"
+            }, 
+            {
+                "ID": "broker-0", 
+                "Metadata": {
+                    "Name": "Broker1", 
+                    "Type": "broker"
+                }, 
+                "Origin": "SoftLayer"
+            }
+        ]
+    }
+]
