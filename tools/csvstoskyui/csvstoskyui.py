@@ -23,7 +23,7 @@ edges        - Create edges between nodes (list of edges)
 """
 
 
-## build nodes
+# build nodes
 def buildNodes(netboxtopologyfiles):
     jsonnodes = []
     for key in netboxtopologyfiles:
@@ -55,7 +55,7 @@ def buildNodes(netboxtopologyfiles):
     return jsonnodes
 
 
-## build edges
+# build edges
 def buildEdges(netboxtopologyfiles, jsonnodes):
     jsonedges = []
     for key in netboxtopologyfiles:
@@ -90,8 +90,8 @@ def buildEdges(netboxtopologyfiles, jsonnodes):
                             if match:
                                 jsondump = {"Metadata": {"RelationType": relationType},
                                             "ID": (str(
-                                                "Edge-" + "(" + fromtype + ")" + src["ID"] + "-(" + totype + ")" +
-                                                dst["ID"]+"["+relationType+"]")),
+                                                "Edge-" + fromtype + "-" + src["ID"] + "-" + totype + "-" +
+                                                dst["ID"] + "-" + relationType)),
                                             "Parent": dst["ID"],
                                             "Child": src["ID"],
                                             "Origin": "SoftLayer"}
@@ -105,7 +105,7 @@ def readconfiguration(topologyrulesfile):
     return dict
 
 
-## main function
+# main function
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("topologyrulesfile",

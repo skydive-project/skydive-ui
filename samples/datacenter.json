@@ -3,7 +3,7 @@
         "Edges": [
             {
                 "Child": "host-0", 
-                "ID": "Edge-(host)host-0-(data_center)data_center-0[ownership]", 
+                "ID": "Edge-host-host-0-data_center-data_center-0-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -12,7 +12,7 @@
             }, 
             {
                 "Child": "host-1", 
-                "ID": "Edge-(host)host-1-(data_center)data_center-0[ownership]", 
+                "ID": "Edge-host-host-1-data_center-data_center-0-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -21,7 +21,7 @@
             }, 
             {
                 "Child": "host-2", 
-                "ID": "Edge-(host)host-2-(data_center)data_center-1[ownership]", 
+                "ID": "Edge-host-host-2-data_center-data_center-1-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -30,7 +30,7 @@
             }, 
             {
                 "Child": "host-3", 
-                "ID": "Edge-(host)host-3-(data_center)data_center-1[ownership]", 
+                "ID": "Edge-host-host-3-data_center-data_center-1-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -39,7 +39,7 @@
             }, 
             {
                 "Child": "vm-0", 
-                "ID": "Edge-(vm)vm-0-(host)host-0[ownership]", 
+                "ID": "Edge-vm-vm-0-host-host-0-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -48,7 +48,7 @@
             }, 
             {
                 "Child": "vm-1", 
-                "ID": "Edge-(vm)vm-1-(host)host-0[ownership]", 
+                "ID": "Edge-vm-vm-1-host-host-0-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -57,7 +57,7 @@
             }, 
             {
                 "Child": "vm-2", 
-                "ID": "Edge-(vm)vm-2-(host)host-1[ownership]", 
+                "ID": "Edge-vm-vm-2-host-host-1-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -66,7 +66,7 @@
             }, 
             {
                 "Child": "vm-3", 
-                "ID": "Edge-(vm)vm-3-(host)host-1[ownership]", 
+                "ID": "Edge-vm-vm-3-host-host-1-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -75,7 +75,7 @@
             }, 
             {
                 "Child": "vm-4", 
-                "ID": "Edge-(vm)vm-4-(host)host-2[ownership]", 
+                "ID": "Edge-vm-vm-4-host-host-2-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -84,7 +84,7 @@
             }, 
             {
                 "Child": "vm-5", 
-                "ID": "Edge-(vm)vm-5-(host)host-3[ownership]", 
+                "ID": "Edge-vm-vm-5-host-host-3-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -93,7 +93,7 @@
             }, 
             {
                 "Child": "vm-6", 
-                "ID": "Edge-(vm)vm-6-(host)host-3[ownership]", 
+                "ID": "Edge-vm-vm-6-host-host-3-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -102,7 +102,7 @@
             }, 
             {
                 "Child": "vm-0", 
-                "ID": "Edge-(vm)vm-0-(application)application-1[application]", 
+                "ID": "Edge-vm-vm-0-application-application-1-application", 
                 "Metadata": {
                     "RelationType": "application"
                 }, 
@@ -111,7 +111,7 @@
             }, 
             {
                 "Child": "vm-1", 
-                "ID": "Edge-(vm)vm-1-(application)application-0[application]", 
+                "ID": "Edge-vm-vm-1-application-application-0-application", 
                 "Metadata": {
                     "RelationType": "application"
                 }, 
@@ -120,7 +120,7 @@
             }, 
             {
                 "Child": "vm-2", 
-                "ID": "Edge-(vm)vm-2-(application)application-0[application]", 
+                "ID": "Edge-vm-vm-2-application-application-0-application", 
                 "Metadata": {
                     "RelationType": "application"
                 }, 
@@ -129,7 +129,7 @@
             }, 
             {
                 "Child": "vm-3", 
-                "ID": "Edge-(vm)vm-3-(application)application-0[application]", 
+                "ID": "Edge-vm-vm-3-application-application-0-application", 
                 "Metadata": {
                     "RelationType": "application"
                 }, 
@@ -138,7 +138,7 @@
             }, 
             {
                 "Child": "vm-4", 
-                "ID": "Edge-(vm)vm-4-(application)application-0[application]", 
+                "ID": "Edge-vm-vm-4-application-application-0-application", 
                 "Metadata": {
                     "RelationType": "application"
                 }, 
@@ -147,7 +147,7 @@
             }, 
             {
                 "Child": "vm-5", 
-                "ID": "Edge-(vm)vm-5-(application)application-1[application]", 
+                "ID": "Edge-vm-vm-5-application-application-1-application", 
                 "Metadata": {
                     "RelationType": "application"
                 }, 
@@ -156,7 +156,7 @@
             }, 
             {
                 "Child": "vm-6", 
-                "ID": "Edge-(vm)vm-6-(application)application-0[application]", 
+                "ID": "Edge-vm-vm-6-application-application-0-application", 
                 "Metadata": {
                     "RelationType": "application"
                 }, 

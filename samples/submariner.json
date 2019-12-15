@@ -3,7 +3,7 @@
         "Edges": [
             {
                 "Child": "node-0", 
-                "ID": "Edge-(node)node-0-(cluster)cluster-0[ownership]", 
+                "ID": "Edge-node-node-0-cluster-cluster-0-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -12,7 +12,7 @@
             }, 
             {
                 "Child": "node-1", 
-                "ID": "Edge-(node)node-1-(cluster)cluster-1[ownership]", 
+                "ID": "Edge-node-node-1-cluster-cluster-1-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -21,7 +21,7 @@
             }, 
             {
                 "Child": "node-2", 
-                "ID": "Edge-(node)node-2-(cluster)cluster-1[ownership]", 
+                "ID": "Edge-node-node-2-cluster-cluster-1-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -30,7 +30,7 @@
             }, 
             {
                 "Child": "cluster-0", 
-                "ID": "Edge-(cluster)cluster-0-(broker)broker-0[ownership]", 
+                "ID": "Edge-cluster-cluster-0-broker-broker-0-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -39,7 +39,7 @@
             }, 
             {
                 "Child": "cluster-1", 
-                "ID": "Edge-(cluster)cluster-1-(broker)broker-0[ownership]", 
+                "ID": "Edge-cluster-cluster-1-broker-broker-0-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -48,7 +48,7 @@
             }, 
             {
                 "Child": "pod-0", 
-                "ID": "Edge-(pod)pod-0-(node)node-0[ownership]", 
+                "ID": "Edge-pod-pod-0-node-node-0-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -57,7 +57,7 @@
             }, 
             {
                 "Child": "pod-1", 
-                "ID": "Edge-(pod)pod-1-(node)node-0[ownership]", 
+                "ID": "Edge-pod-pod-1-node-node-0-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -66,7 +66,7 @@
             }, 
             {
                 "Child": "pod-2", 
-                "ID": "Edge-(pod)pod-2-(node)node-0[ownership]", 
+                "ID": "Edge-pod-pod-2-node-node-0-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -75,7 +75,7 @@
             }, 
             {
                 "Child": "pod-3", 
-                "ID": "Edge-(pod)pod-3-(node)node-1[ownership]", 
+                "ID": "Edge-pod-pod-3-node-node-1-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -84,7 +84,7 @@
             }, 
             {
                 "Child": "pod-4", 
-                "ID": "Edge-(pod)pod-4-(node)node-1[ownership]", 
+                "ID": "Edge-pod-pod-4-node-node-1-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -93,7 +93,7 @@
             }, 
             {
                 "Child": "pod-5", 
-                "ID": "Edge-(pod)pod-5-(node)node-2[ownership]", 
+                "ID": "Edge-pod-pod-5-node-node-2-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -102,7 +102,7 @@
             }, 
             {
                 "Child": "pod-6", 
-                "ID": "Edge-(pod)pod-6-(node)node-2[ownership]", 
+                "ID": "Edge-pod-pod-6-node-node-2-ownership", 
                 "Metadata": {
                     "RelationType": "ownership"
                 }, 
@@ -111,7 +111,7 @@
             }, 
             {
                 "Child": "pod-0", 
-                "ID": "Edge-(pod)pod-0-(pod)pod-0[ipsec]", 
+                "ID": "Edge-pod-pod-0-pod-pod-0-ipsec", 
                 "Metadata": {
                     "RelationType": "ipsec"
                 }, 
@@ -120,7 +120,7 @@
             }, 
             {
                 "Child": "pod-1", 
-                "ID": "Edge-(pod)pod-1-(pod)pod-1[ipsec]", 
+                "ID": "Edge-pod-pod-1-pod-pod-1-ipsec", 
                 "Metadata": {
                     "RelationType": "ipsec"
                 }, 
@@ -129,7 +129,7 @@
             }, 
             {
                 "Child": "pod-2", 
-                "ID": "Edge-(pod)pod-2-(pod)pod-2[ipsec]", 
+                "ID": "Edge-pod-pod-2-pod-pod-2-ipsec", 
                 "Metadata": {
                     "RelationType": "ipsec"
                 }, 
@@ -138,7 +138,7 @@
             }, 
             {
                 "Child": "pod-2", 
-                "ID": "Edge-(pod)pod-2-(pod)pod-3[ipsec]", 
+                "ID": "Edge-pod-pod-2-pod-pod-3-ipsec", 
                 "Metadata": {
                     "RelationType": "ipsec"
                 }, 
@@ -147,7 +147,7 @@
             }, 
             {
                 "Child": "pod-3", 
-                "ID": "Edge-(pod)pod-3-(pod)pod-2[ipsec]", 
+                "ID": "Edge-pod-pod-3-pod-pod-2-ipsec", 
                 "Metadata": {
                     "RelationType": "ipsec"
                 }, 
@@ -156,7 +156,7 @@
             }, 
             {
                 "Child": "pod-3", 
-                "ID": "Edge-(pod)pod-3-(pod)pod-3[ipsec]", 
+                "ID": "Edge-pod-pod-3-pod-pod-3-ipsec", 
                 "Metadata": {
                     "RelationType": "ipsec"
                 }, 
@@ -165,7 +165,7 @@
             }, 
             {
                 "Child": "pod-4", 
-                "ID": "Edge-(pod)pod-4-(pod)pod-4[ipsec]", 
+                "ID": "Edge-pod-pod-4-pod-pod-4-ipsec", 
                 "Metadata": {
                     "RelationType": "ipsec"
                 }, 
@@ -174,7 +174,7 @@
             }, 
             {
                 "Child": "pod-5", 
-                "ID": "Edge-(pod)pod-5-(pod)pod-5[ipsec]", 
+                "ID": "Edge-pod-pod-5-pod-pod-5-ipsec", 
                 "Metadata": {
                     "RelationType": "ipsec"
                 }, 
@@ -183,7 +183,7 @@
             }, 
             {
                 "Child": "pod-6", 
-                "ID": "Edge-(pod)pod-6-(pod)pod-6[ipsec]", 
+                "ID": "Edge-pod-pod-6-pod-pod-6-ipsec", 
                 "Metadata": {
                     "RelationType": "ipsec"
                 }, 
@@ -192,7 +192,7 @@
             }, 
             {
                 "Child": "pod-0", 
-                "ID": "Edge-(pod)pod-0-(pod)pod-0[vxlan]", 
+                "ID": "Edge-pod-pod-0-pod-pod-0-vxlan", 
                 "Metadata": {
                     "RelationType": "vxlan"
                 }, 
@@ -201,7 +201,7 @@
             }, 
             {
                 "Child": "pod-1", 
-                "ID": "Edge-(pod)pod-1-(pod)pod-1[vxlan]", 
+                "ID": "Edge-pod-pod-1-pod-pod-1-vxlan", 
                 "Metadata": {
                     "RelationType": "vxlan"
                 }, 
@@ -210,7 +210,7 @@
             }, 
             {
                 "Child": "pod-2", 
-                "ID": "Edge-(pod)pod-2-(pod)pod-2[vxlan]", 
+                "ID": "Edge-pod-pod-2-pod-pod-2-vxlan", 
                 "Metadata": {
                     "RelationType": "vxlan"
                 }, 
@@ -219,7 +219,7 @@
             }, 
             {
                 "Child": "pod-3", 
-                "ID": "Edge-(pod)pod-3-(pod)pod-3[vxlan]", 
+                "ID": "Edge-pod-pod-3-pod-pod-3-vxlan", 
                 "Metadata": {
                     "RelationType": "vxlan"
                 }, 
@@ -228,7 +228,7 @@
             }, 
             {
                 "Child": "pod-4", 
-                "ID": "Edge-(pod)pod-4-(pod)pod-4[vxlan]", 
+                "ID": "Edge-pod-pod-4-pod-pod-4-vxlan", 
                 "Metadata": {
                     "RelationType": "vxlan"
                 }, 
@@ -237,7 +237,7 @@
             }, 
             {
                 "Child": "pod-4", 
-                "ID": "Edge-(pod)pod-4-(pod)pod-5[vxlan]", 
+                "ID": "Edge-pod-pod-4-pod-pod-5-vxlan", 
                 "Metadata": {
                     "RelationType": "vxlan"
                 }, 
@@ -246,7 +246,7 @@
             }, 
             {
                 "Child": "pod-5", 
-                "ID": "Edge-(pod)pod-5-(pod)pod-4[vxlan]", 
+                "ID": "Edge-pod-pod-5-pod-pod-4-vxlan", 
                 "Metadata": {
                     "RelationType": "vxlan"
                 }, 
@@ -255,7 +255,7 @@
             }, 
             {
                 "Child": "pod-5", 
-                "ID": "Edge-(pod)pod-5-(pod)pod-5[vxlan]", 
+                "ID": "Edge-pod-pod-5-pod-pod-5-vxlan", 
                 "Metadata": {
                     "RelationType": "vxlan"
                 }, 
@@ -264,7 +264,7 @@
             }, 
             {
                 "Child": "pod-6", 
-                "ID": "Edge-(pod)pod-6-(pod)pod-6[vxlan]", 
+                "ID": "Edge-pod-pod-6-pod-pod-6-vxlan", 
                 "Metadata": {
                     "RelationType": "vxlan"
                 }, 
