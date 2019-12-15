@@ -33,7 +33,7 @@ mkdir $destjson_dir
 for rules_filename in data/$data_dir/*.conf; do
   echo Using rules file: $rules_filename
   destjsonfile=$(basename "$rules_filename" .conf).json
-  python csvstoskyui.py $rules_filename > $destjson_dir/$destjsonfile
+  ./csvstoskyui.py $rules_filename > $destjson_dir/$destjsonfile
   mountconf_to_docker=$mountconf_to_docker" -v "$dir"/"$destjson_dir"/"$destjsonfile":/usr/src/skydive-ui/assets/"$destjsonfile
 done
 
