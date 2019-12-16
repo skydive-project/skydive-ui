@@ -51,14 +51,14 @@ import { styles } from './AppStyles'
 import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState, Link } from './Topology'
 import { mainListItems, helpListItems } from './Menu'
 import AutoCompleteInput from './AutoComplete'
-import { AppState, selectElement, unselectElement, bumpRevision, session, closeSession } from './Store'
+import { AppState, selectElement, unselectElement, bumpRevision, session, closeSession, setConfig } from './Store'
 import SelectionPanel from './SelectionPanel'
-import DefaultConfig from './Config'
 import { Configuration } from './api/configuration'
 import * as api from './api/api'
 
 import './App.css'
 import Logo from '../assets/Logo.png'
+import DefaultConfig from './Config'
 
 const queryString = require('query-string')
 const fetchJsonp = require('fetch-jsonp')
@@ -72,10 +72,6 @@ declare global {
 }
 window.API = api
 
-// merge default config and the one from assets
-declare var config: typeof DefaultConfig
-config = { ...DefaultConfig, ...config }
-
 interface Props extends WithSnackbarProps {
   classes: any
   selectElement: typeof selectElement
@@ -85,6 +81,8 @@ interface Props extends WithSnackbarProps {
   session: session
   closeSession: typeof closeSession
   history: any
+  config: typeof DefaultConfig
+  setConfig: typeof setConfig
 }
 
 export interface WSContext {
@@ -116,6 +114,8 @@ class App extends React.Component<Props, State> {
   staticDataURL: string
   apiConf: Configuration
   wsContext: WSContext
+  extraConfigURL: string
+  connected: boolean
 
   constructor(props) {
     super(props)
@@ -140,48 +140,34 @@ class App extends React.Component<Props, State> {
     // we will refresh info each 1s
     this.bumpRevision = debounce(this.props.bumpRevision.bind(this), 1000)
 
-    this.staticDataURL = ""
-
     const parsed = queryString.parse(props.location.search)
+
+    // parse static topology data
     if (parsed.data) {
       this.staticDataURL = parsed.data
+    } else {
+      this.staticDataURL = ""
+    }
+
+    // parse extra config
+    if (parsed.config) {
+      this.extraConfigURL = parsed.config
+    } else {
+      this.extraConfigURL = ""
     }
   }
 
   componentDidMount() {
-    if (this.staticDataURL) {
-      var fetcher = fetch(this.staticDataURL)
-      if (this.staticDataURL.startsWith("http")) {
-        fetcher = fetchJsonp(this.staticDataURL, {
-          jsonpCallbackFunction: 'jsonp_callback'
-        })
-      }
-      fetcher.then(resp => {
-        return resp.json().then(data => {
-          if (!Array.isArray(data)) {
-            throw "topology schema error"
-          }
-          this.parseTopology(data[0])
-        })
-      })
-        .catch(() => {
-          this.notify("Unable to load or parse topology data", "error")
-        })
-    } else {
+    // make the application available globally
+    window.App = this
+
+    this.loadExtraConfig(this.extraConfigURL)
+
+    if (!this.staticDataURL) {
       this.checkAuthID = window.setInterval(() => {
         this.checkAuth()
       }, 2000)
     }
-
-    // filters
-    config.filters.forEach((filter) => {
-      if (filter.id === config.defaultFilter) {
-        this.setState({ wsContext: { GremlinFilter: filter.gremlin } })
-      }
-    })
-
-    // make the application available globally
-    window.App = this
   }
 
   componentWillUnmount() {
@@ -190,8 +176,77 @@ class App extends React.Component<Props, State> {
     }
   }
 
-  fillSuggestions(node: Node, suggestions: Array<string>) {
-    for (let key of config.suggestions) {
+  loadStaticData(url: string) {
+    fetch(url).then(resp => {
+      resp.json().then(data => {
+        if (!Array.isArray(data)) {
+          throw "topology schema error"
+        }
+        this.parseTopology(data[0])
+      }).catch(() => {
+        this.notify("Unable to load or parse topology data", "error")
+      })
+    })
+  }
+
+  private fetchExtraConfig(url: string): Promise<typeof DefaultConfig> {
+    var promise = new Promise<typeof DefaultConfig>((resolve, reject) => {
+      if (!url) {
+        resolve(this.props.config)
+        return
+      }
+
+      fetch(url).then(resp => {
+        resp.text().then(data => {
+          try {
+            var config = eval(data)
+
+            config = { ...this.props.config, ...config }
+            this.props.setConfig(config)
+
+            resolve(config)
+          } catch (e) {
+            reject(e)
+          }
+        })
+      }).catch((reason) => {
+        throw Error(reason)
+      })
+    })
+
+    return promise
+  }
+
+  loadExtraConfig(url: string) {
+    this.extraConfigURL = url
+
+    if (this.staticDataURL) {
+      // load first the config and then the config
+      this.fetchExtraConfig(this.extraConfigURL).then(() => {
+        this.loadStaticData(this.staticDataURL)
+      }).catch(() => {
+        this.notify("Unable to load or parse extra config", "error")
+      })
+    } else {
+      this.sync()
+    }
+  }
+
+  private updateFilter(): boolean {
+    for (let filter of this.props.config.filters) {
+      if (filter.id === this.props.config.defaultFilter) {
+        if (this.state.wsContext.GremlinFilter != filter.gremlin) {
+          this.setState({ wsContext: { GremlinFilter: filter.gremlin } })
+          return true
+        }
+      }
+    }
+
+    return false
+  }
+
+  private fillSuggestions(node: Node, suggestions: Array<string>) {
+    for (let key of this.props.config.suggestions) {
       try {
         var value = eval("node." + key)
         if (Array.isArray(value)) {
@@ -219,9 +274,9 @@ class App extends React.Component<Props, State> {
       return false
     }
 
-    var tags = config.nodeTags(node.Metadata)
+    var tags = this.props.config.nodeTags(node.Metadata)
 
-    let n = this.tc.addNode(node.ID, tags, node.Metadata, (n: Node): number => config.nodeAttrs(n).weight)
+    let n = this.tc.addNode(node.ID, tags, node.Metadata, (n: Node): number => this.props.config.nodeAttrs(n).weight)
     this.tc.setParent(n, this.tc.root)
 
     this.fillSuggestions(n, this.state.suggestions)
@@ -335,7 +390,7 @@ class App extends React.Component<Props, State> {
       }
     }
 
-    this.tc.activeNodeTag(config.defaultNodeTag)
+    this.tc.activeNodeTag(this.props.config.defaultNodeTag)
 
     this.setState({ nodeTagStates: this.tc.nodeTagStates })
 
@@ -343,7 +398,7 @@ class App extends React.Component<Props, State> {
   }
 
   nodeAttrs(node: Node): NodeAttrs {
-    var attrs = config.nodeAttrs(node)
+    var attrs = this.props.config.nodeAttrs(node)
     if (node.data.State) {
       attrs.classes.push(node.data.State.toLowerCase())
     }
@@ -352,7 +407,7 @@ class App extends React.Component<Props, State> {
   }
 
   linkAttrs(link: Link): LinkAttrs {
-    return config.linkAttrs(link)
+    return this.props.config.linkAttrs(link)
   }
 
   onNodeSelected(node: Node, active: boolean) {
@@ -378,19 +433,19 @@ class App extends React.Component<Props, State> {
 
   weightTitles(): Map<number, string> {
     var map = new Map<number, string>()
-    Object.keys(config.weightTitles).forEach(key => {
+    Object.keys(this.props.config.weightTitles).forEach(key => {
       var index = parseInt(key)
-      map.set(index, config.weightTitles[index]);
+      map.set(index, this.props.config.weightTitles[index]);
     })
     return map
   }
 
   sortNodesFnc(a: Node, b: Node) {
-    return config.nodeSortFnc(a, b)
+    return this.props.config.nodeSortFnc(a, b)
   }
 
   onShowNodeContextMenu(node: Node) {
-    return config.nodeMenu(node)
+    return this.props.config.nodeMenu(node)
   }
 
   _refreshTopology() {
@@ -466,6 +521,8 @@ class App extends React.Component<Props, State> {
   }
 
   onWebSocketClose() {
+    this.connected = false
+
     if (this.synced) {
       this.notify("Disconnected", "error")
     } else {
@@ -478,7 +535,7 @@ class App extends React.Component<Props, State> {
     this.checkAuth()
   }
 
-  checkAuth() {
+  async checkAuth(): Promise<void> {
     const requestOptions = {
       method: 'GET',
       headers: {
@@ -494,8 +551,10 @@ class App extends React.Component<Props, State> {
       })
   }
 
-  sendMessage(data) {
-    this.websocket.sendMessage(JSON.stringify(data))
+  sendMessage(data: any) {
+    if (this.websocket) {
+      this.websocket.sendMessage(JSON.stringify(data))
+    }
   }
 
   setWSContext(context: WSContext) {
@@ -509,16 +568,30 @@ class App extends React.Component<Props, State> {
   }
 
   sync() {
-    if (!this.tc) {
+    if (!this.tc || !this.connected) {
       return
     }
 
-    this.tc.resetTree()
-    var msg = { "Namespace": "Graph", "Type": "SyncRequest", "Obj": this.state.wsContext }
-    this.sendMessage(msg)
+    // load first the extra config
+    this.fetchExtraConfig(this.extraConfigURL).then(() => {
+      this.updateFilter()
+
+      if (!this.tc) {
+        return
+      }
+
+      // then reset the topology view and re-sync
+      this.tc.resetTree()
+      var msg = { "Namespace": "Graph", "Type": "SyncRequest", "Obj": this.state.wsContext }
+      this.sendMessage(msg)
+    }).catch((reason) => {
+      this.notify("Unable to load or parse extra config", "error")
+    })
   }
 
   onWebSocketOpen() {
+    this.connected = true
+
     if (!this.tc) {
       return
     }
@@ -687,8 +760,8 @@ class App extends React.Component<Props, State> {
             <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
               <img src={Logo} alt="logo" />
             </Typography>
-            {config.subTitle &&
-              <Typography className={classes.subTitle} variant="caption">{config.subTitle}</Typography>
+            {this.props.config.subTitle &&
+              <Typography className={classes.subTitle} variant="caption">{this.props.config.subTitle}</Typography>
             }
             <div className={classes.search}>
               <AutoCompleteInput placeholder="metadata value" suggestions={this.state.suggestions} onChange={this.onSearchChange.bind(this)} />
@@ -767,15 +840,15 @@ class App extends React.Component<Props, State> {
         <main className={classes.content}>
           <div className={classes.appBarSpacer} />
           <Container maxWidth="xl" className={classes.container}>
-            <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs} linkAttrs={this.linkAttrs}
+            <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs.bind(this)} linkAttrs={this.linkAttrs.bind(this)}
               onNodeSelected={this.onNodeSelected.bind(this)}
-              sortNodesFnc={this.sortNodesFnc}
+              sortNodesFnc={this.sortNodesFnc.bind(this)}
               onShowNodeContextMenu={this.onShowNodeContextMenu.bind(this)}
               weightTitles={this.weightTitles()}
-              groupSize={config.groupSize}
-              groupType={config.groupType}
-              groupGID={config.groupGID}
-              groupName={config.groupName}
+              groupSize={this.props.config.groupSize}
+              groupType={this.props.config.groupType}
+              groupGID={this.props.config.groupGID}
+              groupName={this.props.config.groupName}
               onClick={this.onTopologyClick.bind(this)}
               onLinkSelected={this.onLinkSelected.bind(this)}
               onLinkTagChange={this.onLinkTagChange.bind(this)} />
@@ -788,9 +861,9 @@ class App extends React.Component<Props, State> {
           </Container>
           <Container className={classes.nodeTagsPanel}>
             {Array.from(this.state.nodeTagStates.keys()).sort((a, b) => {
-              if (a === config.defaultNodeTag) {
+              if (a === this.props.config.defaultNodeTag) {
                 return -1
-              } else if (b === config.defaultNodeTag) {
+              } else if (b === this.props.config.defaultNodeTag) {
                 return 1
               }
               return 0
@@ -805,7 +878,7 @@ class App extends React.Component<Props, State> {
           </Container>
           {this.staticDataURL === "" &&
             <Container className={classes.filtersPanel}>
-              {config.filters.map((filter, i) => (
+              {this.props.config.filters.map((filter, i) => (
                 <Button variant="contained" key={i} aria-label="delete" size="small"
                   color={this.state.wsContext.GremlinFilter === filter.gremlin ? "primary" : "default"}
                   className={classes.filtersFab}
@@ -842,14 +915,16 @@ class App extends React.Component<Props, State> {
 
 export const mapStateToProps = (state: AppState) => ({
   selection: state.selection,
-  session: state.session
+  session: state.session,
+  config: state.config
 })
 
 export const mapDispatchToProps = ({
   selectElement,
   unselectElement,
   bumpRevision,
-  closeSession
+  closeSession,
+  setConfig
 })
 
 export default withStyles(styles)(connect(mapStateToProps, mapDispatchToProps)(withSnackbar(withRouter(App))))

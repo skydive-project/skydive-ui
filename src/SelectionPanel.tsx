@@ -37,7 +37,7 @@ import { AppState } from './Store'
 import { styles } from './SelectionPanelStyles'
 import ActionPanel from './ActionPanel'
 
-declare var config: any
+import DefaultConfig from './Config'
 
 interface Props {
   classes: any
@@ -45,6 +45,7 @@ interface Props {
   revision: number
   onLocation?: (node: Node | Link) => void
   onClose?: (node: Node | Link) => void
+  config: typeof DefaultConfig
 }
 
 interface State {
@@ -85,30 +86,34 @@ class SelectionPanel extends React.Component<Props, State> {
       var className = classes.tabIconFree
 
       if (el.type === 'node') {
-        var attrs = config.nodeAttrs(el)
+        let attrs = this.props.config.nodeAttrs(el)
+        var icon = attrs.icon
+        var href = attrs.href
 
         if (attrs.iconClass === "font-brands") {
           className = classes.tabIconBrands
         }
 
-        var title = config.nodeTabTitle(el)
+        var title = this.props.config.nodeTabTitle(el)
       } else {
-        var attrs = config.linkAttrs(el)
+        let attrs = this.props.config.linkAttrs(el)
+        var icon = attrs.icon
+        var href = attrs.href
 
         if (attrs.iconClass === "font-brands") {
           className = classes.tabIconBrands
         }
 
-        var title = config.linkTabTitle(el)
+        var title = this.props.config.linkTabTitle(el)
       }
 
       const iconRender = () => {
-        if (attrs.href) {
+        if (href) {
           return (
-            <img src={attrs.href} className={classes.iconImg} />
+            <img src={href} className={classes.iconImg} />
           )
         }
-        return attrs.icon
+        return icon
       }
 
       return (
@@ -136,17 +141,17 @@ class SelectionPanel extends React.Component<Props, State> {
 
   private dataFields(el: Node | Link): Array<any> {
     if (el.type === 'node') {
-      return config.nodeDataFields
+      return this.props.config.nodeDataFields
     } else {
-      return config.linkDataFields
+      return this.props.config.linkDataFields
     }
   }
 
   private dataAttrs(el: Node | Link): any {
     if (el.type === 'node') {
-      return config.nodeAttrs(el)
+      return this.props.config.nodeAttrs(el)
     } else {
-      return config.linkAttrs(el)
+      return this.props.config.linkAttrs(el)
     }
   }
 
@@ -282,7 +287,8 @@ class SelectionPanel extends React.Component<Props, State> {
 
 export const mapStateToProps = (state: AppState) => ({
   selection: state.selection,
-  revision: state.selectionRevision
+  revision: state.selectionRevision,
+  config: state.config
 })
 
 export const mapDispatchToProps = ({

@@ -188,7 +188,8 @@ var DefaultConfig = {
             },
             { class: "", text: "Capture all", disabled: true, callback: () => { console.log("Capture all") } },
             { class: "", text: "Injection", disabled: false, callback: () => { console.log("Injection") } },
-            { class: "", text: "Flows", disabled: false, callback: () => { console.log("Flows") } }
+            { class: "", text: "Flows", disabled: false, callback: () => { console.log("Flows") } },
+            { class: "", text: "Filter NS(demo)", disabled: false, callback: () => { window.App.loadExtraConfig("/assets/nsconfig.js") } }
         ]
     },
     nodeTags: function (data) {
@@ -199,7 +200,7 @@ var DefaultConfig = {
         }
     },
     defaultNodeTag: "infrastructure",
-    nodeTabTitle: function (node: Node) {
+    nodeTabTitle: function (node: Node): string {
         return node.data.Name.substring(0, 8)
     },
     groupSize: 5,
@@ -433,7 +434,7 @@ var DefaultConfig = {
         }
     ],
     linkAttrs: function (link: Link) {
-        var attrs = { classes: [link.data.RelationType], icon: "\uf362", directed: false }
+        var attrs = { classes: [link.data.RelationType], icon: "\uf362", directed: false, href: '', iconClass: '' }
 
         if (link.data.Directed) {
             attrs.directed = true
