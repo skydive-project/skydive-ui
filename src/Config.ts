@@ -3,6 +3,21 @@ import Tools from './Tools'
 
 var DefaultConfig = {
     subTitle: "",
+    filters: [
+        {
+            id: "default",
+            label: "Default",
+            gremlin: ""
+        },
+        {
+            id: "namespaces",
+            label: "Namespaces",
+            gremlin: "G.V().Has('Type', 'host').as('host')" +
+                ".out().Has('Type', 'netns').descendants().as('netns')" +
+                ".select('host', 'netns').SubGraph()"
+        }
+    ],
+    defaultFilter: 'default',
     nodeAttrs: function (node: Node) {
         var name = node.data.Name
         if (name.length > 24) {

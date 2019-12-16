@@ -45,6 +45,7 @@ import Fab from '@material-ui/core/Fab'
 import { withRouter } from 'react-router-dom'
 import Badge from '@material-ui/core/Badge'
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart'
+import Button from '@material-ui/core/Button'
 
 import { styles } from './AppStyles'
 import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState, Link } from './Topology'
@@ -86,6 +87,10 @@ interface Props extends WithSnackbarProps {
   history: any
 }
 
+export interface WSContext {
+  GremlinFilter: string | null
+}
+
 interface State {
   isContextMenuOn: string
   contextMenuX: number
@@ -96,6 +101,7 @@ interface State {
   suggestions: Array<string>
   anchorEl: Map<string, null | HTMLElement>
   isSelectionOpen: boolean
+  wsContext: WSContext
 }
 
 class App extends React.Component<Props, State> {
@@ -109,6 +115,7 @@ class App extends React.Component<Props, State> {
   checkAuthID: number
   staticDataURL: string
   apiConf: Configuration
+  wsContext: WSContext
 
   constructor(props) {
     super(props)
@@ -122,7 +129,8 @@ class App extends React.Component<Props, State> {
       linkTagStates: new Map<string, LinkTagState>(),
       suggestions: new Array<string>(),
       anchorEl: new Map<string, null | HTMLElement>(),
-      isSelectionOpen: false
+      isSelectionOpen: false,
+      wsContext: { GremlinFilter: null }
     }
 
     this.synced = false
@@ -164,6 +172,13 @@ class App extends React.Component<Props, State> {
         this.checkAuth()
       }, 2000)
     }
+
+    // filters
+    config.filters.forEach((filter) => {
+      if (filter.id === config.defaultFilter) {
+        this.setState({ wsContext: { GremlinFilter: filter.gremlin } })
+      }
+    })
 
     // make the application available globally
     window.App = this
@@ -483,8 +498,23 @@ class App extends React.Component<Props, State> {
     this.websocket.sendMessage(JSON.stringify(data))
   }
 
+  setWSContext(context: WSContext) {
+    this.setState({ wsContext: context })
+    this.sync()
+  }
+
+  setGremlinFilter(gremlin: string) {
+    this.state.wsContext.GremlinFilter = gremlin
+    this.setWSContext(this.state.wsContext)
+  }
+
   sync() {
-    var msg = { "Namespace": "Graph", "Type": "SyncRequest", "Obj": null }
+    if (!this.tc) {
+      return
+    }
+
+    this.tc.resetTree()
+    var msg = { "Namespace": "Graph", "Type": "SyncRequest", "Obj": this.state.wsContext }
     this.sendMessage(msg)
   }
 
@@ -494,7 +524,6 @@ class App extends React.Component<Props, State> {
     }
 
     this.notify("Connected", "info")
-    this.tc.resetTree()
     this.sync()
     this.notify("Synchronized", "info")
 
@@ -774,6 +803,18 @@ class App extends React.Component<Props, State> {
               </Fab>
             ))}
           </Container>
+          {this.staticDataURL === "" &&
+            <Container className={classes.filtersPanel}>
+              {config.filters.map((filter, i) => (
+                <Button variant="contained" key={i} aria-label="delete" size="small"
+                  color={this.state.wsContext.GremlinFilter === filter.gremlin ? "primary" : "default"}
+                  className={classes.filtersFab}
+                  onClick={() => { this.setGremlinFilter(filter.gremlin) }}>
+                  {filter.label}
+                </Button>
+              ))}
+            </Container>
+          }
           {this.state.linkTagStates.size !== 0 &&
             <Container className={classes.linkTagsPanel}>
               <Paper className={classes.linkTagsPanelPaper}>
