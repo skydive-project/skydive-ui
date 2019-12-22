@@ -433,9 +433,10 @@ class App extends React.Component<Props, State> {
 
   weightTitles(): Map<number, string> {
     var map = new Map<number, string>()
-    Object.keys(this.props.config.weightTitles).forEach(key => {
+    var titles = this.props.config.weightTitles()
+    Object.keys(titles).forEach(key => {
       var index = parseInt(key)
-      map.set(index, this.props.config.weightTitles[index]);
+      map.set(index, titles[index]);
     })
     return map
   }
