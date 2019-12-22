@@ -847,9 +847,9 @@ class App extends React.Component<Props, State> {
               onShowNodeContextMenu={this.onShowNodeContextMenu.bind(this)}
               weightTitles={this.weightTitles()}
               groupSize={this.props.config.groupSize}
-              groupType={this.props.config.groupType}
-              groupGID={this.props.config.groupGID}
-              groupName={this.props.config.groupName}
+              groupType={this.props.config.groupType.bind(this.props.config)}
+              groupGID={this.props.config.groupGID.bind(this.props.config)}
+              groupName={this.props.config.groupName.bind(this.props.config)}
               onClick={this.onTopologyClick.bind(this)}
               onLinkSelected={this.onLinkSelected.bind(this)}
               onLinkTagChange={this.onLinkTagChange.bind(this)} />

@@ -633,7 +633,7 @@ export class Topology extends React.Component<Props, {}> {
             }
 
             if (this.props.groupGID) {
-                var gid = this.props.groupGID!(node.wrapped, child.wrapped)
+                var gid = this.props.groupGID(node.wrapped, child.wrapped)
             } else {
                 var gid = node.id + "_" + nodeType + "_" + child.wrapped.getWeight()
             }

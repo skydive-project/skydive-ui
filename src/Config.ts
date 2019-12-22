@@ -286,7 +286,7 @@ var DefaultConfig = {
         var gid = node.id
 
         // group only nodes of same type
-        var nodeType = DefaultConfig.groupType(node)
+        var nodeType = this.groupType(node)
         gid += "_" + nodeType
 
         // group only nodes being at the same level, meaning weight
@@ -294,13 +294,13 @@ var DefaultConfig = {
         gid += "_" + weight
 
         // group only nodes with the same gorup name
-        var name = DefaultConfig.groupName(child)
+        var name = this.groupName(child)
         gid += "_" + name
 
         return gid
     },
     groupName: function (child: Node) {
-        var nodeType = DefaultConfig.groupType(child)
+        var nodeType = this.groupType(child)
         if (!nodeType) {
             return !nodeType
         }
@@ -320,7 +320,7 @@ var DefaultConfig = {
 
         return nodeType + "(s)"
     },
-    weightTitles: function() {
+    weightTitles: function () {
         return {
             [WEIGHT_NONE]: "Not classified",
             [WEIGHT_FABRIC]: "Fabric",
