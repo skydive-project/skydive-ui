@@ -18,7 +18,7 @@
 import * as React from 'react'
 import clsx from 'clsx'
 import Websocket from 'react-websocket'
-import { debounce } from 'ts-debounce'
+import { debounce } from 'throttle-debounce'
 
 import { withStyles } from '@material-ui/core/styles'
 import CssBaseline from '@material-ui/core/CssBaseline'
@@ -116,6 +116,7 @@ class App extends React.Component<Props, State> {
   wsContext: WSContext
   extraConfigURL: string
   connected: boolean
+  debSetState: (state: any) => void
 
   constructor(props) {
     super(props)
@@ -135,10 +136,13 @@ class App extends React.Component<Props, State> {
 
     this.synced = false
 
-    this.refreshTopology = debounce(this._refreshTopology.bind(this), 300)
+    this.refreshTopology = debounce(300, this._refreshTopology.bind(this))
 
     // we will refresh info each 1s
-    this.bumpRevision = debounce(this.props.bumpRevision.bind(this), 1000)
+    this.bumpRevision = debounce(1000, this.props.bumpRevision.bind(this))
+
+    // debounce version of setState
+    this.debSetState = debounce(200, this.setState.bind(this))
 
     const parsed = queryString.parse(props.location.search)
 
@@ -245,7 +249,9 @@ class App extends React.Component<Props, State> {
     return false
   }
 
-  private fillSuggestions(node: Node, suggestions: Array<string>) {
+  private updateSuggestions(node: Node, suggestions: Array<string>) {
+    var updated: boolean = false
+
     for (let key of this.props.config.suggestions) {
       try {
         var value = eval("node." + key)
@@ -253,14 +259,20 @@ class App extends React.Component<Props, State> {
           for (let v of value) {
             if (!suggestions.includes(v)) {
               suggestions.push(v)
+              updated = true
             }
           }
         } else if (typeof value === "string") {
           if (!suggestions.includes(value)) {
             suggestions.push(value)
+            updated = true
           }
         }
       } catch (e) { }
+    }
+
+    if (updated) {
+      this.debSetState({ suggestions: this.state.suggestions })
     }
   }
 
@@ -279,8 +291,7 @@ class App extends React.Component<Props, State> {
     let n = this.tc.addNode(node.ID, tags, node.Metadata, (n: Node): number => this.props.config.nodeAttrs(n).weight)
     this.tc.setParent(n, this.tc.root)
 
-    this.fillSuggestions(n, this.state.suggestions)
-    this.setState({ suggestions: this.state.suggestions })
+    this.updateSuggestions(n, this.state.suggestions)
 
     return true
   }
