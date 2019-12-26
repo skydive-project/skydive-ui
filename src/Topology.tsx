@@ -1903,8 +1903,8 @@ export class Topology extends React.Component<Props, {}> {
             handleIcon(g.select("g.curly-full-icon"), d, 75, animated, false)
         }
 
-        groupButtonEnter.each(function (d) { handleIcons(select(this), d, true) })
-        groupButton.each(function (d) { handleIcons(select(this), d, true) })
+        groupButtonEnter.each(function (d: NodeWrapper) { handleIcons(select(this), d, true) })
+        groupButton.each(function (d: NodeWrapper) { handleIcons(select(this), d, true) })
 
         groupButton.transition()
             .duration(animDuration)
@@ -1912,6 +1912,8 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     private renderNodes(root: any) {
+        var self = this
+
         var node = this.gNodes.selectAll('g.node')
             .interrupt()
             .data(root.descendants(), (d: D3Node) => d.data.id)
@@ -1955,11 +1957,13 @@ export class Topology extends React.Component<Props, {}> {
             .attr("class", "node-overlay")
             .attr("r", hexSize + 16)
             .style("opacity", 0)
+            .attr("pointer-events", "none")
 
         var highlight = nodeEnter.append("g")
             .attr("id", (d: D3Node) => "node-pinned-" + d.data.id)
             .attr("class", "node-pinned")
             .style("opacity", 0)
+            .attr("pointer-events", "none")
         highlight.append("circle")
             .attr("r", hexSize + 16)
         highlight.append("text")
@@ -1973,10 +1977,12 @@ export class Topology extends React.Component<Props, {}> {
         nodeEnter.append("circle")
             .attr("class", "node-disc")
             .attr("r", hexSize + 8)
+            .attr("pointer-events", "none")
 
         nodeEnter.append("path")
             .attr("class", "node-hexagon")
             .attr("d", (d: D3Node) => this.liner(this.hexagon(d, hexSize)))
+            .attr("pointer-events", "none")
 
         const isImgIcon = (d: D3Node): boolean => {
             if (this.props.nodeAttrs(d.data.wrapped).href) {
@@ -1985,21 +1991,28 @@ export class Topology extends React.Component<Props, {}> {
             return false
         }
 
-        nodeEnter.filter((d: D3Node) => !isImgIcon(d))
-            .append("text")
-            .attr("class", (d: D3Node) => "node-icon " + this.props.nodeAttrs(d.data.wrapped).iconClass)
-            .attr("dy", 9)
-            .text((d: D3Node) => this.props.nodeAttrs(d.data.wrapped).icon)
+        nodeEnter.each(function (d: D3Node) {
+            var el = select(this)
+            var attrs = self.props.nodeAttrs(d.data.wrapped)
 
-        nodeEnter.filter((d: D3Node) => isImgIcon(d))
-            .append("image")
-            .attr("class", (d: D3Node) => "node-icon " + this.props.nodeAttrs(d.data.wrapped).iconClass)
-            .attr("transform", "translate(-16,-16)")
-            .attr("width", 32)
-            .attr("heigh", 32)
-            .attr("xlink:href", (d: D3Node) => this.props.nodeAttrs(d.data.wrapped).href)
+            if (isImgIcon(d)) {
+                el.append("image")
+                    .attr("class", (d: D3Node) => "node-icon " + attrs.iconClass)
+                    .attr("transform", "translate(-16,-16)")
+                    .attr("width", 32)
+                    .attr("heigh", 32)
+                    .attr("xlink:href", (d: D3Node) => attrs.href)
+                    .attr("pointer-events", "none")
+            } else {
+                el.append("text")
+                    .attr("class", (d: D3Node) => "node-icon " + attrs.iconClass)
+                    .attr("dy", 9)
+                    .text((d: D3Node) => attrs.icon)
+                    .attr("pointer-events", "none")
+            }
+        })
 
-        var wrapText = (text, lineHeight, width) => {
+        var wrapText = (text: Selection<SVGTextElement, any, null, undefined>, lineHeight: number, width: number) => {
             text.each(function () {
                 var text = select(this)
                 var y = text.attr("y")
@@ -2054,11 +2067,13 @@ export class Topology extends React.Component<Props, {}> {
             .attr("dy", ".35em")
             .attr("y", 85)
             .text((d: D3Node) => this.props.nodeAttrs(d.data.wrapped).name)
+            .attr("pointer-events", "none")
             .call(wrapText, 1.1, this.nodeWidth - 10)
 
         var exco = nodeEnter
             .filter((d: D3Node) => d.data.wrapped.children.length > 0)
             .append("g")
+            .attr("pointer-events", "none")
 
         exco.append("circle")
             .attr("class", "node-exco-circle")
@@ -2149,7 +2164,7 @@ export class Topology extends React.Component<Props, {}> {
             return liner(points)
         }
 
-        var wrapperLink = (d, margin) => {
+        var wrapperLink = (d: Link, margin: number) => {
             var dSource = this.d3nodes.get(d.source.id)
             var dTarget = this.d3nodes.get(d.target.id)
 
