@@ -173,9 +173,8 @@ interface Props {
     nodeAttrs: (node: Node) => NodeAttrs
     linkAttrs: (link: Link) => LinkAttrs
     weightTitles?: Map<number, string>
-    groupType?: (child: Node) => string
-    groupName?: (child: Node) => string
-    groupGID?: (node: Node, child: Node) => string
+    groupType?: (node: Node) => string
+    groupName?: (node: Node) => string
     groupSize?: number
     onLinkSelected: (link: Link, isSelected: boolean) => void
     onLinkTagChange: (tags: Map<string, LinkTagState>) => void
@@ -625,18 +624,23 @@ export class Topology extends React.Component<Props, {}> {
     private groupify(node: NodeWrapper): Map<string, NodeWrapper> {
         var groups = new Map<string, NodeWrapper>()
 
-        // dispatch node per groups
-        node.children.forEach(child => {
-            var nodeType = this.props.groupType ? this.props.groupType(child.wrapped) : child.wrapped.data.Type
+        var nodeTypeGID = (node: Node, child: Node): [string, string] | undefined => {
+            var nodeType = this.props.groupType ? this.props.groupType(child) : child.data.Type
             if (!nodeType) {
                 return
             }
+            var gid = node.id + "_" + nodeType + "_" + child.getWeight()
 
-            if (this.props.groupGID) {
-                var gid = this.props.groupGID(node.wrapped, child.wrapped)
-            } else {
-                var gid = node.id + "_" + nodeType + "_" + child.wrapped.getWeight()
+            return [nodeType, gid]
+        }
+
+        // dispatch node per groups
+        node.children.forEach(child => {
+            var ntg = nodeTypeGID(node.wrapped, child.wrapped)
+            if (!ntg) {
+                return
             }
+            var [nodeType, gid] = ntg
 
             var wrapper = groups.get(gid)
             if (!wrapper) {
@@ -663,15 +667,19 @@ export class Topology extends React.Component<Props, {}> {
 
         var pushed = new Set<string>()
 
+        // iterate one mode time children in order to
+        // if a group doesn't reach the groupSize, then remove the group
+        // and let the node as it is. If the group reach the groupSize
+        // set the children according to the offset and the groupSize or 
+        // the expand parameter.
         var children = new Array<NodeWrapper>()
         node.children.forEach(child => {
-            var nodeType = child.wrapped.data.Type
-            if (!nodeType) {
-                children.push(child)
+            var ntg = nodeTypeGID(node.wrapped, child.wrapped)
+            if (!ntg) {
                 return
             }
+            var [nodeType, gid] = ntg
 
-            var gid = this.props.groupGID!(node.wrapped, child.wrapped)
             if (pushed.has(gid)) {
                 return
             }

@@ -261,9 +261,9 @@ var DefaultConfig = {
     nodeTabTitle: function (node: Node): string {
         return node.data.Name.substring(0, 8)
     },
-    groupSize: 5,
-    groupType: function (child: Node): string|undefined{
-        var nodeType = child.data.Type
+    groupSize: 3,
+    groupType: function (node: Node): string | undefined {
+        var nodeType = node.data.Type
         if (!nodeType) {
             return
         }
@@ -290,24 +290,9 @@ var DefaultConfig = {
                 return nodeType
         }
     },
-    groupGID: function (node: Node, child: Node): string {
-        var gid = node.id
-
-        // group only nodes of same type
-        var nodeType = this.groupType(node)
-        if (nodeType) {
-            gid += "_" + nodeType
-        }
-
-        // group only nodes being at the same level, meaning weight
-        var weight = child.getWeight()
-        gid += "_" + weight
-
-        return gid
-    },
-    groupName: function (child: Node): string|undefined {
-        if (child.data.K8s) {
-            var labels = child.data.K8s.Labels
+    groupName: function (node: Node): string | undefined {
+        if (node.data.K8s) {
+            var labels = node.data.K8s.Labels
             if (!labels) {
                 return name
             }
@@ -319,7 +304,7 @@ var DefaultConfig = {
             return app
         }
 
-        var nodeType = this.groupType(child)
+        var nodeType = this.groupType(node)
         if (!nodeType) {
             return
         }

@@ -576,7 +576,6 @@ class App extends React.Component<Props, State> {
 
   setWSContext(context: WSContext) {
     this.setState({ wsContext: context })
-    console.log(this.state.wsContext)
     this.sync()
   }
 
@@ -593,7 +592,6 @@ class App extends React.Component<Props, State> {
     // then reset the topology view and re-sync
     this.tc.resetTree()
     var msg = { "Namespace": "Graph", "Type": "SyncRequest", "Obj": this.state.wsContext }
-    console.log(msg)
     this.sendMessage(msg)
   }
 
@@ -862,7 +860,6 @@ class App extends React.Component<Props, State> {
               weightTitles={this.weightTitles()}
               groupSize={this.props.config.groupSize}
               groupType={this.props.config.groupType.bind(this.props.config)}
-              groupGID={this.props.config.groupGID.bind(this.props.config)}
               groupName={this.props.config.groupName.bind(this.props.config)}
               onClick={this.onTopologyClick.bind(this)}
               onLinkSelected={this.onLinkSelected.bind(this)}
