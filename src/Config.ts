@@ -31,18 +31,26 @@ var DefaultConfig = {
         }
     ],
     defaultFilter: 'default',
-    newAttrs: function (node: Node) {
+    _newAttrs: function (node: Node) {
         var name = node.data.Name
         if (name.length > 24) {
             name = node.data.Name.substring(0, 24) + "."
         }
 
-        var attrs = { classes: [node.data.Type], name: name, icon: "\uf192", href: '', iconClass: '', weight: 0 }
+        var attrs = {
+            classes: [node.data.Type],
+            name: name,
+            icon: "\uf192",
+            href: '',
+            iconClass: '',
+            weight: 0,
+            badges: ["\uf192"]
+        }
 
         return attrs
     },
-    nodeAttrsK8s: function (node: Node) {
-        var attrs = this.newAttrs(node)
+    _nodeAttrsK8s: function (node: Node) {
+        var attrs = this._newAttrs(node)
 
         switch (node.data.Type) {
             case "cluster":
@@ -136,8 +144,8 @@ var DefaultConfig = {
 
         return attrs
     },
-    nodeAttrsInfra: function (node: Node) {
-        var attrs = this.newAttrs(node)
+    _nodeAttrsInfra: function (node: Node) {
+        var attrs = this._newAttrs(node)
 
         if (node.data.OfPort) {
             attrs.weight = WEIGHT_PORTS
@@ -218,9 +226,9 @@ var DefaultConfig = {
     nodeAttrs: function (node: Node) {
         switch (node.data.Manager) {
             case "k8s":
-                return this.nodeAttrsK8s(node)
+                return this._nodeAttrsK8s(node)
             default:
-                return this.nodeAttrsInfra(node)
+                return this._nodeAttrsInfra(node)
         }
     },
     nodeSortFnc: function (a: Node, b: Node) {
@@ -254,10 +262,10 @@ var DefaultConfig = {
         return node.data.Name.substring(0, 8)
     },
     groupSize: 5,
-    groupType: function (child: Node) {
+    groupType: function (child: Node): string|undefined{
         var nodeType = child.data.Type
         if (!nodeType) {
-            return nodeType
+            return
         }
 
         switch (nodeType) {
@@ -282,29 +290,22 @@ var DefaultConfig = {
                 return nodeType
         }
     },
-    groupGID: function (node: Node, child: Node) {
+    groupGID: function (node: Node, child: Node): string {
         var gid = node.id
 
         // group only nodes of same type
         var nodeType = this.groupType(node)
-        gid += "_" + nodeType
+        if (nodeType) {
+            gid += "_" + nodeType
+        }
 
         // group only nodes being at the same level, meaning weight
         var weight = child.getWeight()
         gid += "_" + weight
 
-        // group only nodes with the same gorup name
-        var name = this.groupName(child)
-        gid += "_" + name
-
         return gid
     },
-    groupName: function (child: Node) {
-        var nodeType = this.groupType(child)
-        if (!nodeType) {
-            return !nodeType
-        }
-
+    groupName: function (child: Node): string|undefined {
         if (child.data.K8s) {
             var labels = child.data.K8s.Labels
             if (!labels) {
@@ -316,6 +317,11 @@ var DefaultConfig = {
                 return "default"
             }
             return app
+        }
+
+        var nodeType = this.groupType(child)
+        if (!nodeType) {
+            return
         }
 
         return nodeType + "(s)"

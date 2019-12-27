@@ -426,7 +426,7 @@ export class Topology extends React.Component<Props, {}> {
     private initTree() {
         var state = { expanded: true, selected: false, mouseover: false, groupOffset: 0, groupFullSize: false }
 
-        this.root = new Node("root", ["root"], { name: "root" }, state, 0)
+        this.root = new Node("root", ["root"], { Name: "root", Type: "root" }, state, 0)
 
         this.nodes = new Map<string, Node>()
         this.nodeTagStates = new Map<string, boolean>()
