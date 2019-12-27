@@ -225,21 +225,26 @@ class App extends React.Component<Props, State> {
     this.extraConfigURL = url
 
     if (this.staticDataURL) {
-      // load first the config and then the config
-      this.fetchExtraConfig(this.extraConfigURL).then(() => {
+      // load first the config and then the data
+      var p = this.fetchExtraConfig(this.extraConfigURL).then(() => {
         this.loadStaticData(this.staticDataURL)
-      }).catch(() => {
-        this.notify("Unable to load or parse extra config", "error")
       })
     } else {
-      this.sync()
+      var p = this.fetchExtraConfig(this.extraConfigURL).then(() => {
+        this.updateFilter()
+        this.sync()
+      })
     }
+
+    p.catch(() => {
+      this.notify("Unable to load or parse extra config", "error")
+    })
   }
 
   private updateFilter(): boolean {
     for (let filter of this.props.config.filters) {
       if (filter.id === this.props.config.defaultFilter) {
-        if (this.state.wsContext.GremlinFilter != filter.gremlin) {
+        if (this.state.wsContext.GremlinFilter !== filter.gremlin) {
           this.setState({ wsContext: { GremlinFilter: filter.gremlin } })
           return true
         }
@@ -571,6 +576,7 @@ class App extends React.Component<Props, State> {
 
   setWSContext(context: WSContext) {
     this.setState({ wsContext: context })
+    console.log(this.state.wsContext)
     this.sync()
   }
 
@@ -584,21 +590,11 @@ class App extends React.Component<Props, State> {
       return
     }
 
-    // load first the extra config
-    this.fetchExtraConfig(this.extraConfigURL).then(() => {
-      this.updateFilter()
-
-      if (!this.tc) {
-        return
-      }
-
-      // then reset the topology view and re-sync
-      this.tc.resetTree()
-      var msg = { "Namespace": "Graph", "Type": "SyncRequest", "Obj": this.state.wsContext }
-      this.sendMessage(msg)
-    }).catch((reason) => {
-      this.notify("Unable to load or parse extra config", "error")
-    })
+    // then reset the topology view and re-sync
+    this.tc.resetTree()
+    var msg = { "Namespace": "Graph", "Type": "SyncRequest", "Obj": this.state.wsContext }
+    console.log(msg)
+    this.sendMessage(msg)
   }
 
   onWebSocketOpen() {
@@ -609,8 +605,15 @@ class App extends React.Component<Props, State> {
     }
 
     this.notify("Connected", "info")
-    this.sync()
-    this.notify("Synchronized", "info")
+    this.fetchExtraConfig(this.extraConfigURL).then(() => {
+      this.updateFilter()
+
+      this.sync()
+
+      this.notify("Synchronized", "info")
+    }).catch((reason) => {
+      this.notify("Unable to load or parse extra config", "error")
+    })
 
     // set API configuration
     this.apiConf = new Configuration({ accessToken: this.props.session.token })
