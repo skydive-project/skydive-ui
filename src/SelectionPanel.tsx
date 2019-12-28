@@ -26,7 +26,7 @@ import Collapse from '@material-ui/core/Collapse'
 import Highlight from 'react-highlight'
 import CancelIcon from '@material-ui/icons/Cancel'
 import Tooltip from '@material-ui/core/Tooltip'
-import AlbumIcon from '@material-ui/icons/Album'
+import VideocamIcon from '@material-ui/icons/Videocam'
 import CaptureForm from "./CaptureForm"
 import { withStyles } from '@material-ui/core/styles'
 
@@ -203,7 +203,7 @@ class SelectionPanel extends React.Component<Props, State> {
                   aria-label="Packet capture"
                   onClick={() => this.toggleCaptureForm(el)}
                   color="inherit">
-                  <AlbumIcon />
+                  <VideocamIcon />
                 </IconButton>
               </Tooltip>
             }

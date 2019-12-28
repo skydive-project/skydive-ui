@@ -1,4 +1,4 @@
-import { Node, Link } from './Topology'
+import { Node, Link, NodeAttrs } from './Topology'
 import Tools from './Tools'
 
 const WEIGHT_NONE = 0
@@ -31,7 +31,7 @@ var DefaultConfig = {
         }
     ],
     defaultFilter: 'default',
-    _newAttrs: function (node: Node) {
+    _newAttrs: function (node: Node): NodeAttrs {
         var name = node.data.Name
         if (name.length > 24) {
             name = node.data.Name.substring(0, 24) + "."
@@ -44,12 +44,12 @@ var DefaultConfig = {
             href: '',
             iconClass: '',
             weight: 0,
-            badges: ["\uf192"]
+            badges: []
         }
 
         return attrs
     },
-    _nodeAttrsK8s: function (node: Node) {
+    _nodeAttrsK8s: function (node: Node): NodeAttrs {
         var attrs = this._newAttrs(node)
 
         switch (node.data.Type) {
@@ -144,7 +144,7 @@ var DefaultConfig = {
 
         return attrs
     },
-    _nodeAttrsInfra: function (node: Node) {
+    _nodeAttrsInfra: function (node: Node): NodeAttrs {
         var attrs = this._newAttrs(node)
 
         if (node.data.OfPort) {
@@ -221,9 +221,13 @@ var DefaultConfig = {
             attrs.weight = WEIGHT_FABRIC
         }
 
+        if (node.data.Captures) {
+            attrs.badges = ["\uf03d"]
+        }
+
         return attrs
     },
-    nodeAttrs: function (node: Node) {
+    nodeAttrs: function (node: Node): NodeAttrs {
         switch (node.data.Manager) {
             case "k8s":
                 return this._nodeAttrsK8s(node)

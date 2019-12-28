@@ -114,6 +114,18 @@ svg {
     font-weight: 900;
 }
 
+.node-badge rect {
+    fill: #170a6d;
+}
+
+.node-badge text {
+    font-size: 16px;
+    text-anchor: middle;
+    font-family: 'Font Awesome 5 Free' !important;
+    fill: #fff;
+    font-weight: 900;
+}
+
 .font-brands {
     font-family: 'Font Awesome 5 Brands' !important;
 }

@@ -157,6 +157,8 @@ export interface NodeAttrs {
     icon: string
     iconClass: string
     href: string
+    badges: Array<string>
+    weight: number
 }
 
 export interface LinkAttrs {
@@ -2074,9 +2076,45 @@ export class Topology extends React.Component<Props, {}> {
             .attr("class", "node-name")
             .attr("dy", ".35em")
             .attr("y", 85)
+            // NOTE(safchain) maybe this should be done for all the nodes
+            // has the name can be updated
             .text((d: D3Node) => this.props.nodeAttrs(d.data.wrapped).name)
             .attr("pointer-events", "none")
             .call(wrapText, 1.1, this.nodeWidth - 10)
+
+        const renderNodeBadge = function (d: D3Node) {
+            var badge = select(this).selectAll("g.node-badge")
+                .data(self.props.nodeAttrs(d.data.wrapped).badges)
+
+            var badgeEnter = badge.enter()
+                .append("g")
+                .attr("class", "node-badge")
+            badge.exit().remove()
+
+            badgeEnter
+                .append("rect")
+                .attr("x", (d: string, i: number) => 38 - i * 28)
+                .attr("y", -60)
+                .attr("width", 24)
+                .attr("height", 24)
+                .attr("rx", 5)
+                .attr("ry", 5)
+
+            badgeEnter
+                .append("text")
+                .attr("dx", (d: string, i: number) => 50 - i * 28)
+                .attr("dy", -42)
+                .text(d => d)
+                .attr("pointer-events", "none")
+        }
+
+        nodeEnter
+            .append("g")
+            .attr("class", "node-badges")
+            .attr("pointer-events", "none")
+            .each(renderNodeBadge)
+
+        node.each(renderNodeBadge)
 
         var exco = nodeEnter
             .filter((d: D3Node) => d.data.wrapped.children.length > 0)

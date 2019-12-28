@@ -19,7 +19,7 @@ import * as React from 'react'
 import TextField from '@material-ui/core/TextField'
 import Button from '@material-ui/core/Button'
 import { withStyles } from '@material-ui/core/styles'
-import AlbumIcon from '@material-ui/icons/Album'
+import VideocamIcon from '@material-ui/icons/Videocam'
 
 import { Configuration } from './api/configuration'
 import ActionPanel from './ActionPanel'
@@ -68,7 +68,7 @@ class CaptureForm extends React.Component<Props, State> {
         const { classes } = this.props
 
         return (
-            <ActionPanel icon={<AlbumIcon />} title="Packet capture" content={
+            <ActionPanel icon={<VideocamIcon />} title="Packet capture" content={
                 <React.Fragment>
                     <TextField
                         id="standard-basic"
