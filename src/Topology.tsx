@@ -182,6 +182,7 @@ interface Props {
     onLinkTagChange: (tags: Map<string, LinkTagState>) => void
     onNodeClicked: (node: Node) => void
     onNodeDblClicked: (node: Node) => void
+    defaultLinkTagMode?: (tag: string) => LinkTagState
 }
 
 /**
@@ -582,7 +583,8 @@ export class Topology extends React.Component<Props, {}> {
             this.linkTagCount.set(tag, count + 1)
 
             if (!this.linkTagStates.has(tag)) {
-                this.linkTagStates.set(tag, LinkTagState.EventBased)
+                let mode = this.props.defaultLinkTagMode ? this.props.defaultLinkTagMode(tag) : LinkTagState.EventBased
+                this.linkTagStates.set(tag, mode)
             }
         })
 

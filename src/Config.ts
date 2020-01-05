@@ -536,8 +536,11 @@ var DefaultConfig = {
             title: "Destination",
             expanded: false,
             icon: "\uf018",
-        },
-    ]
+        }
+    ],
+    defaultLinkTagMode: function(tag: string): number {
+        return 2
+    }
 }
 
 export default DefaultConfig
