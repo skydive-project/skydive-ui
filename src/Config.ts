@@ -238,6 +238,12 @@ var DefaultConfig = {
     nodeSortFnc: function (a: Node, b: Node) {
         return a.data.Name.localeCompare(b.data.Name)
     },
+    nodeClicked: function(node: Node) {
+        window.App.tc.selectNode(node.id)
+    },
+    nodeDblClicked: function(node: Node) {
+        window.App.tc.expand(node)
+    },
     nodeMenu: function (node: Node) {
         return [
             {

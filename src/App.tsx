@@ -863,7 +863,10 @@ class App extends React.Component<Props, State> {
               groupName={this.props.config.groupName.bind(this.props.config)}
               onClick={this.onTopologyClick.bind(this)}
               onLinkSelected={this.onLinkSelected.bind(this)}
-              onLinkTagChange={this.onLinkTagChange.bind(this)} />
+              onLinkTagChange={this.onLinkTagChange.bind(this)}
+              onNodeClicked={this.props.config.nodeClicked.bind(this.props.config)}
+              onNodeDblClicked={this.props.config.nodeDblClicked.bind(this.props.config)}
+            />
           </Container>
           <Container className={classes.rightPanel}>
             <Paper className={clsx(classes.rightPanelPaper, (!this.props.selection.length || !this.state.isSelectionOpen) && classes.rightPanelPaperClose)}

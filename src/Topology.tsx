@@ -180,6 +180,8 @@ interface Props {
     groupSize?: number
     onLinkSelected: (link: Link, isSelected: boolean) => void
     onLinkTagChange: (tags: Map<string, LinkTagState>) => void
+    onNodeClicked: (node: Node) => void
+    onNodeDblClicked: (node: Node) => void
 }
 
 /**
@@ -227,7 +229,7 @@ export class Topology extends React.Component<Props, {}> {
     linkTagStates: Map<string, LinkTagState>
     weightTitles: Map<number, string>
 
-    constructor(props) {
+    constructor(props: Props) {
         super(props)
 
         this.nodeWidth = 150
@@ -837,11 +839,11 @@ export class Topology extends React.Component<Props, {}> {
         node.children.forEach((child: Node) => this.collapse(child))
     }
 
-    private expand(node: NodeWrapper) {
-        if (node.wrapped.state.expanded) {
-            this.collapse(node.wrapped)
+    expand(node: Node) {
+        if (node.state.expanded) {
+            this.collapse(node)
         } else {
-            node.wrapped.state.expanded = true
+            node.state.expanded = true
         }
 
         // invalidate link cache
@@ -1109,7 +1111,7 @@ export class Topology extends React.Component<Props, {}> {
         })
     }
 
-    selectNode(id: string, active: boolean) {
+    selectNode(id: string, active: boolean = true) {
         if (!this.isCtrlPressed && active) {
             this.unselectAllNodes()
             this.unselectAllLinks()
@@ -1339,7 +1341,10 @@ export class Topology extends React.Component<Props, {}> {
             this.nodeClickedID = 0
 
             this.hideNodeContextMenu()
-            this.selectNode(d.data.id, true)
+
+            if (this.props.onNodeClicked) {
+                this.props.onNodeClicked(d.data.wrapped)
+            }
         }, 170)
     }
 
@@ -1350,7 +1355,9 @@ export class Topology extends React.Component<Props, {}> {
             this.nodeClickedID = 0
         }
 
-        this.expand(d.data)
+        if (this.props.onNodeDblClicked) {
+            this.props.onNodeDblClicked(d.data.wrapped)
+        }
     }
 
     private neighborLinks(node: NodeWrapper, links: Array<Link>): Array<Link> {
@@ -1387,7 +1394,7 @@ export class Topology extends React.Component<Props, {}> {
         while (id) {
             var d = this.d3nodes.get(id)
             if (d) {
-                this.expand(d.data)
+                this.expand(d.data.wrapped)
             } else {
                 // part of a group then slide to the offset
                 var group = this.nodeGroup.get(id)
