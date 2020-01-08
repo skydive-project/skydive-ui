@@ -905,10 +905,6 @@ export class Topology extends React.Component<Props, {}> {
         var tagPresent = new Map<string, boolean>()
 
         this.links.forEach((link: Link) => {
-            if (!(link.tags.some(tag => this.linkTagStates.get(tag) !== LinkTagState.Hidden))) {
-                return
-            }
-
             var source = findVisible(link.source)
             var target = findVisible(link.target)
 
@@ -917,7 +913,10 @@ export class Topology extends React.Component<Props, {}> {
                     tagPresent.set(tag, true)
                 }
 
-                links.push(new Link(link.id, link.tags, source, target, link.data, link.state))
+                // at least one tag is present
+                if (link.tags.some(tag => this.linkTagStates.get(tag) !== LinkTagState.Hidden)) {
+                    links.push(new Link(link.id, link.tags, source, target, link.data, link.state))
+                }
             }
         })
 
