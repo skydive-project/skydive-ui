@@ -684,7 +684,7 @@ export class Topology extends React.Component<Props, {}> {
             if (!ntg) {
                 return
             }
-            var [nodeType, gid] = ntg
+            var [_, gid] = ntg
 
             if (pushed.has(gid)) {
                 return
@@ -1917,8 +1917,8 @@ export class Topology extends React.Component<Props, {}> {
         const handleIcons = (g: any, d: NodeWrapper, animated: boolean) => {
             var size = this.props.groupSize || defaultGroupSize
 
-            handleIcon(g.select("g.curly-left-icon"), d, 50, animated, d.wrapped.state.groupOffset == 0)
-            handleIcon(g.select("g.curly-right-icon"), d, 25, animated, d.wrapped.state.groupOffset + size >= d.wrapped.children.length)
+            handleIcon(g.select("g.curly-left-icon"), d, 50, animated, d.wrapped.state.groupFullSize || d.wrapped.state.groupOffset === 0)
+            handleIcon(g.select("g.curly-right-icon"), d, 25, animated, d.wrapped.state.groupFullSize || d.wrapped.state.groupOffset + size >= d.wrapped.children.length)
             handleIcon(g.select("g.curly-full-icon"), d, 75, animated, false)
         }
 
