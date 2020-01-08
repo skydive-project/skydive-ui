@@ -1910,6 +1910,9 @@ export class Topology extends React.Component<Props, {}> {
                     select(this).text("\uf146")
                 }
 
+                // invalidate link cache
+                self.visibleLinksCache = undefined
+
                 self.renderTree()
             })
 
