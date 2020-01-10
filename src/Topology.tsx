@@ -164,6 +164,7 @@ export interface NodeAttrs {
 export interface LinkAttrs {
     classes: Array<string>
     directed: boolean
+    label: string
 }
 
 interface Props {
@@ -202,6 +203,7 @@ export class Topology extends React.Component<Props, {}> {
     private gHieraLinks: Selection<SVGGraphicsElement, {}, null, undefined>
     private gLinkOverlays: Selection<SVGGraphicsElement, {}, null, undefined>
     private gLinks: Selection<SVGGraphicsElement, {}, null, undefined>
+    private gLinkLabels: Selection<SVGGraphicsElement, {}, null, undefined>
     private gLinkWraps: Selection<SVGGraphicsElement, {}, null, undefined>
     private gGroups: Selection<SVGGraphicsElement, {}, null, undefined>
     private gGroupButtons: Selection<SVGGraphicsElement, {}, null, undefined>
@@ -234,7 +236,7 @@ export class Topology extends React.Component<Props, {}> {
         super(props)
 
         this.nodeWidth = 150
-        this.nodeHeight = 260
+        this.nodeHeight = 280
 
         if (this.props.weightTitles) {
             this.weightTitles = this.props.weightTitles
@@ -309,21 +311,25 @@ export class Topology extends React.Component<Props, {}> {
             .attr("viewBox", "-5 -5 10 10")
             .attr("markerWidth", 6)
             .attr("markerHeight", 6)
-            .attr("orient", "auto")
+            .attr("orient", "auto-start-reverse")
             .append("path")
             .attr("class", "link-marker link-directed-marker")
             .attr("d", "M 0,0 m -5,-5 L 5,0 L -5,5 Z")
 
-        defs
-            .append("marker")
-            .attr("id", "link-overlay-marker")
-            .attr("viewBox", "-5 -5 10 10")
-            .attr("markerWidth", 1)
-            .attr("markerHeight", 1)
-            .attr("orient", "auto")
-            .append("path")
-            .attr("class", "link-overlay-marker")
-            .attr("d", "M 0,0 m -5,-5 L 5,-5 L 5,5 L -5,5 Z")
+        const markerOverlay = (id: string) => {
+            defs
+                .append("marker")
+                .attr("id", id)
+                .attr("viewBox", "-5 -5 10 10")
+                .attr("markerWidth", 1)
+                .attr("markerHeight", 1)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("class", id)
+                .attr("d", "M 0,0 m -5,-5 L 5,-5 L 5,5 L -5,5 Z")
+        }
+        markerOverlay("link-overlay-marker")
+        markerOverlay("link-overlay-selected-marker")
 
         var filter = defs.append("filter")
             .attr("id", "drop-shadow")
@@ -388,6 +394,10 @@ export class Topology extends React.Component<Props, {}> {
         // non-hiera links group
         this.gLinks = this.g.append("g")
             .attr("class", "links")
+
+        // link labels
+        this.gLinkLabels = this.g.append("g")
+            .attr("class", "link-labels")
 
         // link wrapper group, used to catch mouse event
         this.gLinkWraps = this.g.append("g")
@@ -1110,6 +1120,10 @@ export class Topology extends React.Component<Props, {}> {
         selectAll("path.link").each(function (d: Link) {
             select(this).style("opacity", self.isLinkVisible(d) ? 1 : 0)
         })
+
+        selectAll("text.link-label").each(function (d: Link) {
+            select(this).style("opacity", self.isLinkVisible(d) ? 1 : 0)
+        })
     }
 
     selectNode(id: string, active: boolean = true) {
@@ -1478,6 +1492,8 @@ export class Topology extends React.Component<Props, {}> {
         for (let link of links) {
             if (active || !this.isLinkNodeSelected(link)) {
                 select("#link-" + link.id)
+                    .style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : opacity)
+                select("#link-label-" + link.id)
                     .style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : opacity)
                 select("#link-overlay-" + link.id)
                     .style("opacity", link.state.selected || opacity)
@@ -2237,17 +2253,16 @@ export class Topology extends React.Component<Props, {}> {
             }
 
             if (dSource.y < dTarget.y) {
-                return vLinker({ source: { node: d.source, dx: 0, dy: margin }, target: { node: d.target, dx: 0, dy: -margin } })
+                return vLinker({ source: { node: d.target, dx: 0, dy: -margin }, target: { node: d.source, dx: 0, dy: margin } })
             }
 
-            return vLinker({ source: { node: d.source, dx: 0, dy: -margin }, target: { node: d.target, dx: 0, dy: margin } })
+            return vLinker({ source: { node: d.source, dx: 0, dy: margin }, target: { node: d.target, dx: 0, dy: -margin } })
         }
         const linker = (d: Link) => wrapperLink(d, 55)
 
         var visibleLinks = this.visibleLinks()
 
         const linkOverlayClass = (d: Link) => new Array<string>().concat("link-overlay",
-            this.props.linkAttrs(d).classes,
             d.state.selected ? "link-overlay-selected" : "").join(" ")
 
         var linkOverlay = this.gLinkOverlays.selectAll('path.link-overlay')
@@ -2288,6 +2303,27 @@ export class Topology extends React.Component<Props, {}> {
             .duration(animDuration)
             .style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : 0)
             .attr("d", linker)
+
+        var linkLabel = this.gLinkLabels.selectAll('text.link-label')
+            .interrupt()
+            .data(visibleLinks.filter((d: Link) => this.props.linkAttrs(d).label), (d: Link) => d.id)
+
+        var linkLabelEnter = linkLabel.enter()
+            .append('text')
+            .attr("class", "link-label")
+            .attr("id", (d: Link) => "link-label-" + d.id)
+            .attr("dy", -8)
+            .style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : 0)
+        linkLabelEnter.append('textPath')
+            .attr("xlink:href", (d: Link) => "#link-" + d.id)
+            .attr("text-anchor", "middle")
+            .attr("startOffset", "50%")
+            .attr("side", "right")
+            .text((d: Link) => this.props.linkAttrs(d).label)
+        linkLabel.exit().remove()
+
+        linkLabel = linkLabel.merge(linkLabelEnter)
+        linkLabel.style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : 0)
 
         var linkWrap = this.gLinkWraps.selectAll('path.link-wrap')
             .interrupt()

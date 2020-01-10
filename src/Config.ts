@@ -213,7 +213,8 @@ var DefaultConfig = {
             attrs.weight = WEIGHT_PHYSICAL
         }
 
-        if (node.data.Driver && ["tap", "veth", "tun", "openvswitch"].indexOf(node.data.Driver) < 0) {
+        var virt = ["tap", "veth", "tun", "openvswitch"]
+        if (node.data.Driver && virt.indexOf(node.data.Driver) < 0) {
             attrs.weight = WEIGHT_PHYSICAL
         }
 
@@ -238,10 +239,10 @@ var DefaultConfig = {
     nodeSortFnc: function (a: Node, b: Node) {
         return a.data.Name.localeCompare(b.data.Name)
     },
-    nodeClicked: function(node: Node) {
+    nodeClicked: function (node: Node) {
         window.App.tc.selectNode(node.id)
     },
-    nodeDblClicked: function(node: Node) {
+    nodeDblClicked: function (node: Node) {
         window.App.tc.expand(node)
     },
     nodeMenu: function (node: Node) {
@@ -490,7 +491,14 @@ var DefaultConfig = {
         }
     ],
     linkAttrs: function (link: Link) {
-        var attrs = { classes: [link.data.RelationType], icon: "\uf362", directed: false, href: '', iconClass: '' }
+        var attrs = {
+            classes: [link.data.RelationType],
+            icon: "\uf362",
+            directed: false,
+            href: '',
+            iconClass: '',
+            label: ""
+        }
 
         if (link.data.Directed) {
             attrs.directed = true
@@ -538,7 +546,7 @@ var DefaultConfig = {
             icon: "\uf018",
         }
     ],
-    defaultLinkTagMode: function(tag: string): number {
+    defaultLinkTagMode: function (tag: string): number {
         return 2
     }
 }

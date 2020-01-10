@@ -58,8 +58,8 @@ svg {
 }
 
 .links .directed {
-    marker-start: unset;
-    marker-end: url(#link-directed-marker);
+    marker-start: url(#link-directed-marker);
+    marker-end: unset;
 }
 
 .link-marker {
@@ -71,6 +71,12 @@ svg {
     stroke-width: 30;
     opacity: 0;
     fill: none;
+}
+
+.link-label {
+    font-size: 18px;
+    font-weight: normal;
+    font-family: sans-serif;
 }
 
 .hiera-link {
@@ -115,7 +121,7 @@ svg {
 }
 
 .node-badge rect {
-    fill: #170a6d;
+    fill: #6975a9;
 }
 
 .node-badge text {
