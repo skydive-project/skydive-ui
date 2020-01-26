@@ -221,4 +221,23 @@ export const styles = (theme: Theme) => createStyles({
     fontSize: '0.8rem',
     padding: '6px 12px !important'
   },
+  menuItemIconFree: {
+    fontFamily: `"Font Awesome 5 Free" !important`,
+    fontWeight: 900,
+    fontSize: 16,
+    marginBottom: `0 !important`,
+    minWidth: 32
+  },
+  menuItemIconBrands: {
+    fontFamily: `"Font Awesome 5 Brands" !important`,
+    fontWeight: 900,
+    fontSize: 16,
+    marginBottom: `0 !important`,
+    minWidth: 32
+  },
+  menuItemIconImg: {
+    maxWidth: 18,
+    maxHeight: 18,
+    verticalAlign: 'middle'
+  }
 })

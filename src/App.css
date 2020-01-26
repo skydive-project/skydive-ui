@@ -22,3 +22,7 @@
 .MuiIconButton-root:hover {
   background-color: #555 !important;
 }
+
+.MuiListItemIcon-root {
+  min-width: 32px !important;
+}

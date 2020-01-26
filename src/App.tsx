@@ -28,6 +28,8 @@ import Toolbar from '@material-ui/core/Toolbar'
 import IconButton from '@material-ui/core/IconButton'
 import Typography from '@material-ui/core/Typography'
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
+import KeyboardArrowDown from '@material-ui/icons/KeyboardArrowDown'
+import RemoveShoppingCartIcon from '@material-ui/icons/RemoveShoppingCart'
 import Divider from '@material-ui/core/Divider'
 import List from '@material-ui/core/List'
 import Container from '@material-ui/core/Container'
@@ -40,6 +42,7 @@ import { connect } from 'react-redux'
 import AccountCircle from '@material-ui/icons/AccountCircle'
 import MenuIcon from '@material-ui/icons/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
+import ListItemIcon from '@material-ui/core/ListItemIcon'
 import Menu from '@material-ui/core/Menu'
 import Fab from '@material-ui/core/Fab'
 import { withRouter } from 'react-router-dom'
@@ -749,6 +752,50 @@ class App extends React.Component<Props, State> {
     })
   }
 
+  renderSelectionMenuItem(classes: any) {
+    return this.props.selection.map((el: Node | Link, i: number) => {
+      var className = classes.menuItemIconFree
+
+      if (el.type === 'node') {
+        let attrs = this.props.config.nodeAttrs(el)
+        var icon: string = attrs.icon
+        var href: string = attrs.href
+
+        if (attrs.iconClass === "font-brands") {
+          className = classes.menuItemIconBrands
+        }
+
+        var title = this.props.config.nodeTabTitle(el)
+      } else {
+        let attrs = this.props.config.linkAttrs(el)
+        var icon: string = attrs.icon
+        var href: string = attrs.href
+
+        if (attrs.iconClass === "font-brands") {
+          className = classes.menuItemIconBrands
+        }
+
+        var title = this.props.config.linkTabTitle(el)
+      }
+
+      const iconRender = () => {
+        if (href) {
+          return (
+            <img src={href} className={classes.menuItemIconImg} />
+          )
+        }
+        return icon
+      }
+
+      return (
+        <MenuItem key={"menu-item-" + i} >
+          <span className={className}>{iconRender()}</span>
+          <Typography>{title}</Typography>
+        </MenuItem>
+      )
+    })
+  }
+
   render() {
     const { classes } = this.props
 
@@ -804,8 +851,21 @@ class App extends React.Component<Props, State> {
                 }}
                 open={Boolean(this.state.anchorEl.get("selection"))}
                 onClose={this.closeMenu.bind(this, "selection")}>
-                <MenuItem onClick={() => { this.closeMenu("selection"); this.openSelection() }}>Show selection</MenuItem>
-                <MenuItem onClick={() => { this.closeMenu("selection"); this.unselectAll() }}>Unselect all</MenuItem>
+                <MenuItem onClick={() => { this.closeMenu("selection"); this.openSelection() }}>
+                  <ListItemIcon>
+                    <KeyboardArrowDown fontSize="small" />
+                  </ListItemIcon>
+                  <Typography>Show selection</Typography>
+                </MenuItem>
+                <Divider />
+                {this.renderSelectionMenuItem(classes)}
+                <Divider />
+                <MenuItem onClick={() => { this.closeMenu("selection"); this.unselectAll() }}>
+                  <ListItemIcon>
+                    <RemoveShoppingCartIcon fontSize="small" />
+                  </ListItemIcon>
+                  <Typography>Unselect all</Typography>
+                </MenuItem>
               </Menu>
               <IconButton
                 aria-label="account of current user"
