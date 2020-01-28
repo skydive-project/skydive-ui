@@ -2144,15 +2144,16 @@ export class Topology extends React.Component<Props, {}> {
         node.each(renderNodeBadge)
 
         var exco = nodeEnter
-            .filter((d: D3Node) => d.data.wrapped.children.length > 0)
             .append("g")
+            .attr("class", "node-exco")
             .attr("pointer-events", "none")
+            .style("opacity", ((d: D3Node) => d.data.wrapped.children.length > 0 ? 1 : 0))
 
         exco.append("circle")
             .attr("class", "node-exco-circle")
             .attr("cx", hexSize + 10)
             .attr("cy", hexSize)
-            .attr("r", (d: D3Node) => d.data.wrapped.children.length ? 18 : 0)
+            .attr("r", 18)
 
         const num = (node: NodeWrapper) => {
             var n = 0
@@ -2174,7 +2175,12 @@ export class Topology extends React.Component<Props, {}> {
             .attr("y", hexSize + 6)
             .text((d: D3Node) => num(d.data))
 
+        node.select("g.node-exco")
+            .filter((d: D3Node) => d.data.wrapped.children.length > 0)
+            .style('opacity', 1)
+
         node.select("text.node-exco-children")
+            .filter((d: D3Node) => d.data.wrapped.children.length > 0)
             .text((d: D3Node) => num(d.data))
 
         node.transition()
