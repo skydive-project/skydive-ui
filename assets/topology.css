@@ -2,15 +2,15 @@
   fill: #114B5F;
 }
 
-.netns .node-hexagon {
+.netns .node-hexagon, .folder .node-hexagon {
   fill: #C6DABF;
 }
 
-.bridge .node-hexagon, .ovsbridge .node-hexagon, .port .node-hexagon, .ovsport .node-hexagon {
+.bridge .node-hexagon, .ovsbridge .node-hexagon, .port .node-hexagon, .ovsport .node-hexagon, .root-folder .node-hexagon {
   fill: #36b791;
 }
 
-.interface .node-hexagon, .device .node-hexagon, .tun .node-hexagon, .tap .node-hexagon, .veth .node-hexagon {
+.interface .node-hexagon, .device .node-hexagon, .tun .node-hexagon, .tap .node-hexagon, .veth .node-hexagon, .file .node-hexagon {
   fill: #88D498;
 }
 

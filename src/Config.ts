@@ -13,6 +13,7 @@ const WEIGHT_K8S_FEDERATION = 100
 const WEIGHT_K8S_CLUSTER = 101
 const WEIGHT_K8S_NODE = 102
 const WEIGHT_K8S_POD = 103
+const WEIGHT_FS = 203
 
 var DefaultConfig = {
     subTitle: "",
@@ -152,6 +153,18 @@ var DefaultConfig = {
         }
 
         switch (node.data.Type) {
+            case "file":
+                attrs.icon = "\uf15b"
+                attrs.weight = WEIGHT_FS
+                break
+            case "folder":
+                attrs.icon = "\uf07b"
+                attrs.weight = WEIGHT_FS
+                break
+            case "root-folder":
+                attrs.icon = "\uf187"
+                attrs.weight = WEIGHT_FS
+                break 
             case "host":
                 attrs.icon = "\uf109"
                 attrs.weight = WEIGHT_PHYSICAL
@@ -335,7 +348,8 @@ var DefaultConfig = {
             [WEIGHT_K8S_FEDERATION]: "Federations",
             [WEIGHT_K8S_CLUSTER]: "Clusters",
             [WEIGHT_K8S_NODE]: "Nodes",
-            [WEIGHT_K8S_POD]: "Pods"
+            [WEIGHT_K8S_POD]: "Pods",
+            [WEIGHT_FS]: "File system"
         }
     },
     suggestions: [
