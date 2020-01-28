@@ -39,7 +39,7 @@ export const styles = (theme: Theme) => createStyles({
         lineHeight: 0
     },
     paper: {
-        display: 'flex',
+        display: 'block',
         flexWrap: 'wrap',
         padding: theme.spacing(2),
         marginLeft: 1,

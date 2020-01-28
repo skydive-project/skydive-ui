@@ -911,7 +911,6 @@ class App extends React.Component<Props, State> {
           <List>{helpListItems}</List>
         </Drawer>
         <main className={classes.content}>
-          <div className={classes.appBarSpacer} />
           <Container maxWidth="xl" className={classes.container}>
             <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs.bind(this)} linkAttrs={this.linkAttrs.bind(this)}
               onNodeSelected={this.onNodeSelected.bind(this)}

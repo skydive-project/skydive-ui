@@ -36,6 +36,7 @@ interface Props {
     details: Map<number, any>
     filterKeys?: Array<string>
     onFilterReset?: () => void
+    defaultColumns?: Array<string>
 }
 
 interface State {
@@ -49,9 +50,12 @@ interface State {
 export class DataViewer extends React.Component<Props, State> {
 
     state: State
+    applyDefaultColumns: boolean
 
     constructor(props) {
         super(props)
+
+        this.applyDefaultColumns = true
 
         this.state = {
             sortField: "",
@@ -62,17 +66,19 @@ export class DataViewer extends React.Component<Props, State> {
     }
 
     static getDerivedStateFromProps(props, state) {
+        if (props.defaultColumns) {
+            state.defaultColumns = props.defaultColumns
+        }
+
         if (props.graph) {
             var graph = props.graph
             if (state.graph) {
                 graph.data = state.graph.data.concat(graph.data.slice(1))
             }
-            return {
-                graph: graph
-            }
+            state.graph = graph
         }
 
-        return null
+        return state
     }
 
     private resetFilter() {
@@ -132,6 +138,10 @@ export class DataViewer extends React.Component<Props, State> {
             onColumnSortChange: (field: string, direction: string) => {
                 this.setState({ sortField: field, sortDirection: direction })
             },
+            onColumnViewChange: (column: string, action: string) => {
+                console.log(column)
+                console.log(action)
+            },
             onFilterChange: (field: string, filterList: Array<any>) => {
                 var newList = new Array<any>()
 
@@ -162,6 +172,12 @@ export class DataViewer extends React.Component<Props, State> {
                 }
             }
 
+            if (this.applyDefaultColumns && this.props.defaultColumns) {
+                if (!this.props.defaultColumns.includes(column.name)) {
+                    column.options.display = 'false'
+                }
+            }
+
             // use value from config first
             if (column.name === "Key" && this.props.filterKeys) {
                 column.options.filterList = this.props.filterKeys
@@ -172,6 +188,7 @@ export class DataViewer extends React.Component<Props, State> {
                 column.options.filterList = filterList
             }
         }
+        this.applyDefaultColumns = false
 
         return (
             <React.Fragment>

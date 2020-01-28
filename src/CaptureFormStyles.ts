@@ -24,5 +24,32 @@ export const styles = (theme: Theme) => createStyles({
     },
     button: {
         margin: theme.spacing(1),
+    },
+    control: {
+        display: "block !important",
+        "& .MuiInputBase-root": {
+            display: "block !important"
+        },
+        marginTop: 36,
+        marginLeft: theme.spacing(1),
+        marginRight: theme.spacing(1)
+    },
+    advanced: {
+        boxShadow: "unset !important",
+        '&::before': {
+            top: 0,
+            height: 0
+        }
+    },
+    advancedSummary: {
+        padding: 0,
+        marginLeft: 8,
+        marginRight: 8,
+        color: "#061775",
+        backgroundColor: "unset !important",
+        borderColor: "unset",
+        '& .MuiExpansionPanelSummary-content': {
+            backgroundColor: "unset",
+        }
     }
 })

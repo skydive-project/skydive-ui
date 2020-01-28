@@ -500,6 +500,10 @@ var DefaultConfig = {
             label: ""
         }
 
+        if (link.data.RelationType === "layer2") {
+            attrs.classes.push("traffic")
+        }
+
         if (link.data.Directed) {
             attrs.directed = true
         }

@@ -96,7 +96,6 @@ export const styles = (theme: Theme) => createStyles({
       width: theme.spacing(0),
     },
   },
-  appBarSpacer: theme.mixins.toolbar,
   content: {
     flexGrow: 1,
     height: '100vh',
@@ -202,6 +201,8 @@ export const styles = (theme: Theme) => createStyles({
       marginLeft: theme.spacing(3),
       width: 'auto',
     },
+    lineHeight: 1,
+    fontSize: '2rem'
   },
   filtersPanel: {
     position: 'absolute',

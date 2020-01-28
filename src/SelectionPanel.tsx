@@ -29,6 +29,7 @@ import Tooltip from '@material-ui/core/Tooltip'
 import VideocamIcon from '@material-ui/icons/Videocam'
 import CaptureForm from "./CaptureForm"
 import { withStyles } from '@material-ui/core/styles'
+import Typography from '@material-ui/core/Typography'
 
 import { Node, Link } from './Topology'
 import DataPanel from './DataPanel'
@@ -36,6 +37,7 @@ import { a11yProps, TabPanel } from './Tabs'
 import { AppState } from './Store'
 import { styles } from './SelectionPanelStyles'
 import ActionPanel from './ActionPanel'
+import FlowPanel from './FlowPanel'
 
 import DefaultConfig from './Config'
 
@@ -221,6 +223,9 @@ class SelectionPanel extends React.Component<Props, State> {
             <CaptureForm defaultName={this.dataAttrs(el).name} gremlinExpr={`G.V().Has('TID', '${el.data.TID}')`} />
           </Collapse>
           <TabPanel key={"tabpanel-" + el.id} value={this.state.tab} index={i}>
+            {el.data!.Captures &&
+              <FlowPanel title="Flow table" gremlinExpr={`G.V('${el.id}').Flows()`} />
+            }
             {this.dataFields(el).map(entry => {
               var data = el.data
               var exclude = new Array<any>()

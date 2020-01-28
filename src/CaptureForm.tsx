@@ -20,6 +20,17 @@ import TextField from '@material-ui/core/TextField'
 import Button from '@material-ui/core/Button'
 import { withStyles } from '@material-ui/core/styles'
 import VideocamIcon from '@material-ui/icons/Videocam'
+import ExpansionPanel from '@material-ui/core/ExpansionPanel'
+import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
+import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
+import InputLabel from '@material-ui/core/InputLabel'
+import Select from '@material-ui/core/Select'
+import MenuItem from '@material-ui/core/MenuItem'
+import FormControl from '@material-ui/core/FormControl'
+import Typography from '@material-ui/core/Typography'
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox'
 
 import { Configuration } from './api/configuration'
 import ActionPanel from './ActionPanel'
@@ -93,6 +104,90 @@ class CaptureForm extends React.Component<Props, State> {
                         margin="normal"
                         fullWidth
                     />
+                    <ExpansionPanel className={classes.advanced}>
+                        <ExpansionPanelSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="panel1a-content"
+                            id="panel1a-header"
+                            className={classes.advancedSummary}
+                        >
+                            <Typography className={classes.heading}>Advanced options</Typography>
+                        </ExpansionPanelSummary>
+                        <ExpansionPanelDetails>
+                            <FormControl className={classes.control}>
+                                <InputLabel id="capture-type-label"
+                                    className={classes.selectField}>Capture Type</InputLabel>
+                                <Select
+                                    id="capture-type"
+                                    value="Default"
+                                    labelId="capture-type-label"
+                                >
+                                    <MenuItem>PCAP (Packet Capture library based probe)</MenuItem>
+                                    <MenuItem>AFPacket (MMap'd AF_PACKET socket reading)</MenuItem>
+                                    <MenuItem>sFlow  (Socket reading sFlow frames)</MenuItem>
+                                    <MenuItem>DPDK</MenuItem>
+                                    <MenuItem>OVS Mirror  (Leverages mirroring to capture - experimental)</MenuItem>
+                                    <MenuItem>eBPF (Flow capture within kernel - experimental)</MenuItem>
+                                </Select>
+                            </FormControl>
+                            <FormControl className={classes.control}>
+                                <InputLabel id="layer-key-label"
+                                    className={classes.selectField}>Layers used for Flow Key</InputLabel>
+                                <Select
+                                    id="layer-key"
+                                    value="Default"
+                                    labelId="layer-key-label"
+                                >
+                                    <MenuItem>L2 (uses Layer 2 and beyond)</MenuItem>
+                                    <MenuItem>L3 (uses layer 3 and beyond)</MenuItem>
+                                </Select>
+                            </FormControl>
+                            <TextField
+                                id="standard-basic"
+                                className={classes.textField}
+                                label="Header size"
+                                margin="normal"
+                                fullWidth
+                            />
+                            <FormControl className={classes.control}>
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            value=""
+                                            color="primary"
+                                        />
+                                    }
+                                    label="Extra TCP metric"
+                                />
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            value=""
+                                            color="primary"
+                                        />
+                                    }
+                                    label="Defragment IPv4 packets"
+                                />
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            value=""
+                                            color="primary"
+                                        />
+                                    }
+                                    label="Reassemble TCP packets"
+                                />
+                            </FormControl>
+                            <TextField
+                                    id="standard-basic"
+                                    className={classes.textField}
+                                    label="Raw packet limit"
+                                    margin="normal"
+                                    fullWidth
+                                    value="0"
+                                />
+                        </ExpansionPanelDetails>
+                    </ExpansionPanel>
                     <Button variant="contained" className={classes.button} color="primary" onClick={this.onClick.bind(this)}>
                         Start
                     </Button>
