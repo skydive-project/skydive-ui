@@ -24,11 +24,9 @@ var DefaultConfig = {
             gremlin: ""
         },
         {
-            id: "namespaces",
-            label: "Namespaces",
-            gremlin: "G.V().Has('Type', 'host').as('host')" +
-                ".out().Has('Type', 'netns').descendants().as('netns')" +
-                ".select('host', 'netns').SubGraph()"
+            id: "folders",
+            label: "folders",
+            gremlin: "G.V().Has('Type', 'folder').descendants().SubGraph()"
         }
     ],
     defaultFilter: 'default',
