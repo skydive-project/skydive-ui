@@ -29,7 +29,6 @@ import Tooltip from '@material-ui/core/Tooltip'
 import VideocamIcon from '@material-ui/icons/Videocam'
 import CaptureForm from "./CaptureForm"
 import { withStyles } from '@material-ui/core/styles'
-import Typography from '@material-ui/core/Typography'
 
 import { Node, Link } from './Topology'
 import DataPanel from './DataPanel'

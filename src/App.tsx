@@ -47,7 +47,7 @@ import Menu from '@material-ui/core/Menu'
 import Fab from '@material-ui/core/Fab'
 import { withRouter } from 'react-router-dom'
 import Badge from '@material-ui/core/Badge'
-import ShoppingCartIcon from '@material-ui/icons/ShoppingCart'
+import ListIcon from '@material-ui/icons/List'
 import Button from '@material-ui/core/Button'
 
 import { styles } from './AppStyles'
@@ -834,7 +834,7 @@ class App extends React.Component<Props, State> {
                 onClick={(event: React.MouseEvent<HTMLElement>) => this.props.selection.length > 0 && this.openMenu("selection", event)}
                 color="inherit">
                 <Badge badgeContent={this.props.selection.length} color="secondary">
-                  <ShoppingCartIcon />
+                  <ListIcon />
                 </Badge>
               </IconButton>
               <Menu
