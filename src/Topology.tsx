@@ -2259,10 +2259,10 @@ export class Topology extends React.Component<Props, {}> {
             }
 
             if (dSource.y < dTarget.y) {
-                return vLinker({ source: { node: d.target, dx: 0, dy: -margin }, target: { node: d.source, dx: 0, dy: margin } })
+                return vLinker({ source: { node: d.source, dx: 0, dy: margin }, target: { node: d.target, dx: 0, dy: -margin } })
             }
 
-            return vLinker({ source: { node: d.source, dx: 0, dy: margin }, target: { node: d.target, dx: 0, dy: -margin } })
+            return vLinker({ source: { node: d.target, dx: 0, dy: -margin }, target: { node: d.source, dx: 0, dy: margin } })
         }
         const linker = (d: Link) => wrapperLink(d, 55)
 
@@ -2330,6 +2330,7 @@ export class Topology extends React.Component<Props, {}> {
 
         linkLabel = linkLabel.merge(linkLabelEnter)
         linkLabel.style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : 0)
+        linkLabel.select('textPath').text((d: Link) => this.props.linkAttrs(d).label)
 
         var linkWrap = this.gLinkWraps.selectAll('path.link-wrap')
             .interrupt()

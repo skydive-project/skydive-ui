@@ -491,13 +491,24 @@ var DefaultConfig = {
         }
     ],
     linkAttrs: function (link: Link) {
+        var metric = link.source.data.LastUpdateMetric
+        var bandwidth = 0
+        if (metric) {
+            bandwidth = (metric.RxBytes + metric.TxBytes) * 8
+            bandwidth /= (metric.Last - metric.Start) / 1000
+        }
+
         var attrs = {
             classes: [link.data.RelationType],
             icon: "\uf362",
             directed: false,
             href: '',
             iconClass: '',
-            label: ""
+            label: bandwidth ? Tools.prettyBandwidth(bandwidth) : ""
+        }
+
+        if (bandwidth > 0) {
+            attrs.classes.push('traffic')
         }
 
         if (link.data.RelationType === "layer2") {

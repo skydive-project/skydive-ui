@@ -18,7 +18,7 @@
 
 export default class Tools {
 
-    static prettyBytes(value) {
+    static prettyBytes(value: number) {
         var g = Math.floor(value / 1000000000)
         var m = Math.floor((value - g * 1000000000) / 1000000)
         var k = Math.floor((value - g * 1000000000 - m * 1000000) / 1000)
@@ -29,5 +29,18 @@ export default class Tools {
         if (k) return k + "Kb (" + value.toLocaleString() + " bytes)"
 
         return b.toLocaleString() + " bytes"
+    }
+
+    static prettyBandwidth(value: number) {
+        var g = Math.floor(value / 1000000000)
+        var m = Math.floor((value - g * 1000000000) / 1000000)
+        var k = Math.floor((value - g * 1000000000 - m * 1000000) / 1000)
+        var b = value - g * 1000000000 - m * 1000000 - k * 1000
+
+        if (g) return g + "Gbit/s"
+        if (m) return m + "Mbit/s"
+        if (k) return k + "Kbit/s"
+
+        return b.toLocaleString() + " bit/s"
     }
 }
