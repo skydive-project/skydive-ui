@@ -37,5 +37,14 @@ for rules_filename in data/$data_dir/*.conf; do
   mountconf_to_docker=$mountconf_to_docker" -v "$dir"/"$destjson_dir"/"$destjsonfile":/usr/src/skydive-ui/assets/"$destjsonfile
 done
 
+echo "$dir"/data/$data_dir/Config.ts
+if [[ -f "$dir"/data/$data_dir/config.js ]]; then
+  mountconf_to_docker=$mountconf_to_docker" -v "$dir"/data/"$data_dir"/config.js:/usr/src/skydive-ui/assets/config.js"
+fi
+
+if [[ -f "$dir"/data/$data_dir/Config.ts ]]; then
+  mountconf_to_docker=$mountconf_to_docker" -v "$dir"/data/"$data_dir"/Config.ts:/usr/src/skydive-ui/src/Config.ts"
+fi
+
 echo Starting skydive ui conainer
-docker run -p 8080:8080 $mountconf_to_docker -v "$dir"/data/$data_dir/config.js:/usr/src/skydive-ui/assets/config.js skydive/skydive-ui
+docker run -p 8080:8080 $mountconf_to_docker skydive/skydive-ui
