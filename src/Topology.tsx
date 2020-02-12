@@ -2192,26 +2192,13 @@ export class Topology extends React.Component<Props, {}> {
 
     private renderLinks() {
         const vLinker = linkVertical()
-            .x((d: any) => {
-                let node = this.d3nodes.get(d.node.id)
-                return node ? node.x + d.dx : d.dx
-            })
-            .y((d: any) => {
-                let node = this.d3nodes.get(d.node.id)
-                return node ? node.y + d.dy : d.y
-            })
+            .x((d: any) => d.x)
+            .y((d: any) => d.y)
 
         const hLinker = (d: any) => {
-            var source = this.d3nodes.get(d.source.node.id)
-            var target = this.d3nodes.get(d.target.node.id)
-
-            if (!source || !target) {
-                return []
-            }
-
-            var x1 = source.x + d.source.dx
-            var x2 = target.x + d.target.dx
-            var y = source.y + d.source.dy
+            var x1 = d.source.x
+            var x2 = d.target.x
+            var y = d.source.y
 
             if (Math.abs(x1 - x2) > this.nodeWidth) {
                 if (x1 > x2) {
@@ -2221,7 +2208,6 @@ export class Topology extends React.Component<Props, {}> {
                 }
 
                 let len = x2 - x1
-
                 var points = [
                     { x: x1, y: y + 10 },
                     { x: x1 + len / 4, y: y + 40 + 0.05 * len },
@@ -2253,16 +2239,28 @@ export class Topology extends React.Component<Props, {}> {
 
             if (dSource.y === dTarget.y) {
                 if (dSource.x < dTarget.x) {
-                    return hLinker({ source: { node: d.source, dx: margin, dy: 0 }, target: { node: d.target, dx: -margin, dy: 0 } })
+                    return hLinker({
+                        source: { x: dSource.x + margin, y: dSource.y, node: d.source },
+                        target: { x: dTarget.x - margin, y: dTarget.y, node: d.target }
+                    })
                 }
-                return hLinker({ source: { node: d.source, dx: -margin, dy: 0 }, target: { node: d.target, dx: margin, dy: 0 } })
+                return hLinker({
+                    source: { x: dTarget.x + margin, y: dTarget.y, node: d.source },
+                    target: { x: dSource.x - margin, y: dSource.y, node: d.target }
+                })
             }
 
             if (dSource.y < dTarget.y) {
-                return vLinker({ source: { node: d.source, dx: 0, dy: margin }, target: { node: d.target, dx: 0, dy: -margin } })
+                return vLinker({
+                    source: { x: dSource.x, y: dSource.y + margin, node: d.source },
+                    target: { x: dTarget.x, y: dTarget.y - margin, node: d.target }
+                })
             }
 
-            return vLinker({ source: { node: d.target, dx: 0, dy: -margin }, target: { node: d.source, dx: 0, dy: margin } })
+            return vLinker({
+                source: { x: dTarget.x, y: dTarget.y + margin, node: d.source },
+                target: { x: dSource.x, y: dSource.y - margin, node: d.target }
+            })
         }
         const linker = (d: Link) => wrapperLink(d, 55)
 
@@ -2324,7 +2322,6 @@ export class Topology extends React.Component<Props, {}> {
             .attr("xlink:href", (d: Link) => "#link-" + d.id)
             .attr("text-anchor", "middle")
             .attr("startOffset", "50%")
-            .attr("side", "right")
             .text((d: Link) => this.props.linkAttrs(d).label)
         linkLabel.exit().remove()
 
