@@ -37,7 +37,10 @@ for rules_filename in data/$data_dir/*.conf; do
   mountconf_to_docker=$mountconf_to_docker" -v "$dir"/"$destjson_dir"/"$destjsonfile":/usr/src/skydive-ui/assets/"$destjsonfile
 done
 
-echo "$dir"/data/$data_dir/Config.ts
+if [[ -f "$dir"/data/$data_dir/topology.css ]]; then
+  mountconf_to_docker=$mountconf_to_docker" -v "$dir"/data/"$data_dir"/topology.css:/usr/src/skydive-ui/assets/topology.css"
+fi
+
 if [[ -f "$dir"/data/$data_dir/config.js ]]; then
   mountconf_to_docker=$mountconf_to_docker" -v "$dir"/data/"$data_dir"/config.js:/usr/src/skydive-ui/assets/config.js"
 fi
