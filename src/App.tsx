@@ -64,7 +64,6 @@ import Logo from '../assets/Logo.png'
 import DefaultConfig from './Config'
 
 const queryString = require('query-string')
-const fetchJsonp = require('fetch-jsonp')
 
 // expose app ouside
 declare global {

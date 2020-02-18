@@ -2201,18 +2201,12 @@ export class Topology extends React.Component<Props, {}> {
             var y = d.source.y
 
             if (Math.abs(x1 - x2) > this.nodeWidth) {
-                if (x1 > x2) {
-                    let t = x1
-                    x1 = x2
-                    x2 = t
-                }
-
                 let len = x2 - x1
                 var points = [
-                    { x: x1, y: y + 10 },
-                    { x: x1 + len / 4, y: y + 40 + 0.05 * len },
-                    { x: x2 - len / 4, y: y + 40 + 0.05 * len },
-                    { x: x2, y: y + 10 }
+                    { x: x1 - 13, y: y + 35 },
+                    { x: x1 + len / 4, y: y + 50 + 0.05 * len },
+                    { x: x2 - len / 4, y: y + 50 + 0.05 * len },
+                    { x: x2 + 13, y: y + 35 }
                 ]
             } else {
                 var points = [
@@ -2237,29 +2231,30 @@ export class Topology extends React.Component<Props, {}> {
                 return
             }
 
+            let source = dSource
+            let target = dTarget
             if (dSource.y === dTarget.y) {
-                if (dSource.x < dTarget.x) {
-                    return hLinker({
-                        source: { x: dSource.x + margin, y: dSource.y, node: d.source },
-                        target: { x: dTarget.x - margin, y: dTarget.y, node: d.target }
-                    })
+                if (dSource.x > dTarget.x) {
+                    source = dTarget, target = dSource
                 }
+
                 return hLinker({
-                    source: { x: dTarget.x + margin, y: dTarget.y, node: d.source },
-                    target: { x: dSource.x - margin, y: dSource.y, node: d.target }
+                    source: { x: source.x + margin, y: source.y, node: d.source },
+                    target: { x: target.x - margin, y: target.y, node: d.target }
                 })
             }
 
-            if (dSource.y < dTarget.y) {
-                return vLinker({
-                    source: { x: dSource.x, y: dSource.y + margin, node: d.source },
-                    target: { x: dTarget.x, y: dTarget.y - margin, node: d.target }
-                })
+            if (dSource.y > dTarget.y || dSource.x > dTarget.x) {
+                source = dTarget, target = dSource
+            }
+
+            if (source.y > target.y) {
+                margin *= -1
             }
 
             return vLinker({
-                source: { x: dTarget.x, y: dTarget.y + margin, node: d.source },
-                target: { x: dSource.x, y: dSource.y - margin, node: d.target }
+                source: { x: source.x, y: source.y + margin, node: d.source },
+                target: { x: target.x, y: target.y - margin, node: d.target }
             })
         }
         const linker = (d: Link) => wrapperLink(d, 55)
@@ -2289,20 +2284,38 @@ export class Topology extends React.Component<Props, {}> {
             .interrupt()
             .data(visibleLinks, (d: Link) => d.id)
 
+        const directedClass = (d: Link) => {
+            var dSource = this.d3nodes.get(d.source.id)
+            var dTarget = this.d3nodes.get(d.target.id)
+
+            if (!dSource || !dTarget) {
+                return ""
+            }
+
+            if (dSource.y === dTarget.y) {
+                return dSource.x > dTarget.x ? "directed-inv" : "directed"
+            }
+
+            if (dSource.y > dTarget.y || dSource.x > dTarget.x) {
+                return "directed-inv"
+            }
+            return "directed"
+        }
+
         const linkClass = (d: Link) => {
             var classes = new Array<string>()
             var attrs = this.props.linkAttrs(d)
-            return classes.concat("link", attrs.classes, attrs.directed ? "directed" : "").join(" ")
+            return classes.concat("link", attrs.classes, attrs.directed ? directedClass(d) : "").join(" ")
         }
 
         var linkEnter = link.enter()
             .append('path')
             .attr("id", (d: Link) => "link-" + d.id)
-            .attr("class", linkClass)
             .style("opacity", 0)
         link.exit().remove()
 
         link = link.merge(linkEnter)
+        link.attr("class", linkClass)
         link.transition()
             .duration(animDuration)
             .style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : 0)
