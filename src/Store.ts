@@ -18,14 +18,12 @@
 import { createStore } from 'redux'
 
 import { Node, Link } from './Topology'
-import DefaultConfig from './Config'
 
 export const SELECT_ELEMENT = 'SELECT_ELEMENT'
 export const UNSELECT_ELEMENT = 'UNSELECT_ELEMENT'
 export const BUMP_REVISION = 'BUMP_REVISION'
 export const OPEN_SESSION = 'OPEN_SESSION'
 export const CLOSE_SESSION = 'CLOSE_SESSION'
-export const SET_CONFIG = 'SET_CONFIG'
 
 interface selectElementAction {
     type: typeof SELECT_ELEMENT
@@ -58,11 +56,6 @@ interface openSessionAction {
 interface closeSessionAction {
     type: typeof CLOSE_SESSION
     payload: null
-}
-
-interface setConfigAction {
-    type: typeof SET_CONFIG
-    payload: typeof DefaultConfig
 }
 
 export function selectElement(node: Node | Link): selectElementAction {
@@ -106,14 +99,7 @@ export function closeSession(): closeSessionAction {
     }
 }
 
-export function setConfig(config: typeof DefaultConfig): setConfigAction {
-    return {
-        type: SET_CONFIG,
-        payload: config
-    }
-}
-
-export type ActionTypes = selectElementAction | unselectElementAction | bumpRevisionAction | openSessionAction | closeSessionAction | setConfigAction
+export type ActionTypes = selectElementAction | unselectElementAction | bumpRevisionAction | openSessionAction | closeSessionAction
 
 const emptySession = {
     endpoint: `${window.location.protocol}//${window.location.hostname}:8082`,
@@ -138,8 +124,7 @@ const loadSession = (): session => {
 const initialState = {
     selection: new Array<Node | Link>(),
     selectionRevision: 0,
-    session: loadSession(),
-    config: DefaultConfig
+    session: loadSession()
 }
 
 function appReducer(state = initialState, action: ActionTypes) {
@@ -180,11 +165,6 @@ function appReducer(state = initialState, action: ActionTypes) {
             return {
                 ...state,
                 session: emptySession
-            }
-        case SET_CONFIG:
-            return {
-                ...state,
-                config: action.payload
             }
         default:
             return state

@@ -1,4 +1,21 @@
-import { Node, Link, NodeAttrs } from './Topology'
+/*
+ * Copyright (C) 2020 Sylvain Afchain
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+import { Node, Link, NodeAttrs, LinkAttrs } from './Topology'
 import Tools from './Tools'
 
 const WEIGHT_NONE = 0
@@ -14,24 +31,353 @@ const WEIGHT_K8S_CLUSTER = 101
 const WEIGHT_K8S_NODE = 102
 const WEIGHT_K8S_POD = 103
 
-var DefaultConfig = {
-    subTitle: "",
-    filters: [
-        {
-            id: "default",
-            label: "Default",
-            gremlin: ""
-        },
-        {
-            id: "namespaces",
-            label: "Namespaces",
-            gremlin: "G.V().Has('Type', 'host').as('host')" +
-                ".out().Has('Type', 'netns').descendants().as('netns')" +
-                ".select('host', 'netns').SubGraph()"
+export interface Filter {
+    id: string
+    label: string
+    gremlin: string
+}
+
+export interface MenuItem {
+    class: string
+    text: string
+    disabled: boolean
+    callback: () => void
+}
+
+export interface GraphField {
+    type: string,
+    data: any
+}
+
+export interface NodeDataField {
+    field: string
+    title?: string
+    expanded: boolean
+    icon: string
+    iconClass?: string
+    sortKeys?: (data: any) => Array<string>
+    filterKeys?: (data: any) => Array<string>
+    normalizer?: (data: any) => any
+    graph?: (data: any) => GraphField
+}
+
+export interface LinkDataField {
+    field: string
+    title: string
+    expanded: boolean
+    icon: string
+}
+
+export interface Config {
+    subTitle?(subTitle: string): string
+    filters?(filters: Array<Filter>): Array<Filter>
+    defaultFilter?(): string
+
+    nodeAttrs?(attrs: NodeAttrs | null, node: Node): NodeAttrs
+    nodeSortFnc?(a: Node, b: Node): number
+    nodeClicked?(node: Node): void
+    nodeDblClicked?(node: Node): void
+
+    nodeMenu?(items: Array<MenuItem>, node: Node): Array<MenuItem>
+    nodeTags?(tags: Array<string>, node: Node): Array<string>
+
+    defaultNodeTag?(): string
+    nodeTabTitle?(node: Node): string
+
+    groupSize?(): number
+    groupType?(node: Node): string | undefined
+    groupName?(node: Node): string | undefined
+    weightTitles?(): Map<number, string>
+
+    suggestions?(): Array<string>
+
+    nodeDataFields?(dataFields: Array<NodeDataField>): Array<NodeDataField>
+
+    linkAttrs?(attrs: LinkAttrs | null, link: Link): LinkAttrs
+    linkTabTitle?(link: Link): string
+
+    linkDataFields?(dataFields: Array<LinkDataField>): Array<LinkDataField>
+
+    defaultLinkTagMode?(): number
+}
+
+export default class ConfigReducer {
+    default: DefaultConfig
+    configs: Array<Config>
+
+    constructor() {
+        this.default = new DefaultConfig()
+        this.configs = new Array<Config>()
+    }
+
+    append(config: Config) {
+        this.configs.push(config)
+    }
+
+    appendURL(url: string): Promise<Config | undefined> {
+        var promise = new Promise<Config>((resolve, reject) => {
+            if (!url) {
+                resolve()
+                return
+            }
+
+            fetch(url).then(resp => {
+                resp.text().then(data => {
+                    try {
+                        var config = eval(data)
+                        this.append(config)
+
+                        resolve(config)
+                    } catch (e) {
+                        reject(e)
+                    }
+                })
+            }).catch((reason) => {
+                throw Error(reason)
+            })
+        })
+
+        return promise
+    }
+
+    subTitle(): string {
+        var subTitle = this.default.subTitle()
+        for (let config of this.configs) {
+            if (config.subTitle) {
+                subTitle = config.subTitle(subTitle)
+            }
         }
-    ],
-    defaultFilter: 'default',
-    _newAttrs: function (node: Node): NodeAttrs {
+        return subTitle
+    }
+
+    filters(): Array<Filter> {
+        var filters = this.default.filters()
+        for (let config of this.configs) {
+            if (config.filters) {
+                filters = config.filters(filters)
+            }
+        }
+        return filters
+    }
+
+    defaultFilter(): string {
+        var defaultFilter = this.default.defaultFilter()
+        for (let config of this.configs) {
+            if (config.defaultFilter) {
+                defaultFilter = config.defaultFilter()
+            }
+        }
+        return defaultFilter
+    }
+
+    nodeAttrs(node: Node): NodeAttrs {
+        var attrs = this.default.nodeAttrs(node)
+        for (let config of this.configs) {
+            if (config.nodeAttrs) {
+                attrs = config.nodeAttrs(attrs, node)
+            }
+        }
+        return attrs
+    }
+
+    nodeSortFnc(a: Node, b: Node): number {
+        var fnc = this.default.nodeSortFnc
+        for (let config of this.configs) {
+            if (config.nodeSortFnc) {
+                fnc = config.nodeSortFnc
+            }
+        }
+        return fnc(a, b)
+    }
+
+    nodeClicked(node: Node): void {
+        var fnc = this.default.nodeClicked
+        for (let config of this.configs) {
+            if (config.nodeClicked) {
+                fnc = config.nodeClicked
+            }
+        }
+        return fnc(node)
+    }
+
+    nodeDblClicked(node: Node): void {
+        var fnc = this.default.nodeDblClicked
+        for (let config of this.configs) {
+            if (config.nodeDblClicked) {
+                fnc = config.nodeDblClicked
+            }
+        }
+        return fnc(node)
+    }
+
+    nodeMenu(node: Node): Array<MenuItem> {
+        var items = this.default.nodeMenu(node)
+        for (let config of this.configs) {
+            if (config.nodeMenu) {
+                items = config.nodeMenu(items, node)
+            }
+        }
+        return items
+    }
+
+    nodeTags(node: Node): Array<string> {
+        var tags = this.default.nodeTags(node)
+        for (let config of this.configs) {
+            if (config.nodeTags) {
+                tags = config.nodeTags([], node)
+            }
+        }
+        return tags
+    }
+
+    defaultNodeTag(): string {
+        var defaultNodeTag = this.default.defaultNodeTag()
+        for (let config of this.configs) {
+            if (config.defaultNodeTag) {
+                defaultNodeTag = config.defaultNodeTag()
+            }
+        }
+        return defaultNodeTag
+    }
+
+    nodeTabTitle(node: Node): string {
+        var nodeTabTitle = this.default.nodeTabTitle(node)
+        for (let config of this.configs) {
+            if (config.nodeTabTitle) {
+                nodeTabTitle = config.nodeTabTitle(node)
+            }
+        }
+        return nodeTabTitle
+    }
+
+    groupSize(): number {
+        var size = this.default.groupSize()
+        for (let config of this.configs) {
+            if (config.groupSize) {
+                size = config.groupSize()
+            }
+        }
+        return size
+    }
+
+    groupType(node: Node): string | undefined {
+        var groupType = this.default.groupType(node)
+        for (let config of this.configs) {
+            if (config.groupType) {
+                groupType = config.groupType(node)
+            }
+        }
+        return groupType
+    }
+
+    groupName(node: Node): string | undefined {
+        var groupName = this.default.groupName(node)
+        for (let config of this.configs) {
+            if (config.groupName) {
+                groupName = config.groupName(node)
+            }
+        }
+        return groupName
+    }
+
+    weightTitles(): Map<number, string> {
+        var titles = this.default.weightTitles()
+        for (let config of this.configs) {
+            if (config.weightTitles) {
+                titles = config.weightTitles()
+            }
+        }
+        return titles
+    }
+
+    suggestions(): Array<string> {
+        var result = this.default.suggestions()
+        for (let config of this.configs) {
+            if (config.suggestions) {
+                result = config.suggestions()
+            }
+        }
+        return result
+    }
+
+    nodeDataFields(): Array<NodeDataField> {
+        var fields = this.default.nodeDataFields()
+        for (let config of this.configs) {
+            if (config.nodeDataFields) {
+                fields = config.nodeDataFields(fields)
+            }
+        }
+        return fields
+    }
+
+    linkAttrs(link: Link): LinkAttrs {
+        var attrs = this.default.linkAttrs(link)
+        for (let config of this.configs) {
+            if (config.linkAttrs) {
+                attrs = config.linkAttrs(attrs, link)
+            }
+        }
+        return attrs
+    }
+
+    linkTabTitle(link: Link): string {
+        var title = this.default.linkTabTitle(link)
+        for (let config of this.configs) {
+            if (config.linkTabTitle) {
+                title = config.linkTabTitle(link)
+            }
+        }
+        return title
+    }
+
+    linkDataFields(): Array<LinkDataField> {
+        var fields = this.default.linkDataFields()
+        for (let config of this.configs) {
+            if (config.linkDataFields) {
+                fields = config.linkDataFields(fields)
+            }
+        }
+        return fields
+    }
+
+    defaultLinkTagMode(): number {
+        var size = this.default.defaultLinkTagMode()
+        for (let config of this.configs) {
+            if (config.defaultLinkTagMode) {
+                size = config.defaultLinkTagMode()
+            }
+        }
+        return size
+    }
+}
+
+class DefaultConfig {
+    subTitle(): string {
+        return ""
+    }
+
+    filters(): Array<Filter> {
+        return [
+            {
+                id: "default",
+                label: "Default",
+                gremlin: ""
+            },
+            {
+                id: "namespaces",
+                label: "Namespaces",
+                gremlin: "G.V().Has('Type', 'host').as('host')" +
+                    ".out().Has('Type', 'netns').descendants().as('netns')" +
+                    ".select('host', 'netns').SubGraph()"
+            }
+        ]
+    }
+
+    defaultFilter(): string {
+        return 'default'
+    }
+
+    private newAttrs(node: Node): NodeAttrs {
         var name = node.data.Name
         if (name.length > 24) {
             name = node.data.Name.substring(0, 24) + "."
@@ -48,9 +394,10 @@ var DefaultConfig = {
         }
 
         return attrs
-    },
-    _nodeAttrsK8s: function (node: Node): NodeAttrs {
-        var attrs = this._newAttrs(node)
+    }
+
+    private nodeAttrsK8s(node: Node): NodeAttrs {
+        var attrs = this.newAttrs(node)
 
         switch (node.data.Type) {
             case "cluster":
@@ -143,9 +490,10 @@ var DefaultConfig = {
         }
 
         return attrs
-    },
-    _nodeAttrsInfra: function (node: Node): NodeAttrs {
-        var attrs = this._newAttrs(node)
+    }
+
+    private nodeAttrsInfra(node: Node): NodeAttrs {
+        var attrs = this.newAttrs(node)
 
         if (node.data.OfPort) {
             attrs.weight = WEIGHT_PORTS
@@ -227,25 +575,30 @@ var DefaultConfig = {
         }
 
         return attrs
-    },
-    nodeAttrs: function (node: Node): NodeAttrs {
+    }
+
+    nodeAttrs(node: Node): NodeAttrs {
         switch (node.data.Manager) {
             case "k8s":
-                return this._nodeAttrsK8s(node)
+                return this.nodeAttrsK8s(node)
             default:
-                return this._nodeAttrsInfra(node)
+                return this.nodeAttrsInfra(node)
         }
-    },
-    nodeSortFnc: function (a: Node, b: Node) {
+    }
+
+    nodeSortFnc(a: Node, b: Node): number {
         return a.data.Name.localeCompare(b.data.Name)
-    },
-    nodeClicked: function (node: Node) {
+    }
+
+    nodeClicked(node: Node): void {
         window.App.tc.selectNode(node.id)
-    },
-    nodeDblClicked: function (node: Node) {
+    }
+
+    nodeDblClicked(node: Node): void {
         window.App.tc.expand(node)
-    },
-    nodeMenu: function (node: Node) {
+    }
+
+    nodeMenu(node: Node): Array<MenuItem> {
         return [
             {
                 class: "", text: "Capture", disabled: false, callback: () => {
@@ -260,20 +613,29 @@ var DefaultConfig = {
             { class: "", text: "Flows", disabled: false, callback: () => { console.log("Flows") } },
             { class: "", text: "Filter NS(demo)", disabled: false, callback: () => { window.App.loadExtraConfig("/assets/nsconfig.js") } }
         ]
-    },
-    nodeTags: function (data) {
+    }
+
+    nodeTags(data) {
         if (data.Manager && data.Manager === "k8s") {
             return ["kubernetes"]
         } else {
             return ["infrastructure"]
         }
-    },
-    defaultNodeTag: "infrastructure",
-    nodeTabTitle: function (node: Node): string {
+    }
+
+    defaultNodeTag() {
+        return "infrastructure"
+    }
+
+    nodeTabTitle(node: Node): string {
         return node.data.Name.substring(0, 8)
-    },
-    groupSize: 3,
-    groupType: function (node: Node): string | undefined {
+    }
+
+    groupSize() {
+        return 3
+    }
+
+    groupType(node: Node): string | undefined {
         var nodeType = node.data.Type
         if (!nodeType) {
             return
@@ -300,8 +662,9 @@ var DefaultConfig = {
             default:
                 return nodeType
         }
-    },
-    groupName: function (node: Node): string | undefined {
+    }
+
+    groupName(node: Node): string | undefined {
         if (node.data.K8s) {
             var labels = node.data.K8s.Labels
             if (!labels) {
@@ -321,176 +684,185 @@ var DefaultConfig = {
         }
 
         return nodeType + "(s)"
-    },
-    weightTitles: function () {
-        return {
-            [WEIGHT_NONE]: "Not classified",
-            [WEIGHT_FABRIC]: "Fabric",
-            [WEIGHT_PHYSICAL]: "Physical",
-            [WEIGHT_BRIDGES]: "Bridges",
-            [WEIGHT_PORTS]: "Ports",
-            [WEIGHT_VIRTUAL]: "Virtual",
-            [WEIGHT_NAMESPACES]: "Namespaces",
-            [WEIGHT_VMS]: "VMs",
-            [WEIGHT_K8S_FEDERATION]: "Federations",
-            [WEIGHT_K8S_CLUSTER]: "Clusters",
-            [WEIGHT_K8S_NODE]: "Nodes",
-            [WEIGHT_K8S_POD]: "Pods"
-        }
-    },
-    suggestions: [
-        "data.IPV4",
-        "data.MAC",
-        "data.Name"
-    ],
-    nodeDataFields: [
-        {
-            field: "",
-            title: "General",
-            expanded: true,
-            icon: "\uf05a",
-            sortKeys: function (data) {
-                return ['Name', 'Type', 'MAC', 'Driver', 'State']
-            },
-            filterKeys: function (data) {
-                switch (data.Type) {
-                    case "host":
-                        return ['Name']
-                    default:
-                        return ['Name', 'Type', 'MAC', 'Driver', 'State']
-                }
-            }
-        },
-        {
-            field: "Sockets",
-            expanded: false,
-            icon: "\uf1e6"
-        },
-        {
-            field: "Captures",
-            expanded: false,
-            icon: "\uf51f",
-            normalizer: function (data) {
-                for (let capture of data) {
-                    capture.ID = capture.ID.split('-')[0]
-                }
-                return data
-            }
-        },
-        {
-            field: "Injections",
-            expanded: false,
-            icon: "\uf48e"
-        },
-        {
-            field: "Docker",
-            expanded: false,
-            icon: "\uf395",
-            iconClass: "font-brands"
-        },
-        {
-            field: "IPV4",
-            expanded: true,
-            icon: "\uf1fa"
-        },
-        {
-            field: "IPV6",
-            expanded: true,
-            icon: "\uf1fa"
-        },
-        {
-            field: "LastUpdateMetric",
-            title: "Last metrics",
-            expanded: false,
-            icon: "\uf201",
-            normalizer: function (data) {
-                return {
-                    RxPackets: data.RxPackets ? data.RxPackets.toLocaleString() : 0,
-                    RxBytes: data.RxBytes ? Tools.prettyBytes(data.RxBytes) : 0,
-                    TxPackets: data.TxPackets ? data.TxPackets.toLocaleString() : 0,
-                    TxBytes: data.TxPackets ? Tools.prettyBytes(data.TxBytes) : 0,
-                    Start: data.Start ? new Date(data.Start).toLocaleString() : 0,
-                    Last: data.Last ? new Date(data.Last).toLocaleString() : 0
-                }
-            },
-            graph: function (data) {
-                return {
-                    type: "LineChart",
-                    data: [
-                        [
-                            { type: "datetime", label: "time" },
-                            "RxBytes",
-                            "TxBytes"
-                        ],
-                        [new Date(data.Last || 0), data.RxBytes || 0, data.TxBytes || 0]
-                    ]
-                }
-            }
-        },
-        {
-            field: "Metric",
-            title: "Total metrics",
-            expanded: false,
-            icon: "\uf201",
-            normalizer: function (data) {
-                return {
-                    RxPackets: data.RxPackets ? data.RxPackets.toLocaleString() : 0,
-                    RxBytes: data.RxBytes ? Tools.prettyBytes(data.RxBytes) : 0,
-                    TxPackets: data.TxPackets ? data.TxPackets.toLocaleString() : 0,
-                    TxBytes: data.TxPackets ? Tools.prettyBytes(data.TxBytes) : 0,
-                    Last: data.Last ? new Date(data.Last).toLocaleString() : 0
-                }
-            }
-        },
-        {
-            field: "Features",
-            expanded: false,
-            icon: "\uf022"
-        },
-        {
-            field: "FDB",
-            expanded: false,
-            icon: "\uf0ce"
-        },
-        {
-            field: "Neighbors",
-            expanded: false,
-            icon: "\uf0ce"
-        },
-        {
-            field: "RoutingTables",
-            title: "Routing tables",
-            expanded: false,
-            icon: "\uf0ce",
-            normalizer: function (data) {
-                var rows = new Array<any>()
-                for (let table of data) {
-                    if (!table.Routes) {
-                        continue
+    }
+
+    weightTitles(): Map<number, string> {
+        var wt = new Map<number, string>()
+        wt.set(WEIGHT_NONE, "Not classified")
+        wt.set(WEIGHT_FABRIC, "Fabric")
+        wt.set(WEIGHT_PHYSICAL, "Physical")
+        wt.set(WEIGHT_BRIDGES, "Bridges")
+        wt.set(WEIGHT_PORTS, "Ports")
+        wt.set(WEIGHT_VIRTUAL, "Virtual")
+        wt.set(WEIGHT_NAMESPACES, "Namespaces")
+        wt.set(WEIGHT_VMS, "VMs")
+        wt.set(WEIGHT_K8S_FEDERATION, "Federations")
+        wt.set(WEIGHT_K8S_CLUSTER, "Clusters")
+        wt.set(WEIGHT_K8S_NODE, "Nodes")
+        wt.set(WEIGHT_K8S_POD, "Pods")
+
+        return wt
+    }
+
+    suggestions(): Array<string> {
+        return [
+            "data.IPV4",
+            "data.MAC",
+            "data.Name"
+        ]
+    }
+
+    nodeDataFields(): Array<NodeDataField> {
+        return [
+            {
+                field: "",
+                title: "General",
+                expanded: true,
+                icon: "\uf05a",
+                sortKeys: (data: any): Array<string> => {
+                    return ['Name', 'Type', 'MAC', 'Driver', 'State']
+                },
+                filterKeys: (data: any): Array<string> => {
+                    switch (data.Type) {
+                        case "host":
+                            return ['Name']
+                        default:
+                            return ['Name', 'Type', 'MAC', 'Driver', 'State']
                     }
-                    for (let route of table.Routes) {
-                        if (!route.NextHops) {
+                }
+            },
+            {
+                field: "Sockets",
+                expanded: false,
+                icon: "\uf1e6"
+            },
+            {
+                field: "Captures",
+                expanded: false,
+                icon: "\uf51f",
+                normalizer: (data: any): any => {
+                    for (let capture of data) {
+                        capture.ID = capture.ID.split('-')[0]
+                    }
+                    return data
+                }
+            },
+            {
+                field: "Injections",
+                expanded: false,
+                icon: "\uf48e"
+            },
+            {
+                field: "Docker",
+                expanded: false,
+                icon: "\uf395",
+                iconClass: "font-brands"
+            },
+            {
+                field: "IPV4",
+                expanded: true,
+                icon: "\uf1fa"
+            },
+            {
+                field: "IPV6",
+                expanded: true,
+                icon: "\uf1fa"
+            },
+            {
+                field: "LastUpdateMetric",
+                title: "Last metrics",
+                expanded: false,
+                icon: "\uf201",
+                normalizer: (data: any): any => {
+                    return {
+                        RxPackets: data.RxPackets ? data.RxPackets.toLocaleString() : 0,
+                        RxBytes: data.RxBytes ? Tools.prettyBytes(data.RxBytes) : 0,
+                        TxPackets: data.TxPackets ? data.TxPackets.toLocaleString() : 0,
+                        TxBytes: data.TxPackets ? Tools.prettyBytes(data.TxBytes) : 0,
+                        Start: data.Start ? new Date(data.Start).toLocaleString() : 0,
+                        Last: data.Last ? new Date(data.Last).toLocaleString() : 0
+                    }
+                },
+                graph: (data: any): any => {
+                    return {
+                        type: "LineChart",
+                        data: [
+                            [
+                                { type: "datetime", label: "time" },
+                                "RxBytes",
+                                "TxBytes"
+                            ],
+                            [new Date(data.Last || 0), data.RxBytes || 0, data.TxBytes || 0]
+                        ]
+                    }
+                }
+            },
+            {
+                field: "Metric",
+                title: "Total metrics",
+                expanded: false,
+                icon: "\uf201",
+                normalizer: (data: any): any => {
+                    return {
+                        RxPackets: data.RxPackets ? data.RxPackets.toLocaleString() : 0,
+                        RxBytes: data.RxBytes ? Tools.prettyBytes(data.RxBytes) : 0,
+                        TxPackets: data.TxPackets ? data.TxPackets.toLocaleString() : 0,
+                        TxBytes: data.TxPackets ? Tools.prettyBytes(data.TxBytes) : 0,
+                        Last: data.Last ? new Date(data.Last).toLocaleString() : 0
+                    }
+                }
+            },
+            {
+                field: "Features",
+                expanded: false,
+                icon: "\uf022"
+            },
+            {
+                field: "FDB",
+                expanded: false,
+                icon: "\uf0ce"
+            },
+            {
+                field: "Neighbors",
+                expanded: false,
+                icon: "\uf0ce"
+            },
+            {
+                field: "RoutingTables",
+                title: "Routing tables",
+                expanded: false,
+                icon: "\uf0ce",
+                normalizer: (data: any): any => {
+                    var rows = new Array<any>()
+                    for (let table of data) {
+                        if (!table.Routes) {
                             continue
                         }
-                        for (let nh of route.NextHops) {
-                            rows.push({
-                                ID: table.ID,
-                                Src: table.Src,
-                                Protocol: route["Protocol"],
-                                Prefix: route["Prefix"],
-                                Priority: nh["Priority"],
-                                IP: nh["IP"],
-                                IfIndex: nh["IfIndex"]
-                            })
+                        for (let route of table.Routes) {
+                            if (!route.NextHops) {
+                                continue
+                            }
+                            for (let nh of route.NextHops) {
+                                rows.push({
+                                    ID: table.ID,
+                                    Src: table.Src,
+                                    Protocol: route["Protocol"],
+                                    Prefix: route["Prefix"],
+                                    Priority: nh["Priority"],
+                                    IP: nh["IP"],
+                                    IfIndex: nh["IfIndex"]
+                                })
+                            }
                         }
                     }
-                }
 
-                return rows
+                    return rows
+                }
             }
-        }
-    ],
-    linkAttrs: function (link: Link) {
+        ]
+    }
+
+    linkAttrs(link: Link): LinkAttrs {
         var metric = link.source.data.LastUpdateMetric
         var bandwidth = 0
         if (metric) {
@@ -520,50 +892,53 @@ var DefaultConfig = {
         }
 
         return attrs
-    },
-    linkTabTitle: function (link: Link) {
+    }
+
+    linkTabTitle(link: Link): string {
         var src = link.source.data.Name
         var dst = link.target.data.Name
         if (src && dst) {
             return src.substring(0, 8) + " / " + dst.substring(0, 8)
         }
         return link.id.split("-")[0]
-    },
-    linkDataFields: [
-        {
-            field: "",
-            title: "General",
-            expanded: true,
-            icon: "\uf05a",
-        },
-        {
-            field: "NSM",
-            title: "Network Service Mesh",
-            expanded: true,
-            icon: "\uf542",
-        },
-        {
-            field: "NSM.Source",
-            title: "Source",
-            expanded: false,
-            icon: "\uf018",
-        },
-        {
-            field: "NSM.Via",
-            title: "Via",
-            expanded: false,
-            icon: "\uf018",
-        },
-        {
-            field: "NSM.Destination",
-            title: "Destination",
-            expanded: false,
-            icon: "\uf018",
-        }
-    ],
-    defaultLinkTagMode: function (tag: string): number {
+    }
+
+    linkDataFields(): Array<LinkDataField> {
+        return [
+            {
+                field: "",
+                title: "General",
+                expanded: true,
+                icon: "\uf05a",
+            },
+            {
+                field: "NSM",
+                title: "Network Service Mesh",
+                expanded: true,
+                icon: "\uf542",
+            },
+            {
+                field: "NSM.Source",
+                title: "Source",
+                expanded: false,
+                icon: "\uf018",
+            },
+            {
+                field: "NSM.Via",
+                title: "Via",
+                expanded: false,
+                icon: "\uf018",
+            },
+            {
+                field: "NSM.Destination",
+                title: "Destination",
+                expanded: false,
+                icon: "\uf018",
+            }
+        ]
+    }
+
+    defaultLinkTagMode(): number {
         return 2
     }
 }
-
-export default DefaultConfig

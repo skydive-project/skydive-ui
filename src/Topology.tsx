@@ -165,6 +165,9 @@ export interface LinkAttrs {
     classes: Array<string>
     directed: boolean
     label: string
+    icon: string
+    iconClass: string
+    href: string
 }
 
 interface Props {

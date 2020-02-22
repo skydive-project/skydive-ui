@@ -38,7 +38,7 @@ import { styles } from './SelectionPanelStyles'
 import ActionPanel from './ActionPanel'
 import FlowPanel from './FlowPanel'
 
-import DefaultConfig from './Config'
+import ConfigReducer from './Config'
 
 interface Props {
   classes: any
@@ -46,7 +46,7 @@ interface Props {
   revision: number
   onLocation?: (node: Node | Link) => void
   onClose?: (node: Node | Link) => void
-  config: typeof DefaultConfig
+  config: ConfigReducer
 }
 
 interface State {
@@ -142,9 +142,9 @@ class SelectionPanel extends React.Component<Props, State> {
 
   private dataFields(el: Node | Link): Array<any> {
     if (el.type === 'node') {
-      return this.props.config.nodeDataFields
+      return this.props.config.nodeDataFields()
     } else {
-      return this.props.config.linkDataFields
+      return this.props.config.linkDataFields()
     }
   }
 
@@ -291,8 +291,7 @@ class SelectionPanel extends React.Component<Props, State> {
 
 export const mapStateToProps = (state: AppState) => ({
   selection: state.selection,
-  revision: state.selectionRevision,
-  config: state.config
+  revision: state.selectionRevision
 })
 
 export const mapDispatchToProps = ({

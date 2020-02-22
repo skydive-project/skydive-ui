@@ -54,14 +54,14 @@ import { styles } from './AppStyles'
 import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState, Link } from './Topology'
 import { mainListItems, helpListItems } from './Menu'
 import AutoCompleteInput from './AutoComplete'
-import { AppState, selectElement, unselectElement, bumpRevision, session, closeSession, setConfig } from './Store'
+import { AppState, selectElement, unselectElement, bumpRevision, session, closeSession } from './Store'
 import SelectionPanel from './SelectionPanel'
 import { Configuration } from './api/configuration'
 import * as api from './api/api'
 
 import './App.css'
 import Logo from '../assets/Logo.png'
-import DefaultConfig from './Config'
+import ConfigReducer from './Config'
 
 const queryString = require('query-string')
 
@@ -83,8 +83,6 @@ interface Props extends WithSnackbarProps {
   session: session
   closeSession: typeof closeSession
   history: any
-  config: typeof DefaultConfig
-  setConfig: typeof setConfig
 }
 
 export interface WSContext {
@@ -119,6 +117,7 @@ class App extends React.Component<Props, State> {
   extraConfigURL: string
   connected: boolean
   debSetState: (state: any) => void
+  config: ConfigReducer
 
   constructor(props) {
     super(props)
@@ -145,6 +144,9 @@ class App extends React.Component<Props, State> {
 
     // debounce version of setState
     this.debSetState = debounce(200, this.setState.bind(this))
+
+    // will handle multiple configuration files
+    this.config = new ConfigReducer()
 
     const parsed = queryString.parse(props.location.search)
 
@@ -195,44 +197,16 @@ class App extends React.Component<Props, State> {
     })
   }
 
-  private fetchExtraConfig(url: string): Promise<typeof DefaultConfig> {
-    var promise = new Promise<typeof DefaultConfig>((resolve, reject) => {
-      if (!url) {
-        resolve(this.props.config)
-        return
-      }
-
-      fetch(url).then(resp => {
-        resp.text().then(data => {
-          try {
-            var config = eval(data)
-
-            config = { ...this.props.config, ...config }
-            this.props.setConfig(config)
-
-            resolve(config)
-          } catch (e) {
-            reject(e)
-          }
-        })
-      }).catch((reason) => {
-        throw Error(reason)
-      })
-    })
-
-    return promise
-  }
-
   loadExtraConfig(url: string) {
     this.extraConfigURL = url
 
     if (this.staticDataURL) {
       // load first the config and then the data
-      var p = this.fetchExtraConfig(this.extraConfigURL).then(() => {
+      var p = this.config.appendURL(this.extraConfigURL).then(() => {
         this.loadStaticData(this.staticDataURL)
       })
     } else {
-      var p = this.fetchExtraConfig(this.extraConfigURL).then(() => {
+      var p = this.config.appendURL(this.extraConfigURL).then(() => {
         this.updateFilter()
         this.sync()
       })
@@ -244,8 +218,8 @@ class App extends React.Component<Props, State> {
   }
 
   private updateFilter(): boolean {
-    for (let filter of this.props.config.filters) {
-      if (filter.id === this.props.config.defaultFilter) {
+    for (let filter of this.config.filters()) {
+      if (filter.id === this.config.defaultFilter()) {
         if (this.state.wsContext.GremlinFilter !== filter.gremlin) {
           this.setState({ wsContext: { GremlinFilter: filter.gremlin } })
           return true
@@ -259,7 +233,7 @@ class App extends React.Component<Props, State> {
   private updateSuggestions(node: Node, suggestions: Array<string>) {
     var updated: boolean = false
 
-    for (let key of this.props.config.suggestions) {
+    for (let key of this.config.suggestions()) {
       try {
         var value = eval("node." + key)
         if (Array.isArray(value)) {
@@ -293,9 +267,9 @@ class App extends React.Component<Props, State> {
       return false
     }
 
-    var tags = this.props.config.nodeTags(node.Metadata)
+    var tags = this.config.nodeTags(node.Metadata)
 
-    let n = this.tc.addNode(node.ID, tags, node.Metadata, (n: Node): number => this.props.config.nodeAttrs(n).weight)
+    let n = this.tc.addNode(node.ID, tags, node.Metadata, (n: Node): number => this.config.nodeAttrs(n).weight)
     this.tc.setParent(n, this.tc.root)
 
     this.updateSuggestions(n, this.state.suggestions)
@@ -408,7 +382,7 @@ class App extends React.Component<Props, State> {
       }
     }
 
-    this.tc.activeNodeTag(this.props.config.defaultNodeTag)
+    this.tc.activeNodeTag(this.config.defaultNodeTag())
 
     this.setState({ nodeTagStates: this.tc.nodeTagStates })
 
@@ -416,7 +390,7 @@ class App extends React.Component<Props, State> {
   }
 
   nodeAttrs(node: Node): NodeAttrs {
-    var attrs = this.props.config.nodeAttrs(node)
+    var attrs = this.config.nodeAttrs(node)
     if (node.data.State) {
       attrs.classes.push(node.data.State.toLowerCase())
     }
@@ -425,7 +399,7 @@ class App extends React.Component<Props, State> {
   }
 
   linkAttrs(link: Link): LinkAttrs {
-    return this.props.config.linkAttrs(link)
+    return this.config.linkAttrs(link)
   }
 
   onNodeSelected(node: Node, active: boolean) {
@@ -449,22 +423,12 @@ class App extends React.Component<Props, State> {
     }
   }
 
-  weightTitles(): Map<number, string> {
-    var map = new Map<number, string>()
-    var titles = this.props.config.weightTitles()
-    Object.keys(titles).forEach(key => {
-      var index = parseInt(key)
-      map.set(index, titles[index]);
-    })
-    return map
-  }
-
   sortNodesFnc(a: Node, b: Node) {
-    return this.props.config.nodeSortFnc(a, b)
+    return this.config.nodeSortFnc(a, b)
   }
 
   onShowNodeContextMenu(node: Node) {
-    return this.props.config.nodeMenu(node)
+    return this.config.nodeMenu(node)
   }
 
   _refreshTopology() {
@@ -605,7 +569,7 @@ class App extends React.Component<Props, State> {
     }
 
     this.notify("Connected", "info")
-    this.fetchExtraConfig(this.extraConfigURL).then(() => {
+    this.config.appendURL(this.extraConfigURL).then(() => {
       this.updateFilter()
 
       this.sync()
@@ -756,7 +720,7 @@ class App extends React.Component<Props, State> {
       var className = classes.menuItemIconFree
 
       if (el.type === 'node') {
-        let attrs = this.props.config.nodeAttrs(el)
+        let attrs = this.config.nodeAttrs(el)
         var icon: string = attrs.icon
         var href: string = attrs.href
 
@@ -764,9 +728,9 @@ class App extends React.Component<Props, State> {
           className = classes.menuItemIconBrands
         }
 
-        var title = this.props.config.nodeTabTitle(el)
+        var title = this.config.nodeTabTitle(el)
       } else {
-        let attrs = this.props.config.linkAttrs(el)
+        let attrs = this.config.linkAttrs(el)
         var icon: string = attrs.icon
         var href: string = attrs.href
 
@@ -774,7 +738,7 @@ class App extends React.Component<Props, State> {
           className = classes.menuItemIconBrands
         }
 
-        var title = this.props.config.linkTabTitle(el)
+        var title = this.config.linkTabTitle(el)
       }
 
       const iconRender = () => {
@@ -819,8 +783,8 @@ class App extends React.Component<Props, State> {
             <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
               <img src={Logo} alt="logo" />
             </Typography>
-            {this.props.config.subTitle &&
-              <Typography className={classes.subTitle} variant="caption">{this.props.config.subTitle}</Typography>
+            {this.config.subTitle &&
+              <Typography className={classes.subTitle} variant="caption">{this.config.subTitle}</Typography>
             }
             <div className={classes.search}>
               <AutoCompleteInput placeholder="metadata value" suggestions={this.state.suggestions} onChange={this.onSearchChange.bind(this)} />
@@ -911,33 +875,35 @@ class App extends React.Component<Props, State> {
         </Drawer>
         <main className={classes.content}>
           <Container maxWidth="xl" className={classes.container}>
-            <Topology className={classes.topology} ref={node => this.tc = node} nodeAttrs={this.nodeAttrs.bind(this)} linkAttrs={this.linkAttrs.bind(this)}
+            <Topology className={classes.topology} ref={node => this.tc = node}
+              nodeAttrs={this.nodeAttrs.bind(this)}
+              linkAttrs={this.linkAttrs.bind(this)}
               onNodeSelected={this.onNodeSelected.bind(this)}
               sortNodesFnc={this.sortNodesFnc.bind(this)}
               onShowNodeContextMenu={this.onShowNodeContextMenu.bind(this)}
-              weightTitles={this.weightTitles()}
-              groupSize={this.props.config.groupSize}
-              groupType={this.props.config.groupType.bind(this.props.config)}
-              groupName={this.props.config.groupName.bind(this.props.config)}
+              weightTitles={this.config.weightTitles()}
+              groupSize={this.config.groupSize()}
+              groupType={this.config.groupType.bind(this.config)}
+              groupName={this.config.groupName.bind(this.config)}
               onClick={this.onTopologyClick.bind(this)}
               onLinkSelected={this.onLinkSelected.bind(this)}
               onLinkTagChange={this.onLinkTagChange.bind(this)}
-              onNodeClicked={this.props.config.nodeClicked.bind(this.props.config)}
-              onNodeDblClicked={this.props.config.nodeDblClicked.bind(this.props.config)}
-              defaultLinkTagMode={this.props.config.defaultLinkTagMode.bind(this.props.config)}
+              onNodeClicked={this.config.nodeClicked.bind(this.config)}
+              onNodeDblClicked={this.config.nodeDblClicked.bind(this.config)}
+              defaultLinkTagMode={this.config.defaultLinkTagMode.bind(this.config)}
             />
           </Container>
           <Container className={classes.rightPanel}>
             <Paper className={clsx(classes.rightPanelPaper, (!this.props.selection.length || !this.state.isSelectionOpen) && classes.rightPanelPaperClose)}
               square={true}>
-              <SelectionPanel onLocation={this.onSelectionLocation.bind(this)} onClose={this.onSelectionClose.bind(this)} />
+              <SelectionPanel onLocation={this.onSelectionLocation.bind(this)} onClose={this.onSelectionClose.bind(this)} config={this.config} />
             </Paper>
           </Container>
           <Container className={classes.nodeTagsPanel}>
             {Array.from(this.state.nodeTagStates.keys()).sort((a, b) => {
-              if (a === this.props.config.defaultNodeTag) {
+              if (a === this.config.defaultNodeTag()) {
                 return -1
-              } else if (b === this.props.config.defaultNodeTag) {
+              } else if (b === this.config.defaultNodeTag()) {
                 return 1
               }
               return 0
@@ -952,7 +918,7 @@ class App extends React.Component<Props, State> {
           </Container>
           {this.staticDataURL === "" &&
             <Container className={classes.filtersPanel}>
-              {this.props.config.filters.map((filter, i) => (
+              {this.config.filters().map((filter, i) => (
                 <Button variant="contained" key={i} aria-label="delete" size="small"
                   color={this.state.wsContext.GremlinFilter === filter.gremlin ? "primary" : "default"}
                   className={classes.filtersFab}
@@ -989,16 +955,14 @@ class App extends React.Component<Props, State> {
 
 export const mapStateToProps = (state: AppState) => ({
   selection: state.selection,
-  session: state.session,
-  config: state.config
+  session: state.session
 })
 
 export const mapDispatchToProps = ({
   selectElement,
   unselectElement,
   bumpRevision,
-  closeSession,
-  setConfig
+  closeSession
 })
 
 export default withStyles(styles)(connect(mapStateToProps, mapDispatchToProps)(withSnackbar(withRouter(App))))
