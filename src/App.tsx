@@ -45,7 +45,6 @@ import MenuItem from '@material-ui/core/MenuItem'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
 import Menu from '@material-ui/core/Menu'
 import Fab from '@material-ui/core/Fab'
-import { withRouter } from 'react-router-dom'
 import Badge from '@material-ui/core/Badge'
 import ListIcon from '@material-ui/icons/List'
 import Button from '@material-ui/core/Button'
@@ -55,27 +54,33 @@ import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState, Link } from './Topo
 import { mainListItems, helpListItems } from './Menu'
 import AutoCompleteInput from './AutoComplete'
 import { AppState, selectElement, unselectElement, bumpRevision, session, closeSession } from './Store'
+import { withRouter } from 'react-router-dom'
 import SelectionPanel from './SelectionPanel'
 import { Configuration } from './api/configuration'
 import * as api from './api/api'
+import Tools from './Tools'
 
 import './App.css'
 import Logo from '../assets/Logo.png'
 import ConfigReducer from './Config'
 
-const queryString = require('query-string')
 
 // expose app ouside
 declare global {
   interface Window {
     API: any,
-    App: any
+    App: any,
+    Tools: Tools
   }
 }
 window.API = api
+window.Tools = Tools
 
 interface Props extends WithSnackbarProps {
   classes: any
+  configURL?: string
+  dataURL?: string
+
   selectElement: typeof selectElement
   unselectElement: typeof unselectElement
   selection: Array<Node | Link>
@@ -147,31 +152,17 @@ class App extends React.Component<Props, State> {
 
     // will handle multiple configuration files
     this.config = new ConfigReducer()
-
-    const parsed = queryString.parse(props.location.search)
-
-    // parse static topology data
-    if (parsed.data) {
-      this.staticDataURL = parsed.data
-    } else {
-      this.staticDataURL = ""
-    }
-
-    // parse extra config
-    if (parsed.config) {
-      this.extraConfigURL = parsed.config
-    } else {
-      this.extraConfigURL = ""
-    }
   }
 
   componentDidMount() {
     // make the application available globally
     window.App = this
 
-    this.loadExtraConfig(this.extraConfigURL)
+    if (this.props.configURL) {
+      this.config.appendURL("URL", this.props.configURL)
+    }
 
-    if (!this.staticDataURL) {
+    if (!this.props.dataURL) {
       this.checkAuthID = window.setInterval(() => {
         this.checkAuth()
       }, 2000)
@@ -197,16 +188,14 @@ class App extends React.Component<Props, State> {
     })
   }
 
-  loadExtraConfig(url: string) {
-    this.extraConfigURL = url
-
-    if (this.staticDataURL) {
+  appendConfig(id: string, url: string) {
+    if (this.props.dataURL) {
       // load first the config and then the data
-      var p = this.config.appendURL(this.extraConfigURL).then(() => {
+      var p = this.config.appendURL(id, url).then(() => {
         this.loadStaticData(this.staticDataURL)
       })
     } else {
-      var p = this.config.appendURL(this.extraConfigURL).then(() => {
+      var p = this.config.appendURL(id, url).then(() => {
         this.updateFilter()
         this.sync()
       })
@@ -569,15 +558,8 @@ class App extends React.Component<Props, State> {
     }
 
     this.notify("Connected", "info")
-    this.config.appendURL(this.extraConfigURL).then(() => {
-      this.updateFilter()
-
-      this.sync()
-
-      this.notify("Synchronized", "info")
-    }).catch((reason) => {
-      this.notify("Unable to load or parse extra config", "error")
-    })
+    this.updateFilter()
+    this.sync()
 
     // set API configuration
     this.apiConf = new Configuration({ accessToken: this.props.session.token })
@@ -759,17 +741,26 @@ class App extends React.Component<Props, State> {
     })
   }
 
+  connection() {
+    return (
+      <React.Fragment>
+        {
+          this.props.dataURL === undefined &&
+          <Websocket ref={node => this.websocket = node} url={this.subscriberURL()} onOpen={this.onWebSocketOpen.bind(this)}
+            onMessage={this.onWebSocketMessage.bind(this)} onClose={this.onWebSocketClose.bind(this)}
+            reconnectIntervalInMilliSeconds={2500} />
+        }
+      </React.Fragment>
+    )
+  }
+
   render() {
     const { classes } = this.props
 
     return (
       <div className={classes.app}>
         <CssBaseline />
-        {this.staticDataURL === "" &&
-          <Websocket ref={node => this.websocket = node} url={this.subscriberURL()} onOpen={this.onWebSocketOpen.bind(this)}
-            onMessage={this.onWebSocketMessage.bind(this)} onClose={this.onWebSocketClose.bind(this)}
-            reconnectIntervalInMilliSeconds={2500} />
-        }
+        {this.connection()}
         <AppBar position="absolute" className={clsx(classes.appBar, this.state.isNavOpen && classes.appBarShift)}>
           <Toolbar className={classes.toolbar}>
             <IconButton
@@ -784,7 +775,7 @@ class App extends React.Component<Props, State> {
               <img src={Logo} alt="logo" />
             </Typography>
             {this.config.subTitle &&
-              <Typography className={classes.subTitle} variant="caption">{this.config.subTitle}</Typography>
+              <Typography className={classes.subTitle} variant="caption">{this.config.subTitle()}</Typography>
             }
             <div className={classes.search}>
               <AutoCompleteInput placeholder="metadata value" suggestions={this.state.suggestions} onChange={this.onSearchChange.bind(this)} />

@@ -101,20 +101,30 @@ export interface Config {
     defaultLinkTagMode?(): number
 }
 
+class ConfigWithID {
+    id: string
+    config: Config
+
+    constructor(id: string, config: Config) {
+        this.id = id
+        this.config = config
+    }
+}
+
 export default class ConfigReducer {
     default: DefaultConfig
-    configs: Array<Config>
+    configs: Array<ConfigWithID>
 
     constructor() {
         this.default = new DefaultConfig()
-        this.configs = new Array<Config>()
+        this.configs = new Array<ConfigWithID>()
     }
 
-    append(config: Config) {
-        this.configs.push(config)
+    append(id: string, config: Config) {
+        this.configs.push(new ConfigWithID(id, config))
     }
 
-    appendURL(url: string): Promise<Config | undefined> {
+    appendURL(id: string, url: string): Promise<Config | undefined> {
         var promise = new Promise<Config>((resolve, reject) => {
             if (!url) {
                 resolve()
@@ -125,7 +135,7 @@ export default class ConfigReducer {
                 resp.text().then(data => {
                     try {
                         var config = eval(data)
-                        this.append(config)
+                        this.append(id, config)
 
                         resolve(config)
                     } catch (e) {
@@ -142,9 +152,9 @@ export default class ConfigReducer {
 
     subTitle(): string {
         var subTitle = this.default.subTitle()
-        for (let config of this.configs) {
-            if (config.subTitle) {
-                subTitle = config.subTitle(subTitle)
+        for (let c of this.configs) {
+            if (c.config.subTitle) {
+                subTitle = c.config.subTitle(subTitle)
             }
         }
         return subTitle
@@ -152,9 +162,9 @@ export default class ConfigReducer {
 
     filters(): Array<Filter> {
         var filters = this.default.filters()
-        for (let config of this.configs) {
-            if (config.filters) {
-                filters = config.filters(filters)
+        for (let c of this.configs) {
+            if (c.config.filters) {
+                filters = c.config.filters(filters)
             }
         }
         return filters
@@ -162,9 +172,9 @@ export default class ConfigReducer {
 
     defaultFilter(): string {
         var defaultFilter = this.default.defaultFilter()
-        for (let config of this.configs) {
-            if (config.defaultFilter) {
-                defaultFilter = config.defaultFilter()
+        for (let c of this.configs) {
+            if (c.config.defaultFilter) {
+                defaultFilter = c.config.defaultFilter()
             }
         }
         return defaultFilter
@@ -172,9 +182,9 @@ export default class ConfigReducer {
 
     nodeAttrs(node: Node): NodeAttrs {
         var attrs = this.default.nodeAttrs(node)
-        for (let config of this.configs) {
-            if (config.nodeAttrs) {
-                attrs = config.nodeAttrs(attrs, node)
+        for (let c of this.configs) {
+            if (c.config.nodeAttrs) {
+                attrs = c.config.nodeAttrs(attrs, node)
             }
         }
         return attrs
@@ -182,9 +192,9 @@ export default class ConfigReducer {
 
     nodeSortFnc(a: Node, b: Node): number {
         var fnc = this.default.nodeSortFnc
-        for (let config of this.configs) {
-            if (config.nodeSortFnc) {
-                fnc = config.nodeSortFnc
+        for (let c of this.configs) {
+            if (c.config.nodeSortFnc) {
+                fnc = c.config.nodeSortFnc
             }
         }
         return fnc(a, b)
@@ -192,9 +202,9 @@ export default class ConfigReducer {
 
     nodeClicked(node: Node): void {
         var fnc = this.default.nodeClicked
-        for (let config of this.configs) {
-            if (config.nodeClicked) {
-                fnc = config.nodeClicked
+        for (let c of this.configs) {
+            if (c.config.nodeClicked) {
+                fnc = c.config.nodeClicked
             }
         }
         return fnc(node)
@@ -202,9 +212,9 @@ export default class ConfigReducer {
 
     nodeDblClicked(node: Node): void {
         var fnc = this.default.nodeDblClicked
-        for (let config of this.configs) {
-            if (config.nodeDblClicked) {
-                fnc = config.nodeDblClicked
+        for (let c of this.configs) {
+            if (c.config.nodeDblClicked) {
+                fnc = c.config.nodeDblClicked
             }
         }
         return fnc(node)
@@ -212,9 +222,9 @@ export default class ConfigReducer {
 
     nodeMenu(node: Node): Array<MenuItem> {
         var items = this.default.nodeMenu(node)
-        for (let config of this.configs) {
-            if (config.nodeMenu) {
-                items = config.nodeMenu(items, node)
+        for (let c of this.configs) {
+            if (c.config.nodeMenu) {
+                items = c.config.nodeMenu(items, node)
             }
         }
         return items
@@ -222,9 +232,9 @@ export default class ConfigReducer {
 
     nodeTags(node: Node): Array<string> {
         var tags = this.default.nodeTags(node)
-        for (let config of this.configs) {
-            if (config.nodeTags) {
-                tags = config.nodeTags([], node)
+        for (let c of this.configs) {
+            if (c.config.nodeTags) {
+                tags = c.config.nodeTags([], node)
             }
         }
         return tags
@@ -232,9 +242,9 @@ export default class ConfigReducer {
 
     defaultNodeTag(): string {
         var defaultNodeTag = this.default.defaultNodeTag()
-        for (let config of this.configs) {
-            if (config.defaultNodeTag) {
-                defaultNodeTag = config.defaultNodeTag()
+        for (let c of this.configs) {
+            if (c.config.defaultNodeTag) {
+                defaultNodeTag = c.config.defaultNodeTag()
             }
         }
         return defaultNodeTag
@@ -242,9 +252,9 @@ export default class ConfigReducer {
 
     nodeTabTitle(node: Node): string {
         var nodeTabTitle = this.default.nodeTabTitle(node)
-        for (let config of this.configs) {
-            if (config.nodeTabTitle) {
-                nodeTabTitle = config.nodeTabTitle(node)
+        for (let c of this.configs) {
+            if (c.config.nodeTabTitle) {
+                nodeTabTitle = c.config.nodeTabTitle(node)
             }
         }
         return nodeTabTitle
@@ -252,9 +262,9 @@ export default class ConfigReducer {
 
     groupSize(): number {
         var size = this.default.groupSize()
-        for (let config of this.configs) {
-            if (config.groupSize) {
-                size = config.groupSize()
+        for (let c of this.configs) {
+            if (c.config.groupSize) {
+                size = c.config.groupSize()
             }
         }
         return size
@@ -262,9 +272,9 @@ export default class ConfigReducer {
 
     groupType(node: Node): string | undefined {
         var groupType = this.default.groupType(node)
-        for (let config of this.configs) {
-            if (config.groupType) {
-                groupType = config.groupType(node)
+        for (let c of this.configs) {
+            if (c.config.groupType) {
+                groupType = c.config.groupType(node)
             }
         }
         return groupType
@@ -272,9 +282,9 @@ export default class ConfigReducer {
 
     groupName(node: Node): string | undefined {
         var groupName = this.default.groupName(node)
-        for (let config of this.configs) {
-            if (config.groupName) {
-                groupName = config.groupName(node)
+        for (let c of this.configs) {
+            if (c.config.groupName) {
+                groupName = c.config.groupName(node)
             }
         }
         return groupName
@@ -282,9 +292,9 @@ export default class ConfigReducer {
 
     weightTitles(): Map<number, string> {
         var titles = this.default.weightTitles()
-        for (let config of this.configs) {
-            if (config.weightTitles) {
-                titles = config.weightTitles()
+        for (let c of this.configs) {
+            if (c.config.weightTitles) {
+                titles = c.config.weightTitles()
             }
         }
         return titles
@@ -292,9 +302,9 @@ export default class ConfigReducer {
 
     suggestions(): Array<string> {
         var result = this.default.suggestions()
-        for (let config of this.configs) {
-            if (config.suggestions) {
-                result = config.suggestions()
+        for (let c of this.configs) {
+            if (c.config.suggestions) {
+                result = c.config.suggestions()
             }
         }
         return result
@@ -302,9 +312,9 @@ export default class ConfigReducer {
 
     nodeDataFields(): Array<NodeDataField> {
         var fields = this.default.nodeDataFields()
-        for (let config of this.configs) {
-            if (config.nodeDataFields) {
-                fields = config.nodeDataFields(fields)
+        for (let c of this.configs) {
+            if (c.config.nodeDataFields) {
+                fields = c.config.nodeDataFields(fields)
             }
         }
         return fields
@@ -312,9 +322,9 @@ export default class ConfigReducer {
 
     linkAttrs(link: Link): LinkAttrs {
         var attrs = this.default.linkAttrs(link)
-        for (let config of this.configs) {
-            if (config.linkAttrs) {
-                attrs = config.linkAttrs(attrs, link)
+        for (let c of this.configs) {
+            if (c.config.linkAttrs) {
+                attrs = c.config.linkAttrs(attrs, link)
             }
         }
         return attrs
@@ -322,9 +332,9 @@ export default class ConfigReducer {
 
     linkTabTitle(link: Link): string {
         var title = this.default.linkTabTitle(link)
-        for (let config of this.configs) {
-            if (config.linkTabTitle) {
-                title = config.linkTabTitle(link)
+        for (let c of this.configs) {
+            if (c.config.linkTabTitle) {
+                title = c.config.linkTabTitle(link)
             }
         }
         return title
@@ -332,9 +342,9 @@ export default class ConfigReducer {
 
     linkDataFields(): Array<LinkDataField> {
         var fields = this.default.linkDataFields()
-        for (let config of this.configs) {
-            if (config.linkDataFields) {
-                fields = config.linkDataFields(fields)
+        for (let c of this.configs) {
+            if (c.config.linkDataFields) {
+                fields = c.config.linkDataFields(fields)
             }
         }
         return fields
@@ -342,9 +352,9 @@ export default class ConfigReducer {
 
     defaultLinkTagMode(): number {
         var size = this.default.defaultLinkTagMode()
-        for (let config of this.configs) {
-            if (config.defaultLinkTagMode) {
-                size = config.defaultLinkTagMode()
+        for (let c of this.configs) {
+            if (c.config.defaultLinkTagMode) {
+                size = c.config.defaultLinkTagMode()
             }
         }
         return size

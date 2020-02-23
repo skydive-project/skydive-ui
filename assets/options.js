@@ -1,1 +1,1 @@
-var baseurl = "/";
+var baseURL = "/";

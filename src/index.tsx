@@ -24,19 +24,14 @@ import '@fortawesome/fontawesome-free/css/all.css'
 import { Provider, connect } from 'react-redux'
 import { createBrowserHistory } from 'history'
 import { AppState, store } from './Store'
-import { BrowserRouter, Route, Redirect, Switch } from 'react-router-dom'
+import { BrowserRouter, Route, Redirect, Switch, withRouter } from 'react-router-dom'
 import Login from './Login'
 import App from './App'
-import Tools from './Tools'
+
+const queryString = require('query-string')
 
 // from options
-declare var baseurl: string
-
-// expose some tools
-declare global {
-  interface Window { Tools: any }
-}
-window.Tools = Tools
+declare var baseURL: string
 
 const history = createBrowserHistory()
 
@@ -56,17 +51,35 @@ const PrivateRoute = connect(mapStateToProps, mapDispatchToProps)(({ component, 
   return <Route {...props} render={routeComponent} />
 })
 
+interface Props {
+  location: any
+}
+
+class SkydiveApp extends React.Component<Props> {
+
+  constructor(props) {
+    super(props)
+  }
+
+  render() {
+    const parsed = queryString.parse(this.props.location.search)
+    return <App configURL={parsed.config} dataURL={parsed.data} />
+  }
+}
+
 ReactDOM.render(
   <Provider store={store}>
     <SnackbarProvider>
-      <BrowserRouter history={history} basename={baseurl || ""}>
+      <BrowserRouter history={history} basename={baseURL || ""}>
         <Switch>
-          <PrivateRoute path="/" component={App} exact />
+          <PrivateRoute path="/" component={withRouter(SkydiveApp)} exact />
           <Route path="/login" component={Login} />
-          <Redirect from="*" to={(baseurl || "/") + history.location.search} />
+          <Redirect from="*" to={(baseURL || "/") + history.location.search} />
         </Switch>
       </BrowserRouter>
     </SnackbarProvider>
   </Provider>,
   document.getElementById('index')
 )
+
+//     //const parsed = queryString.parse(props.location.search)
