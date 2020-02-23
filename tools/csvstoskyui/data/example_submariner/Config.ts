@@ -560,11 +560,13 @@ var DefaultConfig = {
         switch (link.data.RelationType) {
             case "ipsec":
                 attrs.label = link.data.RelationType
-                attrs.classes.push('traffic')
+                attrs.classes.push("traffic")
+                attrs.classes.push('ipsec_traffic')
                 break
             case "vxlan":
                 attrs.label = link.data.RelationType
-                attrs.classes.push('traffic')
+                attrs.classes.push("traffic")
+                attrs.classes.push('vxlan_traffic')
                 break
         }
 
