@@ -61,7 +61,6 @@ import * as api from './api/api'
 import Tools from './Tools'
 
 import './App.css'
-import Logo from '../assets/Logo.png'
 import ConfigReducer from './Config'
 
 
@@ -80,6 +79,7 @@ interface Props extends WithSnackbarProps {
   classes: any
   configURL?: string
   dataURL?: string
+  logo?: string
 
   selectElement: typeof selectElement
   unselectElement: typeof unselectElement
@@ -772,7 +772,7 @@ class App extends React.Component<Props, State> {
               <MenuIcon />
             </IconButton>
             <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
-              <img src={Logo} alt="logo" />
+              {this.props.logo}
             </Typography>
             {this.config.subTitle &&
               <Typography className={classes.subTitle} variant="caption">{this.config.subTitle()}</Typography>

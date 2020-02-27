@@ -17,16 +17,18 @@
 
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
-import './index.css'
 import 'roboto-fontface/css/roboto/roboto-fontface.css'
 import { SnackbarProvider } from 'notistack'
 import '@fortawesome/fontawesome-free/css/all.css'
 import { Provider, connect } from 'react-redux'
 import { createBrowserHistory } from 'history'
-import { AppState, store } from './Store'
 import { BrowserRouter, Route, Redirect, Switch, withRouter } from 'react-router-dom'
+
+import './index.css'
+import { AppState, store } from './Store'
 import Login from './Login'
 import App from './App'
+import Logo from '../assets/Logo.png'
 
 const queryString = require('query-string')
 
@@ -63,7 +65,7 @@ class SkydiveApp extends React.Component<Props> {
 
   render() {
     const parsed = queryString.parse(this.props.location.search)
-    return <App configURL={parsed.config} dataURL={parsed.data} />
+    return <App configURL={parsed.config} dataURL={parsed.data} logo={<img src={Logo} alt="logo" />} />
   }
 }
 
@@ -81,5 +83,3 @@ ReactDOM.render(
   </Provider>,
   document.getElementById('index')
 )
-
-//     //const parsed = queryString.parse(props.location.search)
