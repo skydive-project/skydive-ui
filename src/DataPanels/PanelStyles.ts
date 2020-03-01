@@ -21,7 +21,7 @@ export const styles = (theme: Theme) => createStyles({
     header: {
         display: 'flex',
         minHeight: 64,
-        backgroundColor: '#757575 !important',
+        backgroundColor: '#a2a2a2 !important',
         padding: '0 24px 0 24px',
         borderTopLeftRadius: 4,
         borderTopRightRadius: 4,

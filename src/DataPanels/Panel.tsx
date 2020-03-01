@@ -18,8 +18,9 @@
 import * as React from 'react'
 import Paper from '@material-ui/core/Paper'
 import { withStyles } from '@material-ui/core/styles'
-import { styles } from './ActionPanelStyles'
 import { Typography } from '@material-ui/core'
+
+import { styles } from './PanelStyles'
 
 interface Props {
     classes: any
@@ -31,7 +32,7 @@ interface Props {
 interface State {
 }
 
-class ActionPanel extends React.Component<Props, State> {
+class Panel extends React.Component<Props, State> {
 
     state: State
 
@@ -65,4 +66,4 @@ class ActionPanel extends React.Component<Props, State> {
     }
 }
 
-export default withStyles(styles)(ActionPanel)
+export default withStyles(styles)(Panel)

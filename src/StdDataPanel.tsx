@@ -21,12 +21,12 @@ import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import Typography from '@material-ui/core/Typography'
-import { DataViewer } from './DataViewer'
-import { DataNormalizer, Result, Graph } from './DataNormalizer'
 import { withStyles } from '@material-ui/core/styles'
 
-import { styles } from './DataPanelStyles'
-import './DataPanel.css'
+import { DataViewer } from './StdDataViewer'
+import { DataNormalizer, Result, Graph } from './StdDataNormalizer'
+import { styles } from './StdDataPanelStyles'
+import './StdDataPanel.css'
 
 interface Props {
     title: string

@@ -16,18 +16,21 @@
  */
 
 import * as React from "react"
-import DataPanel from './DataPanel'
-import './DataPanel.css'
-import { AppState, session } from './Store'
 import { connect } from 'react-redux'
-import { Configuration } from './api/configuration'
-import { TopologyApi } from './api'
-import Tools from './Tools'
+import { withStyles } from '@material-ui/core/styles'
+
+import DataPanel from '../StdDataPanel'
+import '../StdDataPanel.css'
+import { AppState, session } from '../Store'
+import { Configuration } from '../api/configuration'
+import { TopologyApi } from '../api'
+import Tools from '../Tools'
+import { Node, Link } from '../Topology'
+import { styles } from './FlowStyles'
 
 interface Props {
-    classes?: any
-    title: string
-    gremlinExpr: string
+    classes: any
+    el: Node | Link
     session: session
 }
 
@@ -38,6 +41,7 @@ interface State {
 class FlowPanel extends React.Component<Props, State> {
 
     state: State
+    gremlin: string
 
     constructor(props) {
         super(props)
@@ -45,6 +49,8 @@ class FlowPanel extends React.Component<Props, State> {
         this.state = {
             data: []
         }
+
+        this.gremlin = `G.V('${this.props.el.id}').Flows()`
     }
 
     componentDidMount() {
@@ -71,14 +77,16 @@ class FlowPanel extends React.Component<Props, State> {
                 "Total.ABBytes": Tools.prettyBytes(flow.Metric.ABBytes),
                 "Total.BABytes": Tools.prettyBytes(flow.Metric.BABytes),
 
-                "Last.ABPackets": flow.LastUpdateMetric.ABPAckets,
-                "Last.BAPackets": flow.LastUpdateMetric.BAPAckets,
-                "Last.ABBytes": Tools.prettyBytes(flow.LastUpdateMetric.ABBytes),
-                "Last.BABytes": Tools.prettyBytes(flow.LastUpdateMetric.BABytes),
-                "Last.RTT": (flow.LastUpdateMetric.RTT / 1000000) + " ms",
-
                 "Start": flow.Start,
                 "Last": flow.Last
+            }
+
+            if (flow.LastUpdateMetric) {
+                result["Last.ABPackets"] = flow.LastUpdateMetric.ABPAckets
+                result["Last.BAPackets"] = flow.LastUpdateMetric.BAPAckets
+                result["Last.ABBytes"] = Tools.prettyBytes(flow.LastUpdateMetric.ABBytes)
+                result["Last.BABytes"] = Tools.prettyBytes(flow.LastUpdateMetric.BABytes)
+                result["Last.RTT"] = (flow.LastUpdateMetric.RTT / 1000000) + " ms"
             }
 
             if (flow.Link) {
@@ -110,18 +118,22 @@ class FlowPanel extends React.Component<Props, State> {
         var conf = new Configuration({ accessToken: this.props.session.token })
         var api = new TopologyApi(conf)
 
-        api.searchTopology({ GremlinQuery: this.props.gremlinExpr }).then(result => {
+        api.searchTopology({ GremlinQuery: this.gremlin }).then(result => {
             this.setState({ data: result })
         })
     }
 
     render() {
+        var classes = this.props.classes
+
         const defaultColumns = ["Application", "Network.A", "Network.B", "Transport.A", "Transport.B", "Total.ABBytes", "Total.BAPackets"]
 
         return (
-            <DataPanel title={this.props.title}
-                defaultExpanded={false} data={this.state.data} defaultColumns={defaultColumns}
-                icon={"\uf0ce"} normalizer={this.normalizer.bind(this)} />
+            <div className={classes.panel}>
+                <DataPanel title="Flow table"
+                    defaultExpanded={false} data={this.state.data} defaultColumns={defaultColumns}
+                    icon={"\uf0ce"} normalizer={this.normalizer.bind(this)} />
+            </div>
         )
     }
 }
@@ -133,4 +145,4 @@ export const mapStateToProps = (state: AppState) => ({
 export const mapDispatchToProps = ({
 })
 
-export default connect(mapStateToProps, mapDispatchToProps)(FlowPanel)
+export default connect(mapStateToProps, mapDispatchToProps)(withStyles(styles)(FlowPanel))

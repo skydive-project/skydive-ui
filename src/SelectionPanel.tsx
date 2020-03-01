@@ -21,24 +21,17 @@ import Tab from '@material-ui/core/Tab'
 import { connect } from 'react-redux'
 import IconButton from '@material-ui/core/IconButton'
 import LocationOnIcon from '@material-ui/icons/LocationOn'
-import CodeIcon from '@material-ui/icons/Code'
-import Collapse from '@material-ui/core/Collapse'
-import Highlight from 'react-highlight'
 import CancelIcon from '@material-ui/icons/Cancel'
 import Tooltip from '@material-ui/core/Tooltip'
-import VideocamIcon from '@material-ui/icons/Videocam'
-import CaptureForm from "./CaptureForm"
 import { withStyles } from '@material-ui/core/styles'
 
 import { Node, Link } from './Topology'
-import DataPanel from './DataPanel'
+import DataPanel from './StdDataPanel'
 import { a11yProps, TabPanel } from './Tabs'
 import { AppState } from './Store'
 import { styles } from './SelectionPanelStyles'
-import ActionPanel from './ActionPanel'
-import FlowPanel from './FlowPanel'
-
 import ConfigReducer from './Config'
+
 
 interface Props {
   classes: any
@@ -47,6 +40,8 @@ interface Props {
   onLocation?: (node: Node | Link) => void
   onClose?: (node: Node | Link) => void
   config: ConfigReducer
+  buttonsContent?: (el: Node | Link) => JSX.Element
+  panelsContent?: (el: Node | Link) => JSX.Element
 }
 
 interface State {
@@ -124,35 +119,11 @@ class SelectionPanel extends React.Component<Props, State> {
     })
   }
 
-  private toggleGremlinExpr(el: Node | Link) {
-    if (this.state.gremlin) {
-      this.setState({ gremlin: "" })
-    } else {
-      if (el.type === 'node') {
-        this.setState({ gremlin: `G.V('${el.id}')` })
-      } else {
-        this.setState({ gremlin: `G.E('${el.id}')` })
-      }
-    }
-  }
-
-  private toggleCaptureForm(node: Node) {
-    this.setState({ captureForm: !this.state.captureForm })
-  }
-
   private dataFields(el: Node | Link): Array<any> {
     if (el.type === 'node') {
       return this.props.config.nodeDataFields()
     } else {
       return this.props.config.linkDataFields()
-    }
-  }
-
-  private dataAttrs(el: Node | Link): any {
-    if (el.type === 'node') {
-      return this.props.config.nodeAttrs(el)
-    } else {
-      return this.props.config.linkAttrs(el)
     }
   }
 
@@ -190,41 +161,10 @@ class SelectionPanel extends React.Component<Props, State> {
                 <LocationOnIcon />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Gremlin expression" aria-label="Gremlin expression">
-              <IconButton
-                aria-label="Show gremlin expression"
-                onClick={() => this.toggleGremlinExpr(el)}
-                color="inherit">
-                <CodeIcon />
-              </IconButton>
-            </Tooltip>
-            {el.type === 'node' &&
-              <Tooltip title="Packet capture" aria-label="Packet capture">
-                <IconButton
-                  aria-label="Packet capture"
-                  onClick={() => this.toggleCaptureForm(el)}
-                  color="inherit">
-                  <VideocamIcon />
-                </IconButton>
-              </Tooltip>
-            }
+            {this.props.buttonsContent && this.props.buttonsContent(el)}
           </div>
-          <Collapse in={this.state.gremlin !== ""} timeout="auto" unmountOnExit className={classes.actionPanel}>
-            <ActionPanel icon={<CodeIcon />} title="Gremlin expression" content={
-              <div className={classes.gremlinExpr}>
-                <Highlight language="bash">
-                  {this.state.gremlin}
-                </Highlight>
-              </div>
-            } />
-          </Collapse>
-          <Collapse in={this.state.captureForm} timeout="auto" unmountOnExit className={classes.actionPanel}>
-            <CaptureForm defaultName={this.dataAttrs(el).name} gremlinExpr={`G.V().Has('TID', '${el.data.TID}')`} />
-          </Collapse>
+          {this.props.panelsContent && this.props.panelsContent(el)}
           <TabPanel key={"tabpanel-" + el.id} value={this.state.tab} index={i}>
-            {el.data!.Captures &&
-              <FlowPanel title="Flow table" gremlinExpr={`G.V('${el.id}').Flows()`} />
-            }
             {this.dataFields(el).map(entry => {
               var data = el.data
               var exclude = new Array<any>()

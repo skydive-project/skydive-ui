@@ -32,17 +32,17 @@ import Typography from '@material-ui/core/Typography'
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox'
 
-import { Configuration } from './api/configuration'
-import ActionPanel from './ActionPanel'
-import { CapturesApi } from './api'
+import { Configuration } from '../api/configuration'
+import Panel from './Panel'
+import { CapturesApi } from '../api'
 import { styles } from './CaptureFormStyles'
-import { AppState, session } from './Store'
+import { AppState, session } from '../Store'
 import { connect } from 'react-redux'
 
 interface Props {
     classes: any
     defaultName: string
-    gremlinExpr: string
+    gremlin: string
     session: session
 }
 
@@ -70,7 +70,7 @@ class CaptureForm extends React.Component<Props, State> {
         var conf = new Configuration({ accessToken: this.props.session.token })
         var api = new CapturesApi(conf)
 
-        api.createCapture({ GremlinQuery: this.props.gremlinExpr }).then(result => {
+        api.createCapture({ GremlinQuery: this.props.gremlin }).then(result => {
             console.log(result)
         })
     }
@@ -79,7 +79,7 @@ class CaptureForm extends React.Component<Props, State> {
         const { classes } = this.props
 
         return (
-            <ActionPanel icon={<VideocamIcon />} title="Packet capture" content={
+            <Panel icon={<VideocamIcon />} title="Packet capture" content={
                 <React.Fragment>
                     <TextField
                         id="standard-basic"

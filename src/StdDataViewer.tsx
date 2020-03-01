@@ -21,12 +21,12 @@ import TableRow from "@material-ui/core/TableRow"
 import TableCell from "@material-ui/core/TableCell"
 import { Chart } from 'react-google-charts'
 import JSONTree from 'react-json-tree'
-import { Column, Graph } from './DataNormalizer'
 import FilterNoneIcon from '@material-ui/icons/FilterNone'
 import IconButton from '@material-ui/core/IconButton'
 import Tooltip from '@material-ui/core/Tooltip'
 
-import './DataViewer.css'
+import { Column, Graph } from './StdDataNormalizer'
+import './StdDataViewer.css'
 
 interface Props {
     title?: string

@@ -1,4 +1,4 @@
-import { DataNormalizer } from '../src/DataNormalizer'
+import { DataNormalizer } from '../src/StdDataNormalizer'
 
 var assert = require('assert');
 describe('DataNormalizer', function () {

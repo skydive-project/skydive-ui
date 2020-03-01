@@ -59,6 +59,11 @@ import SelectionPanel from './SelectionPanel'
 import { Configuration } from './api/configuration'
 import * as api from './api/api'
 import Tools from './Tools'
+import GremlinButton from './ActionButtons/Gremlin'
+import CaptureButton from './ActionButtons/Capture'
+import GremlinPanel from './DataPanels/Gremlin'
+import CapturePanel from './DataPanels/Capture'
+import FlowPanel from './DataPanels/Flow'
 
 import './App.css'
 import ConfigReducer from './Config'
@@ -105,6 +110,8 @@ interface State {
   anchorEl: Map<string, null | HTMLElement>
   isSelectionOpen: boolean
   wsContext: WSContext
+  isGremlinPanelOpen: boolean
+  isCapturePanelOpen: boolean
 }
 
 class App extends React.Component<Props, State> {
@@ -137,7 +144,9 @@ class App extends React.Component<Props, State> {
       suggestions: new Array<string>(),
       anchorEl: new Map<string, null | HTMLElement>(),
       isSelectionOpen: false,
-      wsContext: { GremlinFilter: null }
+      wsContext: { GremlinFilter: null },
+      isGremlinPanelOpen: false,
+      isCapturePanelOpen: false
     }
 
     this.synced = false
@@ -754,6 +763,164 @@ class App extends React.Component<Props, State> {
     )
   }
 
+  actionButtons(el: Node | Link) {
+    return (
+      <React.Fragment>
+        <GremlinButton el={el} onClick={() => { this.setState({ isGremlinPanelOpen: !this.state.isGremlinPanelOpen }) }} />
+        <CaptureButton el={el} onClick={() => { this.setState({ isCapturePanelOpen: !this.state.isCapturePanelOpen }) }} />
+      </React.Fragment>
+    )
+  }
+
+  dataPanels(el: Node | Link) {
+    return (
+      <React.Fragment>
+        <GremlinPanel el={el} expanded={this.state.isGremlinPanelOpen} />
+        <CapturePanel el={el} expanded={this.state.isCapturePanelOpen} config={this.config} />
+        {el.data!.Captures &&
+          <FlowPanel el={el} />
+        }
+      </React.Fragment>
+    )
+  }
+
+  renderFilterButtons(classes: any) {
+    return (
+      <React.Fragment>
+        {this.staticDataURL === "" &&
+          <Container className={classes.filtersPanel}>
+            {this.config.filters().map((filter, i) => (
+              <Button variant="contained" key={i} aria-label="delete" size="small"
+                color={this.state.wsContext.GremlinFilter === filter.gremlin ? "primary" : "default"}
+                className={classes.filtersFab}
+                onClick={() => { this.setGremlinFilter(filter.gremlin) }}>
+                {filter.label}
+              </Button>
+            ))}
+          </Container>
+        }
+      </React.Fragment>
+    )
+  }
+
+  renderLinkTagButtons(classes: any) {
+    return (
+      <React.Fragment>
+        {this.state.linkTagStates.size !== 0 &&
+          <Container className={classes.linkTagsPanel}>
+            <Paper className={classes.linkTagsPanelPaper}>
+              <Typography component="h6" color="primary" gutterBottom>
+                Link types
+          </Typography>
+              <FormGroup>
+                {Array.from(this.state.linkTagStates.keys()).map((key) => (
+                  <FormControlLabel key={key} control={
+                    <Checkbox value={key} color="primary" onChange={this.onLinkTagStateChange.bind(this)}
+                      checked={this.state.linkTagStates.get(key) === LinkTagState.Visible}
+                      indeterminate={this.state.linkTagStates.get(key) === LinkTagState.EventBased} />
+                  }
+                    label={key} />
+                ))}
+              </FormGroup>
+            </Paper>
+          </Container>
+        }
+      </React.Fragment>
+    )
+  }
+
+  renderNodeTagButtons(classes: any) {
+    return (
+      <Container className={classes.nodeTagsPanel}>
+        {Array.from(this.state.nodeTagStates.keys()).sort((a, b) => {
+          if (a === this.config.defaultNodeTag()) {
+            return -1
+          } else if (b === this.config.defaultNodeTag()) {
+            return 1
+          }
+          return 0
+        }).map((tag) => (
+          <Fab key={tag} variant="extended" aria-label="delete" size="small"
+            color={this.state.nodeTagStates.get(tag) ? "primary" : "default"}
+            className={classes.nodeTagsFab}
+            onClick={this.activeNodeTag.bind(this, tag)}>
+            {tag}
+          </Fab>
+        ))}
+      </Container>
+    )
+  }
+
+  renderMenuButtons(classes: any) {
+    return (
+      <div>
+        <IconButton
+          aria-controls="menu-selection"
+          aria-haspopup="true"
+          onClick={(event: React.MouseEvent<HTMLElement>) => this.props.selection.length > 0 && this.openMenu("selection", event)}
+          color="inherit">
+          <Badge badgeContent={this.props.selection.length} color="secondary">
+            <ListIcon />
+          </Badge>
+        </IconButton>
+        <Menu
+          id="menu-selection"
+          anchorEl={this.state.anchorEl.get("selection")}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+          keepMounted
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+          open={Boolean(this.state.anchorEl.get("selection"))}
+          onClose={this.closeMenu.bind(this, "selection")}>
+          <MenuItem onClick={() => { this.closeMenu("selection"); this.openSelection() }}>
+            <ListItemIcon>
+              <KeyboardArrowDown fontSize="small" />
+            </ListItemIcon>
+            <Typography>Show selection</Typography>
+          </MenuItem>
+          <Divider />
+          {this.renderSelectionMenuItem(classes)}
+          <Divider />
+          <MenuItem onClick={() => { this.closeMenu("selection"); this.unselectAll() }}>
+            <ListItemIcon>
+              <RemoveShoppingCartIcon fontSize="small" />
+            </ListItemIcon>
+            <Typography>Unselect all</Typography>
+          </MenuItem>
+        </Menu>
+        <IconButton
+          aria-label="account of current user"
+          aria-controls="menu-profile"
+          aria-haspopup="true"
+          onClick={this.openMenu.bind(this, "profile")}
+          color="inherit">
+          <AccountCircle />
+        </IconButton>
+        <Menu
+          id="menu-profile"
+          anchorEl={this.state.anchorEl.get("profile")}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+          keepMounted
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+          open={Boolean(this.state.anchorEl.get("profile"))}
+          onClose={this.closeMenu.bind(this, "profile")}>
+          <MenuItem onClick={this.logout.bind(this)}>Logout</MenuItem>
+        </Menu>
+      </div>
+    )
+  }
+
   render() {
     const { classes } = this.props
 
@@ -781,71 +948,7 @@ class App extends React.Component<Props, State> {
               <AutoCompleteInput placeholder="metadata value" suggestions={this.state.suggestions} onChange={this.onSearchChange.bind(this)} />
             </div>
             <div className={classes.grow} />
-            <div>
-              <IconButton
-                aria-controls="menu-selection"
-                aria-haspopup="true"
-                onClick={(event: React.MouseEvent<HTMLElement>) => this.props.selection.length > 0 && this.openMenu("selection", event)}
-                color="inherit">
-                <Badge badgeContent={this.props.selection.length} color="secondary">
-                  <ListIcon />
-                </Badge>
-              </IconButton>
-              <Menu
-                id="menu-selection"
-                anchorEl={this.state.anchorEl.get("selection")}
-                anchorOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                keepMounted
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                open={Boolean(this.state.anchorEl.get("selection"))}
-                onClose={this.closeMenu.bind(this, "selection")}>
-                <MenuItem onClick={() => { this.closeMenu("selection"); this.openSelection() }}>
-                  <ListItemIcon>
-                    <KeyboardArrowDown fontSize="small" />
-                  </ListItemIcon>
-                  <Typography>Show selection</Typography>
-                </MenuItem>
-                <Divider />
-                {this.renderSelectionMenuItem(classes)}
-                <Divider />
-                <MenuItem onClick={() => { this.closeMenu("selection"); this.unselectAll() }}>
-                  <ListItemIcon>
-                    <RemoveShoppingCartIcon fontSize="small" />
-                  </ListItemIcon>
-                  <Typography>Unselect all</Typography>
-                </MenuItem>
-              </Menu>
-              <IconButton
-                aria-label="account of current user"
-                aria-controls="menu-profile"
-                aria-haspopup="true"
-                onClick={this.openMenu.bind(this, "profile")}
-                color="inherit">
-                <AccountCircle />
-              </IconButton>
-              <Menu
-                id="menu-profile"
-                anchorEl={this.state.anchorEl.get("profile")}
-                anchorOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                keepMounted
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                open={Boolean(this.state.anchorEl.get("profile"))}
-                onClose={this.closeMenu.bind(this, "profile")}>
-                <MenuItem onClick={this.logout.bind(this)}>Logout</MenuItem>
-              </Menu>
-            </div>
+            {this.renderMenuButtons(classes)}
           </Toolbar>
         </AppBar>
         <Drawer
@@ -887,57 +990,13 @@ class App extends React.Component<Props, State> {
           <Container className={classes.rightPanel}>
             <Paper className={clsx(classes.rightPanelPaper, (!this.props.selection.length || !this.state.isSelectionOpen) && classes.rightPanelPaperClose)}
               square={true}>
-              <SelectionPanel onLocation={this.onSelectionLocation.bind(this)} onClose={this.onSelectionClose.bind(this)} config={this.config} />
+              <SelectionPanel onLocation={this.onSelectionLocation.bind(this)} onClose={this.onSelectionClose.bind(this)} config={this.config}
+                buttonsContent={this.actionButtons.bind(this)} panelsContent={this.dataPanels.bind(this)} />
             </Paper>
           </Container>
-          <Container className={classes.nodeTagsPanel}>
-            {Array.from(this.state.nodeTagStates.keys()).sort((a, b) => {
-              if (a === this.config.defaultNodeTag()) {
-                return -1
-              } else if (b === this.config.defaultNodeTag()) {
-                return 1
-              }
-              return 0
-            }).map((tag) => (
-              <Fab key={tag} variant="extended" aria-label="delete" size="small"
-                color={this.state.nodeTagStates.get(tag) ? "primary" : "default"}
-                className={classes.nodeTagsFab}
-                onClick={this.activeNodeTag.bind(this, tag)}>
-                {tag}
-              </Fab>
-            ))}
-          </Container>
-          {this.staticDataURL === "" &&
-            <Container className={classes.filtersPanel}>
-              {this.config.filters().map((filter, i) => (
-                <Button variant="contained" key={i} aria-label="delete" size="small"
-                  color={this.state.wsContext.GremlinFilter === filter.gremlin ? "primary" : "default"}
-                  className={classes.filtersFab}
-                  onClick={() => { this.setGremlinFilter(filter.gremlin) }}>
-                  {filter.label}
-                </Button>
-              ))}
-            </Container>
-          }
-          {this.state.linkTagStates.size !== 0 &&
-            <Container className={classes.linkTagsPanel}>
-              <Paper className={classes.linkTagsPanelPaper}>
-                <Typography component="h6" color="primary" gutterBottom>
-                  Link types
-                </Typography>
-                <FormGroup>
-                  {Array.from(this.state.linkTagStates.keys()).map((key) => (
-                    <FormControlLabel key={key} control={
-                      <Checkbox value={key} color="primary" onChange={this.onLinkTagStateChange.bind(this)}
-                        checked={this.state.linkTagStates.get(key) === LinkTagState.Visible}
-                        indeterminate={this.state.linkTagStates.get(key) === LinkTagState.EventBased} />
-                    }
-                      label={key} />
-                  ))}
-                </FormGroup>
-              </Paper>
-            </Container>
-          }
+          {this.renderNodeTagButtons(classes)}
+          {this.renderFilterButtons(classes)}
+          {this.renderLinkTagButtons(classes)}
         </main>
       </div>
     )
