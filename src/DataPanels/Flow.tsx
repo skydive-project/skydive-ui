@@ -18,20 +18,20 @@
 import * as React from "react"
 import { connect } from 'react-redux'
 import { withStyles } from '@material-ui/core/styles'
+import Collapse from '@material-ui/core/Collapse'
+import { Node, Link, DataViewerPanel, AppState, Session } from 'graffiti-ui'
 
-import DataPanel from '../StdDataPanel'
-import '../StdDataPanel.css'
-import { AppState, session } from '../Store'
 import { Configuration } from '../api/configuration'
 import { TopologyApi } from '../api'
 import Tools from '../Tools'
-import { Node, Link } from '../Topology'
 import { styles } from './FlowStyles'
 
 interface Props {
     classes: any
     el: Node | Link
-    session: session
+    expanded: boolean
+
+    session: Session
 }
 
 interface State {
@@ -43,7 +43,7 @@ class FlowPanel extends React.Component<Props, State> {
     state: State
     gremlin: string
 
-    constructor(props) {
+    constructor(props: Props) {
         super(props)
 
         this.state = {
@@ -60,10 +60,8 @@ class FlowPanel extends React.Component<Props, State> {
     normalizer(data: Array<any>): any {
         return data.map(flow => {
 
-            console.log(flow)
-
             // TODO(safchain) add more
-            var result = {
+            var result: any = {
                 "Application": flow.Application,
                 "LayersPath": flow.LayersPath,
 
@@ -72,42 +70,45 @@ class FlowPanel extends React.Component<Props, State> {
                 "RawPacketsCaptured": flow.RawPacketsCaptured,
                 "NodeTID": flow.NodeTID,
 
-                "Total.ABPackets": flow.Metric.ABPAckets,
-                "Total.BAPackets": flow.Metric.BAPAckets,
-                "Total.ABBytes": Tools.prettyBytes(flow.Metric.ABBytes),
-                "Total.BABytes": Tools.prettyBytes(flow.Metric.BABytes),
+                "Total ABPackets": flow.Metric.ABPackets,
+                "Total BAPackets": flow.Metric.BAPackets,
+                "Total ABBytes": Tools.prettyBytes(flow.Metric.ABBytes),
+                "Total BABytes": Tools.prettyBytes(flow.Metric.BABytes),
+
+                "Total Packets": flow.Metric.ABPackets + flow.Metric.BAPackets,
+                "Total Bytes": Tools.prettyBytes(flow.Metric.ABBytes + flow.Metric.BABytes),
 
                 "Start": flow.Start,
                 "Last": flow.Last
             }
 
             if (flow.LastUpdateMetric) {
-                result["Last.ABPackets"] = flow.LastUpdateMetric.ABPAckets
-                result["Last.BAPackets"] = flow.LastUpdateMetric.BAPAckets
-                result["Last.ABBytes"] = Tools.prettyBytes(flow.LastUpdateMetric.ABBytes)
-                result["Last.BABytes"] = Tools.prettyBytes(flow.LastUpdateMetric.BABytes)
-                result["Last.RTT"] = (flow.LastUpdateMetric.RTT / 1000000) + " ms"
+                result["Last ABPackets"] = flow.LastUpdateMetric.ABPAckets
+                result["Last BAPackets"] = flow.LastUpdateMetric.BAPAckets
+                result["Last ABBytes"] = Tools.prettyBytes(flow.LastUpdateMetric.ABBytes)
+                result["Last BABytes"] = Tools.prettyBytes(flow.LastUpdateMetric.BABytes)
+                result["Last RTT"] = (flow.LastUpdateMetric.RTT / 1000000) + " ms"
             }
 
             if (flow.Link) {
-                result["Link.ID"] = flow.Link.ID
-                result["Link.Protocol"] = flow.Link.Protocol
-                result["Link.A"] = flow.Link.A
-                result["Link.B"] = flow.Link.B
+                result["Link ID"] = flow.Link.ID
+                result["Link Protocol"] = flow.Link.Protocol
+                result["Link A"] = flow.Link.A
+                result["Link B"] = flow.Link.B
             }
 
             if (flow.Network) {
-                result["Network.ID"] = flow.Network.ID
-                result["Network.Protocol"] = flow.Network.Protocol
-                result["Network.A"] = flow.Network.A
-                result["Networl.B"] = flow.Network.B
+                result["Network ID"] = flow.Network.ID
+                result["Network Protocol"] = flow.Network.Protocol
+                result["Network A"] = flow.Network.A
+                result["Network B"] = flow.Network.B
             }
 
             if (flow.Transport) {
-                result["Transport.ID"] = flow.Transport.ID
-                result["Transport.Protocol"] = flow.Transport.Protocol
-                result["Transport.A"] = flow.Transport.A
-                result["Transport.B"] = flow.Transport.B
+                result["Transport ID"] = flow.Transport.ID
+                result["Transport Protocol"] = flow.Transport.Protocol
+                result["Port A"] = flow.Transport.A
+                result["Port B"] = flow.Transport.B
             }
 
             return result
@@ -126,14 +127,14 @@ class FlowPanel extends React.Component<Props, State> {
     render() {
         var classes = this.props.classes
 
-        const defaultColumns = ["Application", "Network.A", "Network.B", "Transport.A", "Transport.B", "Total.ABBytes", "Total.BAPackets"]
+        const defaultColumns = ["Application", "Network B", "Port B", "Total Bytes", "Total Packets"]
 
         return (
-            <div className={classes.panel}>
-                <DataPanel title="Flow table"
-                    defaultExpanded={false} data={this.state.data} defaultColumns={defaultColumns}
+            <Collapse in={this.props.expanded} timeout="auto" unmountOnExit className={classes.panel}>
+                <DataViewerPanel title="Flow table"
+                    defaultExpanded={true} data={this.state.data} defaultColumns={defaultColumns}
                     icon={"\uf0ce"} normalizer={this.normalizer.bind(this)} />
-            </div>
+            </Collapse>
         )
     }
 }

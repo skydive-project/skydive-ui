@@ -16,22 +16,19 @@
  */
 
 import * as React from 'react'
-import { withStyles } from '@material-ui/core/styles'
 import Tooltip from '@material-ui/core/Tooltip'
 import IconButton from '@material-ui/core/IconButton'
 import VideocamIcon from '@material-ui/icons/Videocam'
-
-import { styles } from '../DataPanels/PanelStyles'
-import { Node, Link } from '../Topology'
+import { Node, Link } from 'graffiti-ui'
 
 interface Props {
     el: Node | Link
     onClick: (el: Node | Link) => void
 }
 
-export class CapturePanel extends React.Component<Props> {
+export default class CaptureButton extends React.Component<Props> {
 
-    constructor(props) {
+    constructor(props: Props) {
         super(props)
     }
 
@@ -53,5 +50,3 @@ export class CapturePanel extends React.Component<Props> {
         )
     }
 }
-
-export default withStyles(styles)(CapturePanel)

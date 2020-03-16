@@ -15,7 +15,9 @@
  *
  */
 
-import { Node, Link, NodeAttrs, LinkAttrs } from './Topology'
+import { App, Node, Link, NodeAttrs, LinkAttrs } from 'graffiti-ui'
+import { Filter, MenuItem, NodeDataField, LinkDataField } from 'graffiti-ui'
+
 import Tools from './Tools'
 
 const WEIGHT_NONE = 0
@@ -31,342 +33,15 @@ const WEIGHT_K8S_CLUSTER = 101
 const WEIGHT_K8S_NODE = 102
 const WEIGHT_K8S_POD = 103
 
-export interface Filter {
-    id: string
-    label: string
-    gremlin: string
-}
+export default class Config {
 
-export interface MenuItem {
-    class: string
-    text: string
-    disabled: boolean
-    callback: () => void
-}
+    app: App
 
-export interface GraphField {
-    type: string,
-    data: any
-}
-
-export interface NodeDataField {
-    field: string
-    title?: string
-    expanded: boolean
-    icon: string
-    iconClass?: string
-    sortKeys?: (data: any) => Array<string>
-    filterKeys?: (data: any) => Array<string>
-    normalizer?: (data: any) => any
-    graph?: (data: any) => GraphField
-}
-
-export interface LinkDataField {
-    field: string
-    title: string
-    expanded: boolean
-    icon: string
-}
-
-export interface Config {
-    subTitle?(subTitle: string): string
-    filters?(filters: Array<Filter>): Array<Filter>
-    defaultFilter?(): string
-
-    nodeAttrs?(attrs: NodeAttrs | null, node: Node): NodeAttrs
-    nodeSortFnc?(a: Node, b: Node): number
-    nodeClicked?(node: Node): void
-    nodeDblClicked?(node: Node): void
-
-    nodeMenu?(items: Array<MenuItem>, node: Node): Array<MenuItem>
-    nodeTags?(tags: Array<string>, node: Node): Array<string>
-
-    defaultNodeTag?(): string
-    nodeTabTitle?(node: Node): string
-
-    groupSize?(): number
-    groupType?(node: Node): string | undefined
-    groupName?(node: Node): string | undefined
-    weightTitles?(): Map<number, string>
-
-    suggestions?(): Array<string>
-
-    nodeDataFields?(dataFields: Array<NodeDataField>): Array<NodeDataField>
-
-    linkAttrs?(attrs: LinkAttrs | null, link: Link): LinkAttrs
-    linkTabTitle?(link: Link): string
-
-    linkDataFields?(dataFields: Array<LinkDataField>): Array<LinkDataField>
-
-    defaultLinkTagMode?(): number
-}
-
-class ConfigWithID {
-    id: string
-    config: Config
-
-    constructor(id: string, config: Config) {
-        this.id = id
-        this.config = config
-    }
-}
-
-export default class ConfigReducer {
-    default: DefaultConfig
-    configs: Array<ConfigWithID>
-
-    constructor() {
-        this.default = new DefaultConfig()
-        this.configs = new Array<ConfigWithID>()
+    setApp(app: App) {
+        this.app = app
     }
 
-    append(id: string, config: Config) {
-        this.configs.push(new ConfigWithID(id, config))
-    }
-
-    appendURL(id: string, url: string): Promise<Config | undefined> {
-        var promise = new Promise<Config>((resolve, reject) => {
-            if (!url) {
-                resolve()
-                return
-            }
-
-            fetch(url).then(resp => {
-                resp.text().then(data => {
-                    try {
-                        var config = eval(data)
-                        this.append(id, config)
-
-                        resolve(config)
-                    } catch (e) {
-                        reject(e)
-                    }
-                })
-            }).catch((reason) => {
-                throw Error(reason)
-            })
-        })
-
-        return promise
-    }
-
-    subTitle(): string {
-        var subTitle = this.default.subTitle()
-        for (let c of this.configs) {
-            if (c.config.subTitle) {
-                subTitle = c.config.subTitle(subTitle)
-            }
-        }
-        return subTitle
-    }
-
-    filters(): Array<Filter> {
-        var filters = this.default.filters()
-        for (let c of this.configs) {
-            if (c.config.filters) {
-                filters = c.config.filters(filters)
-            }
-        }
-        return filters
-    }
-
-    defaultFilter(): string {
-        var defaultFilter = this.default.defaultFilter()
-        for (let c of this.configs) {
-            if (c.config.defaultFilter) {
-                defaultFilter = c.config.defaultFilter()
-            }
-        }
-        return defaultFilter
-    }
-
-    nodeAttrs(node: Node): NodeAttrs {
-        var attrs = this.default.nodeAttrs(node)
-        for (let c of this.configs) {
-            if (c.config.nodeAttrs) {
-                attrs = c.config.nodeAttrs(attrs, node)
-            }
-        }
-        return attrs
-    }
-
-    nodeSortFnc(a: Node, b: Node): number {
-        var fnc = this.default.nodeSortFnc
-        for (let c of this.configs) {
-            if (c.config.nodeSortFnc) {
-                fnc = c.config.nodeSortFnc
-            }
-        }
-        return fnc(a, b)
-    }
-
-    nodeClicked(node: Node): void {
-        var fnc = this.default.nodeClicked
-        for (let c of this.configs) {
-            if (c.config.nodeClicked) {
-                fnc = c.config.nodeClicked
-            }
-        }
-        return fnc(node)
-    }
-
-    nodeDblClicked(node: Node): void {
-        var fnc = this.default.nodeDblClicked
-        for (let c of this.configs) {
-            if (c.config.nodeDblClicked) {
-                fnc = c.config.nodeDblClicked
-            }
-        }
-        return fnc(node)
-    }
-
-    nodeMenu(node: Node): Array<MenuItem> {
-        var items = this.default.nodeMenu(node)
-        for (let c of this.configs) {
-            if (c.config.nodeMenu) {
-                items = c.config.nodeMenu(items, node)
-            }
-        }
-        return items
-    }
-
-    nodeTags(node: Node): Array<string> {
-        var tags = this.default.nodeTags(node)
-        for (let c of this.configs) {
-            if (c.config.nodeTags) {
-                tags = c.config.nodeTags([], node)
-            }
-        }
-        return tags
-    }
-
-    defaultNodeTag(): string {
-        var defaultNodeTag = this.default.defaultNodeTag()
-        for (let c of this.configs) {
-            if (c.config.defaultNodeTag) {
-                defaultNodeTag = c.config.defaultNodeTag()
-            }
-        }
-        return defaultNodeTag
-    }
-
-    nodeTabTitle(node: Node): string {
-        var nodeTabTitle = this.default.nodeTabTitle(node)
-        for (let c of this.configs) {
-            if (c.config.nodeTabTitle) {
-                nodeTabTitle = c.config.nodeTabTitle(node)
-            }
-        }
-        return nodeTabTitle
-    }
-
-    groupSize(): number {
-        var size = this.default.groupSize()
-        for (let c of this.configs) {
-            if (c.config.groupSize) {
-                size = c.config.groupSize()
-            }
-        }
-        return size
-    }
-
-    groupType(node: Node): string | undefined {
-        var groupType = this.default.groupType(node)
-        for (let c of this.configs) {
-            if (c.config.groupType) {
-                groupType = c.config.groupType(node)
-            }
-        }
-        return groupType
-    }
-
-    groupName(node: Node): string | undefined {
-        var groupName = this.default.groupName(node)
-        for (let c of this.configs) {
-            if (c.config.groupName) {
-                groupName = c.config.groupName(node)
-            }
-        }
-        return groupName
-    }
-
-    weightTitles(): Map<number, string> {
-        var titles = this.default.weightTitles()
-        for (let c of this.configs) {
-            if (c.config.weightTitles) {
-                titles = c.config.weightTitles()
-            }
-        }
-        return titles
-    }
-
-    suggestions(): Array<string> {
-        var result = this.default.suggestions()
-        for (let c of this.configs) {
-            if (c.config.suggestions) {
-                result = c.config.suggestions()
-            }
-        }
-        return result
-    }
-
-    nodeDataFields(): Array<NodeDataField> {
-        var fields = this.default.nodeDataFields()
-        for (let c of this.configs) {
-            if (c.config.nodeDataFields) {
-                fields = c.config.nodeDataFields(fields)
-            }
-        }
-        return fields
-    }
-
-    linkAttrs(link: Link): LinkAttrs {
-        var attrs = this.default.linkAttrs(link)
-        for (let c of this.configs) {
-            if (c.config.linkAttrs) {
-                attrs = c.config.linkAttrs(attrs, link)
-            }
-        }
-        return attrs
-    }
-
-    linkTabTitle(link: Link): string {
-        var title = this.default.linkTabTitle(link)
-        for (let c of this.configs) {
-            if (c.config.linkTabTitle) {
-                title = c.config.linkTabTitle(link)
-            }
-        }
-        return title
-    }
-
-    linkDataFields(): Array<LinkDataField> {
-        var fields = this.default.linkDataFields()
-        for (let c of this.configs) {
-            if (c.config.linkDataFields) {
-                fields = c.config.linkDataFields(fields)
-            }
-        }
-        return fields
-    }
-
-    defaultLinkTagMode(): number {
-        var size = this.default.defaultLinkTagMode()
-        for (let c of this.configs) {
-            if (c.config.defaultLinkTagMode) {
-                size = c.config.defaultLinkTagMode()
-            }
-        }
-        return size
-    }
-}
-
-class DefaultConfig {
-    subTitle(): string {
-        return ""
-    }
-
-    filters(): Array<Filter> {
+    filters(filters: Array<Filter>): Array<Filter> {
         return [
             {
                 id: "default",
@@ -587,7 +262,7 @@ class DefaultConfig {
         return attrs
     }
 
-    nodeAttrs(node: Node): NodeAttrs {
+    nodeAttrs(attrs: NodeAttrs | null, node: Node): NodeAttrs {
         switch (node.data.Manager) {
             case "k8s":
                 return this.nodeAttrsK8s(node)
@@ -600,32 +275,23 @@ class DefaultConfig {
         return a.data.Name.localeCompare(b.data.Name)
     }
 
-    nodeClicked(node: Node): void {
-        window.App.tc.selectNode(node.id)
-    }
-
-    nodeDblClicked(node: Node): void {
-        window.App.tc.expand(node)
-    }
-
-    nodeMenu(node: Node): Array<MenuItem> {
+    nodeMenu(items: Array<MenuItem>, node: Node): Array<MenuItem> {
         return [
             {
                 class: "", text: "Capture", disabled: false, callback: () => {
-                    var api = new window.API.CapturesApi(window.App.apiConf)
+                    /*var api = new this.app.CapturesApi(window.App.apiConf)
                     api.createCapture({ GremlinQuery: `G.V('${node.id}')` }).then(result => {
                         console.log(result)
-                    })
+                    })*/
                 }
             },
             { class: "", text: "Capture all", disabled: true, callback: () => { console.log("Capture all") } },
             { class: "", text: "Injection", disabled: false, callback: () => { console.log("Injection") } },
-            { class: "", text: "Flows", disabled: false, callback: () => { console.log("Flows") } },
-            { class: "", text: "Filter NS(demo)", disabled: false, callback: () => { window.App.loadExtraConfig("/assets/nsconfig.js") } }
+            { class: "", text: "Flows", disabled: false, callback: () => { console.log("Flows") } }
         ]
     }
 
-    nodeTags(data) {
+    nodeTags(tags: Array<string>, data: any): Array<string> {
         if (data.Manager && data.Manager === "k8s") {
             return ["kubernetes"]
         } else {
@@ -722,7 +388,7 @@ class DefaultConfig {
         ]
     }
 
-    nodeDataFields(): Array<NodeDataField> {
+    nodeDataFields(dataFields: Array<NodeDataField>): Array<NodeDataField> {
         return [
             {
                 field: "",
@@ -872,7 +538,7 @@ class DefaultConfig {
         ]
     }
 
-    linkAttrs(link: Link): LinkAttrs {
+    linkAttrs(attrs: LinkAttrs | null, link: Link): LinkAttrs {
         var metric = link.source.data.LastUpdateMetric
         var bandwidth = 0
         if (metric) {
@@ -880,7 +546,7 @@ class DefaultConfig {
             bandwidth /= (metric.Last - metric.Start) / 1000
         }
 
-        var attrs = {
+        attrs = {
             classes: [link.data.RelationType],
             icon: "\uf362",
             directed: false,
@@ -913,7 +579,7 @@ class DefaultConfig {
         return link.id.split("-")[0]
     }
 
-    linkDataFields(): Array<LinkDataField> {
+    linkDataFields(dataFields: Array<LinkDataField>): Array<LinkDataField> {
         return [
             {
                 field: "",

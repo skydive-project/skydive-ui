@@ -1,5 +1,6 @@
 const HtmlWebPackPlugin = require("html-webpack-plugin");
 const CopyWebPackPlugin = require('copy-webpack-plugin');
+const path = require('path');
 
 const htmlPlugin = new HtmlWebPackPlugin({
     template: "./src/index.html",
@@ -7,9 +8,13 @@ const htmlPlugin = new HtmlWebPackPlugin({
 });
 
 module.exports = {
-    entry: './src/index.tsx',
+    entry: {
+        index: './src/Index.tsx',
+    },
     output: {
-        filename: './dist/bundle.js'
+        path: path.resolve(__dirname, "dist"),
+        filename: '[name].js',
+        publicPath: '/',
     },
     resolve: {
         extensions: [".ts", ".tsx", ".js", ".jsx"]

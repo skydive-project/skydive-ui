@@ -26,7 +26,7 @@ export const styles = (theme: Theme) => createStyles({
         margin: theme.spacing(1),
     },
     control: {
-        display: "block !important",
+        display: "flex",
         "& .MuiInputBase-root": {
             display: "block !important"
         },

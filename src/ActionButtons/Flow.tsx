@@ -16,37 +16,37 @@
  */
 
 import * as React from 'react'
-import { withStyles } from '@material-ui/core/styles'
 import Tooltip from '@material-ui/core/Tooltip'
 import IconButton from '@material-ui/core/IconButton'
-import CodeIcon from '@material-ui/icons/Code'
-
-import { styles } from '../DataPanels/PanelStyles'
-import { Node, Link } from '../Topology'
+import SettingsInputHdmiIcon from '@material-ui/icons/SettingsInputHdmi'
+import { Node, Link } from 'graffiti-ui'
 
 interface Props {
     el: Node | Link
     onClick: (el: Node | Link) => void
 }
 
-export class GremlinButton extends React.Component<Props> {
+export default class FlowButton extends React.Component<Props> {
 
-    constructor(props) {
+    constructor(props: Props) {
         super(props)
     }
 
     render() {
         return (
-            <Tooltip title="Gremlin expression" aria-label="Gremlin expression">
-                <IconButton
-                    aria-label="Show gremlin expression"
-                    onClick={() => this.props.onClick(this.props.el)}
-                    color="inherit">
-                    <CodeIcon />
-                </IconButton>
-            </Tooltip>
+            <React.Fragment>
+                {
+                    this.props.el.type === 'node' &&
+                    <Tooltip title="Flows" aria-label="Flows">
+                        <IconButton
+                            aria-label="Flows"
+                            onClick={() => this.props.onClick(this.props.el)}
+                            color="inherit">
+                            <SettingsInputHdmiIcon />
+                        </IconButton>
+                    </Tooltip>
+                }
+            </React.Fragment>
         )
     }
 }
-
-export default withStyles(styles)(GremlinButton)

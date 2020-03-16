@@ -18,12 +18,10 @@
 import * as React from 'react'
 import { withStyles } from '@material-ui/core/styles'
 import Collapse from '@material-ui/core/Collapse'
-
+import { Node, Link, ConfigReducer } from 'graffiti-ui'
 
 import CaptureForm from "./CaptureForm"
 import { styles } from './CaptureStyles'
-import { Node, Link } from '../Topology'
-import ConfigReducer from '../Config'
 
 interface Props {
     classes: any
@@ -51,7 +49,11 @@ export class CapturePanel extends React.Component<Props> {
 
         return (
             <Collapse in={this.props.expanded} timeout="auto" unmountOnExit className={classes.panel}>
-                <CaptureForm defaultName={this.dataAttrs(this.props.el).name} gremlin={`G.V().Has('TID', '${this.props.el.data.TID}')`} />
+                <CaptureForm
+                    name={this.dataAttrs(this.props.el).name}
+                    gremlin={`G.V().Has('TID', '${this.props.el.data.TID}')`}
+                    type={this.dataAttrs(this.props.el).type}
+                />
             </Collapse>
         )
     }
