@@ -58,6 +58,8 @@ interface State {
     reassemble: boolean
     defragment: boolean
     extraTCP: boolean
+    targetType: string
+    target: string
 }
 
 class CaptureForm extends React.Component<Props, State> {
@@ -77,7 +79,9 @@ class CaptureForm extends React.Component<Props, State> {
             layerKey: "",
             reassemble: false,
             defragment: false,
-            extraTCP: false
+            extraTCP: false,
+            targetType: "",
+            target: "",
         }
     }
 
@@ -125,7 +129,6 @@ class CaptureForm extends React.Component<Props, State> {
         return (
             <DataPanel icon={<VideocamIcon />} title="Packet capture" content={
                 <React.Fragment>
-                    <Typography>{this.state.captureType}</Typography>
                     <TextField
                         id="standard-basic"
                         className={classes.textField}
@@ -177,6 +180,33 @@ class CaptureForm extends React.Component<Props, State> {
                                     {this.renderCaptureTypes()}
                                 </Select>
                             </FormControl>
+
+                            <TextField
+                                id="standard-basic"
+                                className={classes.textField}
+                                label="Target"
+                                margin="normal"
+                                fullWidth
+                                value={this.state.target}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => this.setState({ target: e.target.value as string })}
+
+                            />
+                            {this.state.captureType != "ovssflow" && this.state.captureType != "ovsnetflow" &&
+                                <FormControl className={classes.control}>
+                                    <InputLabel id="target"
+                                        className={classes.selectField}>Target type</InputLabel>
+                                    <Select
+                                        id="Target type"
+                                        labelId="Target type"
+                                        value={this.state.targetType}
+                                        onChange={(e: React.ChangeEvent<{ value: unknown }>) => this.setState({ targetType: e.target.value as string })}
+                                    >
+                                        <MenuItem value="L1"><em>None</em></MenuItem>
+                                        <MenuItem value="L2">NetFlow</MenuItem>
+                                        <MenuItem value="L3">Erspan</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            }
                             <FormControl className={classes.control}>
                                 <InputLabel id="layer-key-label"
                                     className={classes.selectField}>Layers used for Flow Key</InputLabel>
