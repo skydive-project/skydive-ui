@@ -64,7 +64,7 @@
     "webpack-dev-server": "^3.8.0"
   },
   "scripts": {
-    "start": "webpack-dev-server --mode development --host 0.0.0.0 --open-page=$PAGE",
+    "start": "webpack-dev-server --mode development --disable-host-check --host 0.0.0.0 --open-page=$PAGE",
     "build": "webpack --mode production",
     "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' mocha -r ts-node/register tests/**/*.test.ts",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test"
