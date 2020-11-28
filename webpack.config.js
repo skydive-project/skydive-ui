@@ -61,8 +61,10 @@ module.exports = {
 
     plugins: [
         htmlPlugin,
-        new CopyWebPackPlugin([
-            { from: 'assets', to: 'assets' }
-        ])
+        new CopyWebPackPlugin({
+            patterns: [
+                { from: 'assets', to: 'assets' }
+            ]
+        })
     ]
 }

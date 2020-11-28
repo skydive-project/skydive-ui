@@ -48,7 +48,7 @@ export const styles = (theme: Theme) => createStyles({
         color: "#061775",
         backgroundColor: "unset !important",
         borderColor: "unset",
-        '& .MuiExpansionPanelSummary-content': {
+        '& .MuiAccordionSummary-content': {
             backgroundColor: "unset",
         }
     }

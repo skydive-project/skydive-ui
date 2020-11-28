@@ -20,9 +20,9 @@ import TextField from '@material-ui/core/TextField'
 import Button from '@material-ui/core/Button'
 import { withStyles } from '@material-ui/core/styles'
 import VideocamIcon from '@material-ui/icons/Videocam'
-import ExpansionPanel from '@material-ui/core/ExpansionPanel'
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
+import Accordion from '@material-ui/core/Accordion'
+import AccordionSummary from '@material-ui/core/AccordionSummary'
+import AccordionDetails from '@material-ui/core/AccordionDetails'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import InputLabel from '@material-ui/core/InputLabel'
 import Select from '@material-ui/core/Select'
@@ -82,7 +82,6 @@ class CaptureForm extends React.Component<Props, State> {
             <Panel icon={<VideocamIcon />} title="Packet capture" content={
                 <React.Fragment>
                     <TextField
-                        id="standard-basic"
                         className={classes.textField}
                         label="Name"
                         margin="normal"
@@ -90,7 +89,6 @@ class CaptureForm extends React.Component<Props, State> {
                         value={this.props.defaultName}
                     />
                     <TextField
-                        id="standard-basic"
                         className={classes.textField}
                         label="Description"
                         margin="normal"
@@ -98,22 +96,21 @@ class CaptureForm extends React.Component<Props, State> {
                         fullWidth
                     />
                     <TextField
-                        id="standard-basic"
                         className={classes.textField}
                         label="Filter (BPF)"
                         margin="normal"
                         fullWidth
                     />
-                    <ExpansionPanel className={classes.advanced}>
-                        <ExpansionPanelSummary
+                    <Accordion className={classes.advanced}>
+                        <AccordionSummary
                             expandIcon={<ExpandMoreIcon />}
                             aria-controls="panel1a-content"
                             id="panel1a-header"
                             className={classes.advancedSummary}
                         >
                             <Typography className={classes.heading}>Advanced options</Typography>
-                        </ExpansionPanelSummary>
-                        <ExpansionPanelDetails>
+                        </AccordionSummary>
+                        <AccordionDetails>
                             <FormControl className={classes.control}>
                                 <InputLabel id="capture-type-label"
                                     className={classes.selectField}>Capture Type</InputLabel>
@@ -122,6 +119,7 @@ class CaptureForm extends React.Component<Props, State> {
                                     value="Default"
                                     labelId="capture-type-label"
                                 >
+                                    <MenuItem>Default</MenuItem>
                                     <MenuItem>PCAP (Packet Capture library based probe)</MenuItem>
                                     <MenuItem>AFPacket (MMap'd AF_PACKET socket reading)</MenuItem>
                                     <MenuItem>sFlow  (Socket reading sFlow frames)</MenuItem>
@@ -143,7 +141,6 @@ class CaptureForm extends React.Component<Props, State> {
                                 </Select>
                             </FormControl>
                             <TextField
-                                id="standard-basic"
                                 className={classes.textField}
                                 label="Header size"
                                 margin="normal"
@@ -179,15 +176,14 @@ class CaptureForm extends React.Component<Props, State> {
                                 />
                             </FormControl>
                             <TextField
-                                    id="standard-basic"
                                     className={classes.textField}
                                     label="Raw packet limit"
                                     margin="normal"
                                     fullWidth
                                     value="0"
                                 />
-                        </ExpansionPanelDetails>
-                    </ExpansionPanel>
+                        </AccordionDetails>
+                    </Accordion>
                     <Button variant="contained" className={classes.button} color="primary" onClick={this.onClick.bind(this)}>
                         Start
                     </Button>

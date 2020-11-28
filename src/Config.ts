@@ -625,7 +625,7 @@ class DefaultConfig {
         ]
     }
 
-    nodeTags(data) {
+    nodeTags(data: any): Array<string> {
         if (data.Manager && data.Manager === "k8s") {
             return ["kubernetes"]
         } else {
@@ -641,7 +641,7 @@ class DefaultConfig {
         return node.data.Name.substring(0, 8)
     }
 
-    groupSize() {
+    groupSize(): number {
         return 3
     }
 

@@ -789,6 +789,7 @@ class App extends React.Component<Props, State> {
       <React.Fragment>
         {this.staticDataURL === "" &&
           <Container className={classes.filtersPanel}>
+                    <Typography component="h6" color="primary" gutterBottom>
             {this.config.filters().map((filter, i) => (
               <Button variant="contained" key={i} aria-label="delete" size="small"
                 color={this.state.wsContext.GremlinFilter === filter.gremlin ? "primary" : "default"}
@@ -811,7 +812,7 @@ class App extends React.Component<Props, State> {
             <Paper className={classes.linkTagsPanelPaper}>
               <Typography component="h6" color="primary" gutterBottom>
                 Link types
-          </Typography>
+              </Typography>
               <FormGroup>
                 {Array.from(this.state.linkTagStates.keys()).map((key) => (
                   <FormControlLabel key={key} control={

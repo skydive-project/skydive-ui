@@ -16,9 +16,9 @@
  */
 
 import * as React from "react"
-import ExpansionPanel from '@material-ui/core/ExpansionPanel'
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
+import Accordion from '@material-ui/core/Accordion'
+import AccordionSummary from '@material-ui/core/AccordionSummary'
+import AccordionDetails from '@material-ui/core/AccordionDetails'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import Typography from '@material-ui/core/Typography'
 import { withStyles } from '@material-ui/core/styles'
@@ -106,15 +106,15 @@ class DataPanel extends React.Component<Props, State> {
         const iconClass = this.props.iconClass === "font-brands" ? classes.panelIconBrands : classes.panelIconFree
 
         return (
-            <ExpansionPanel defaultExpanded={this.props.defaultExpanded} onChange={this.onExpandChange.bind(this)}>
-                <ExpansionPanelSummary
+            <Accordion defaultExpanded={this.props.defaultExpanded} onChange={this.onExpandChange.bind(this)}>
+                <AccordionSummary
                     expandIcon={<ExpandMoreIcon />}
                     aria-controls="panel1a-content"
                     id="panel1a-header">
                     <Typography className={iconClass}>{this.props.icon}</Typography>
                     <Typography>{this.props.title}</Typography>
-                </ExpansionPanelSummary>
-                <ExpansionPanelDetails>
+                </AccordionSummary>
+                <AccordionDetails>
                     {
                         this.state.data.rows.length && this.state.isExpanded &&
                         (
@@ -123,8 +123,8 @@ class DataPanel extends React.Component<Props, State> {
                                 defaultColumns={this.props.defaultColumns} />
                         )
                     }
-                </ExpansionPanelDetails>
-            </ExpansionPanel>
+                </AccordionDetails>
+            </Accordion>
         )
     }
 }
