@@ -789,7 +789,6 @@ class App extends React.Component<Props, State> {
       <React.Fragment>
         {this.staticDataURL === "" &&
           <Container className={classes.filtersPanel}>
-                    <Typography component="h6" color="primary" gutterBottom>
             {this.config.filters().map((filter, i) => (
               <Button variant="contained" key={i} aria-label="delete" size="small"
                 color={this.state.wsContext.GremlinFilter === filter.gremlin ? "primary" : "default"}

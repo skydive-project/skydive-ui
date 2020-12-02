@@ -14,7 +14,7 @@
 
 
 import * as url from "url";
-url.URLSearchParams = URLSearchParams;
+//url.URLSearchParams = URLSearchParams;
 
 import * as portableFetch from "portable-fetch";
 import { Configuration } from "./configuration";
@@ -3376,7 +3376,7 @@ export const LoginApiFetchParamCreator = function (configuration?: Configuration
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-            const localVarFormParams = new url.URLSearchParams();
+            const localVarFormParams = new URLSearchParams();
 
             if (username !== undefined) {
                 localVarFormParams.set('username', username as any);
