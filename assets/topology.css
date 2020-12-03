@@ -41,7 +41,7 @@
 .traffic {
   stroke-dasharray: 5;
   animation: traffic 3s linear;
-  animation-iteration-count:infinite
+  animation-iteration-count:infinite;
 }
 
 @keyframes traffic {

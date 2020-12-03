@@ -1491,13 +1491,18 @@ export class Topology extends React.Component<Props, {}> {
     private highlightNeighborLinks(d: D3Node, active: boolean) {
         var opacity = active ? 1 : 0
 
+        const isVisible = (d: Link) => {
+            return this.isLinkVisible(d) ? 1 : opacity
+        }
+
         var links = this.neighborLinks(d.data, this.visibleLinks())
         for (let link of links) {
             if (active || !this.isLinkNodeSelected(link)) {
                 select("#link-" + link.id)
-                    .style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : opacity)
+                    .attr("class", (d: Link) => isVisible(d) ? this.linkClass(d) : 'link')
+                    .style("opacity", isVisible)
                 select("#link-label-" + link.id)
-                    .style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : opacity)
+                    .style("opacity", isVisible)
                 select("#link-overlay-" + link.id)
                     .style("opacity", link.state.selected || opacity)
             }
@@ -2193,7 +2198,46 @@ export class Topology extends React.Component<Props, {}> {
             .attr("class", nodeClass)
     }
 
+    private linkClass(d: Link) {
+        const directedClass = (d: Link) => {
+            var dSource = this.d3nodes.get(d.source.id)
+            var dTarget = this.d3nodes.get(d.target.id)
+
+            if (!dSource || !dTarget) {
+                return ""
+            }
+
+            if (dSource.y === dTarget.y) {
+                return dSource.x > dTarget.x ? "directed-inv" : "directed"
+            }
+
+            if (dSource.y > dTarget.y || dSource.x > dTarget.x) {
+                return "directed-inv"
+            }
+            return "directed"
+        }
+
+        var classes = new Array<string>()
+        var attrs = this.props.linkAttrs(d)
+        return classes.concat("link", attrs.classes, attrs.directed ? directedClass(d) : "").join(" ")
+    }
+
     private renderLinks() {
+        var linkerCache = new Map<string, any>()
+        var visibleCache = new Map<string, any>()
+
+        const isVisible = (d: any) => {
+            let ok = visibleCache.has(d.id)
+            if (ok) {
+                return visibleCache.get(d.id)
+            }
+
+            let visible = this.isLinkVisible(d)
+            visibleCache.set(d.id, visible)
+
+            return visible
+        }
+
         const vLinker = linkVertical()
             .x((d: any) => d.x)
             .y((d: any) => d.y)
@@ -2234,6 +2278,11 @@ export class Topology extends React.Component<Props, {}> {
                 return
             }
 
+            var line = linkerCache.get(d.id)
+            if (line) {
+                return line
+            }
+
             let source = dSource
             let target = dTarget
             if (dSource.y === dTarget.y) {
@@ -2241,10 +2290,14 @@ export class Topology extends React.Component<Props, {}> {
                     source = dTarget, target = dSource
                 }
 
-                return hLinker({
+                line = hLinker({
                     source: { x: source.x + margin, y: source.y, node: d.source },
                     target: { x: target.x - margin, y: target.y, node: d.target }
                 })
+
+                linkerCache.set(d.id, line)
+
+                return line
             }
 
             if (dSource.y > dTarget.y || dSource.x > dTarget.x) {
@@ -2255,10 +2308,14 @@ export class Topology extends React.Component<Props, {}> {
                 margin *= -1
             }
 
-            return vLinker({
+            line = vLinker({
                 source: { x: source.x, y: source.y + margin, node: d.source },
                 target: { x: target.x, y: target.y - margin, node: d.target }
             })
+
+            linkerCache.set(d.id, line)
+
+            return line
         }
         const linker = (d: Link) => wrapperLink(d, 55)
 
@@ -2278,7 +2335,9 @@ export class Topology extends React.Component<Props, {}> {
         linkOverlay.exit().remove()
 
         linkOverlay = linkOverlay.merge(linkOverlayEnter)
-        linkOverlay.transition()
+
+        linkOverlay
+            .transition()
             .duration(animDuration)
             .style("opacity", (d: Link) => d.state.selected || this.isLinkNodeSelected(d) || this.isLinkNodeMouseOver(d) ? 1 : 0)
             .attr("d", linker)
@@ -2287,41 +2346,19 @@ export class Topology extends React.Component<Props, {}> {
             .interrupt()
             .data(visibleLinks, (d: Link) => d.id)
 
-        const directedClass = (d: Link) => {
-            var dSource = this.d3nodes.get(d.source.id)
-            var dTarget = this.d3nodes.get(d.target.id)
-
-            if (!dSource || !dTarget) {
-                return ""
-            }
-
-            if (dSource.y === dTarget.y) {
-                return dSource.x > dTarget.x ? "directed-inv" : "directed"
-            }
-
-            if (dSource.y > dTarget.y || dSource.x > dTarget.x) {
-                return "directed-inv"
-            }
-            return "directed"
-        }
-
-        const linkClass = (d: Link) => {
-            var classes = new Array<string>()
-            var attrs = this.props.linkAttrs(d)
-            return classes.concat("link", attrs.classes, attrs.directed ? directedClass(d) : "").join(" ")
-        }
-
         var linkEnter = link.enter()
             .append('path')
             .attr("id", (d: Link) => "link-" + d.id)
+            .attr("class", "link")
             .style("opacity", 0)
         link.exit().remove()
 
         link = link.merge(linkEnter)
-        link.attr("class", linkClass)
-        link.transition()
+        link
+            .attr("class", (d: Link) => isVisible(d) ? this.linkClass(d) : 'link')
+            .transition()
             .duration(animDuration)
-            .style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : 0)
+            .style("opacity", (d: Link) => isVisible(d) ? 1 : 0)
             .attr("d", linker)
 
         var linkLabel = this.gLinkLabels.selectAll('text.link-label')
@@ -2333,7 +2370,7 @@ export class Topology extends React.Component<Props, {}> {
             .attr("class", "link-label")
             .attr("id", (d: Link) => "link-label-" + d.id)
             .attr("dy", -8)
-            .style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : 0)
+            .style("opacity", (d: Link) => isVisible(d) ? 1 : 0)
         linkLabelEnter.append('textPath')
             .attr("xlink:href", (d: Link) => "#link-" + d.id)
             .attr("text-anchor", "middle")
@@ -2342,7 +2379,7 @@ export class Topology extends React.Component<Props, {}> {
         linkLabel.exit().remove()
 
         linkLabel = linkLabel.merge(linkLabelEnter)
-        linkLabel.style("opacity", (d: Link) => this.isLinkVisible(d) ? 1 : 0)
+        linkLabel.style("opacity", (d: Link) => isVisible(d) ? 1 : 0)
         linkLabel.select('textPath').text((d: Link) => this.props.linkAttrs(d).label)
 
         var linkWrap = this.gLinkWraps.selectAll('path.link-wrap')
@@ -2353,7 +2390,7 @@ export class Topology extends React.Component<Props, {}> {
             .attr("class", "link-wrap")
             .on("click", (d: Link) => this.linkClicked(d))
             .on("mouseover", (d: Link) => {
-                if (this.isLinkVisible(d)) {
+                if (isVisible(d)) {
                     select("#link-overlay-" + d.id)
                         .style("opacity", 1)
                 }
@@ -2367,7 +2404,8 @@ export class Topology extends React.Component<Props, {}> {
         linkWrap.exit().remove()
 
         linkWrap = linkWrap.merge(linkWrapEnter)
-        linkWrap.transition()
+        linkWrap
+            .transition()
             .duration(animDuration)
             .attr("d", linker)
     }
