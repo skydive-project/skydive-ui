@@ -111,11 +111,11 @@ const emptySession = {
 
 const loadSession = (): session => {
     try {
-        const serializedSession = localStorage.getItem('session');
+        const serializedSession = localStorage.getItem('session')
         if (serializedSession === null) {
             return emptySession
         }
-        return JSON.parse(serializedSession);
+        return JSON.parse(serializedSession)
     } catch (err) {
         return emptySession
     }

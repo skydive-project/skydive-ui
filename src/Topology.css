@@ -176,37 +176,37 @@ svg {
     font-family: sans-serif;
 }
 
-.group .curly-brace {
+.group .group-brace {
     stroke: #555;
     stroke-width: 2px;
     fill: none;
 }
 
-.group .curly-brace-bg {
+.group .group-brace-bg {
     fill: #e0e0e0;
     stroke: #ddd;
     stroke-width: 2px;
 }
 
-.group .curly-brace-owner-bg {
+.group .group-brace-owner-bg {
     fill: #cac9c9;
     stroke: #aaa;
     stroke-width: 2px;
 }
 
-.group-button .curly-icon text {
+.group-button .brace-icon text {
     font-family: 'Font Awesome 5 Free' !important;
     fill: #444;
     font-weight: 900;
     font-size: 24px;
 }
 
-.group-button .curly-icon rect {
+.group-button .brace-icon rect {
     stroke: none;
     fill: #eee;
 }
 
-.group-button .curly-icon:disabled {
+.group-button .brace-icon:disabled {
     fill: #bbb;
 }  
 

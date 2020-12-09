@@ -69,7 +69,7 @@ class Login extends React.Component<Props, State> {
     }
 
     handleChange(e) {
-        const { name, value } = e.target;
+        const { name, value } = e.target
         switch (name) {
             case "endpoint":
                 this.setState({ endpoint: value })
@@ -87,7 +87,7 @@ class Login extends React.Component<Props, State> {
     }
 
     handleSubmit(e) {
-        e.preventDefault();
+        e.preventDefault()
 
         this.setState({ submitted: true })
 

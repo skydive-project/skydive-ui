@@ -32,7 +32,7 @@ export const mainListItems = (
             <ListItemText primary="Settings" />
         </ListItem>
     </div>
-);
+)
 
 export const helpListItems = (
     <div>
@@ -49,4 +49,4 @@ export const helpListItems = (
             <ListItemText primary="About" />
         </ListItem>
     </div>
-);
+)

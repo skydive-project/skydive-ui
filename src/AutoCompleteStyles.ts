@@ -1,5 +1,3 @@
-import { minWidth, borderRadius } from "@material-ui/system";
-
 /*
  * Copyright (C) 2019 Sylvain Afchain
  *
@@ -17,7 +15,7 @@ import { minWidth, borderRadius } from "@material-ui/system";
  *
  */
 
-import { createStyles, makeStyles, Theme } from '@material-ui/core';
+import { createStyles, makeStyles, Theme } from '@material-ui/core'
 
 export const styles = makeStyles((theme: Theme) =>
   createStyles({

@@ -15,7 +15,7 @@
  *
  */
 
-import { GoogleChartWrapperChartType } from 'react-google-charts/dist/types';
+import { GoogleChartWrapperChartType } from 'react-google-charts/dist/types'
 
 export interface Graph {
     type: GoogleChartWrapperChartType

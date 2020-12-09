@@ -44,5 +44,5 @@ export function a11yProps(index: any) {
     return {
         id: `tab-${index}`,
         'aria-controls': `tabpanel-${index}`,
-    };
+    }
 }

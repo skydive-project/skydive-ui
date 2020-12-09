@@ -154,7 +154,7 @@ export class DataViewer extends React.Component<Props, State> {
                 this.state.filterList.set(field, newList)
                 this.setState({ filterList: this.state.filterList })
             },
-        };
+        }
 
         // re-apply sort and filter if need
         for (let column of this.props.columns) {

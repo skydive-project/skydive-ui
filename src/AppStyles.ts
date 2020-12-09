@@ -1,5 +1,3 @@
-import { minWidth, borderRadius } from "@material-ui/system";
-
 /*
  * Copyright (C) 2019 Sylvain Afchain
  *
@@ -17,7 +15,7 @@ import { minWidth, borderRadius } from "@material-ui/system";
  *
  */
 
-import { createStyles, Theme } from '@material-ui/core';
+import { createStyles, Theme } from '@material-ui/core'
 import { fade } from '@material-ui/core/styles'
 
 const drawerWidth = 300

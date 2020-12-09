@@ -466,11 +466,7 @@ export class Topology extends React.Component<Props, {}> {
 
     setLinkTagState(tag: string, state: LinkTagState) {
         this.linkTagStates.set(tag, state)
-
-        // invalidate link cache
-        this.visibleLinksCache = undefined
-
-        this.renderTree()
+        this.resetCacheAndRenderTree()
     }
 
     showNodeTag(tag: string, active: boolean) {
@@ -486,14 +482,18 @@ export class Topology extends React.Component<Props, {}> {
         this.invalidate()
     }
 
-    private invalidate() {
+    private resetCacheAndRenderTree() {
         // invalidate link cache
         this.visibleLinksCache = undefined
 
+        this.renderTree()
+    }
+
+    private invalidate() {
         // invalidate the whole topology
         this.invalidated = true
 
-        this.renderTree()
+        this.resetCacheAndRenderTree()
     }
 
     private updateWeighs(node: Node) {
@@ -861,13 +861,10 @@ export class Topology extends React.Component<Props, {}> {
             node.state.expanded = true
         }
 
-        // invalidate link cache
-        this.visibleLinksCache = undefined
-
         // invalidate the whole topology rendering
         this.invalidated = true
 
-        this.renderTree()
+        this.resetCacheAndRenderTree()
     }
 
     private hexagon(d: D3Node, size: number) {
@@ -1728,7 +1725,7 @@ export class Topology extends React.Component<Props, {}> {
             .style("opacity", 0)
         group.exit().remove()
 
-        const curlyBrace = (x1, y1, x2, y2, w) => {
+        const curlyBrace = (x1: number, y1: number, x2: number, y2: number, w: number) => {
             var len = y2 - y1
 
             var qx1 = x1 - w, qy1 = y1
@@ -1743,7 +1740,13 @@ export class Topology extends React.Component<Props, {}> {
                 " T " + x2 + " " + y2
         }
 
-        const handleCurlyBraces = (g: any, d: NodeWrapper, animated: boolean) => {
+
+        const straightBrace = (x1: number, y1: number, x2: number, y2: number, m: number) => {
+            return "M " + (x1 - m) + " " + y1 +
+                " L " + (x2 - m) + " " + y2
+        }
+
+        const handleBraces = (g: any, d: NodeWrapper, animated: boolean) => {
             var bb = this.groupBB(d)
             if (!bb) {
                 return
@@ -1753,60 +1756,64 @@ export class Topology extends React.Component<Props, {}> {
             var y1 = bb.y + 70
             var x2 = bb.x + bb.width - 15
             var y2 = bb.y + bb.height - 70
+            var margin = 15
 
-            var left = curlyBrace(x1, y1, x1, y2, 15)
-            var right = curlyBrace(x2, y2, x2, y1, -15)
+            //var left = curlyBrace(x1, y1, x1, y2, 15)
+            //var right = curlyBrace(x2, y2, x2, y1, -15)
 
-            var curly = g.select("path.curly-brace-left")
+            var left = straightBrace(x1, y1, x1, y2, margin)
+            var right = straightBrace(x2, y2, x2, y1, -margin)
+
+            var brace = g.select("path.group-brace-left")
             if (animated) {
-                curly = curly.transition()
+                brace = brace.transition()
                     .duration(animDuration)
             }
-            curly.attr("d", "M " + x1 + " " + y1 + " " + left)
+            brace.attr("d", "M " + x1 + " " + y1 + " " + left)
 
-            curly = g.select("path.curly-brace-right")
+            brace = g.select("path.group-brace-right")
             if (animated) {
-                curly = curly.transition()
+                brace = brace.transition()
                     .duration(animDuration)
             }
-            curly.attr("d", "M " + x2 + " " + y2 + " " + right)
+            brace.attr("d", "M " + x2 + " " + y2 + " " + right)
 
-            curly = g.select("path.curly-brace-bg")
+            brace = g.select("path.group-brace-bg")
             if (animated) {
-                curly = curly.transition()
+                brace = brace.transition()
                     .duration(animDuration)
             }
 
-            curly
+            brace
                 .attr("d",
-                    "M " + x1 + " " + y1 + " " +
+                    "M " + (x1 - margin) + " " + y1 + " " +
                     left +
-                    " L " + x2 + " " + y2 + " " +
+                    " L " + (x2 + margin) + " " + y2 + " " +
                     right +
-                    " L " + x1 + " " + y1 + " "
+                    " L " + (x1 - margin) + " " + y1 + " "
                 )
 
-            curly = g.select("path.curly-brace-owner-bg")
+            brace = g.select("path.group-brace-owner-bg")
 
             if (animated && d.wrapped.state.expanded) {
-                curly = curly.transition()
+                brace = brace.transition()
                     .duration(animDuration)
                     .style("opacity", d.wrapped.state.expanded ? 1 : 0)
             } else {
-                curly.style("opacity", 0)
+                brace.style("opacity", 0)
             }
 
             let d3node = this.d3nodes.get(d.id)
             if (d3node) {
                 let xEnd = d.wrapped.state.expanded ? d3node.x + self.nodeWidth / 2 : x2
                 let junction = d.wrapped.state.expanded ? " L " + xEnd + " " + y1 + " " : right
-                curly
+                brace
                     .attr("d",
-                        "M " + x1 + " " + y1 + " " +
+                        "M " + (x1 - margin) + " " + y1 + " " +
                         left +
                         " L " + xEnd + " " + y2 + " " +
                         junction +
-                        " L " + x1 + " " + y1 + " ")
+                        " L " + (x1 - margin) + " " + y1 + " ")
             }
         }
 
@@ -1815,20 +1822,20 @@ export class Topology extends React.Component<Props, {}> {
             .style("opacity", 1)
 
         groupEnter.append("path")
-            .attr("class", "curly-brace-bg")
+            .attr("class", "group-brace-bg")
 
         groupEnter.append("path")
-            .attr("class", "curly-brace-owner-bg")
+            .attr("class", "group-brace-owner-bg")
             .style("opacity", 0)
 
         groupEnter.append("path")
-            .attr("class", "curly-brace curly-brace-left")
+            .attr("class", "group-brace group-brace-left")
 
         groupEnter.append("path")
-            .attr("class", "curly-brace curly-brace-right")
+            .attr("class", "group-brace group-brace-right")
 
-        groupEnter.each(function (d) { handleCurlyBraces(select(this), d, false) })
-        group.each(function (d) { handleCurlyBraces(select(this), d, true) })
+        groupEnter.each(function (d: NodeWrapper) { handleBraces(select(this), d, false) })
+        group.each(function (d: NodeWrapper) { handleBraces(select(this), d, true) })
 
         group.transition()
             .duration(animDuration)
@@ -1879,7 +1886,7 @@ export class Topology extends React.Component<Props, {}> {
         groupButton.exit().remove()
 
         var leftIcon = groupButtonEnter.append("g")
-            .attr("class", "curly-icon curly-left-icon")
+            .attr("class", "brace-icon brace-left-icon")
             .style("opacity", 0)
         leftIcon.append("rect")
             .attr("rx", 5)
@@ -1893,12 +1900,12 @@ export class Topology extends React.Component<Props, {}> {
 
                 if (d.wrapped.state.groupOffset > 0) {
                     d.wrapped.state.groupOffset--
-                    this.renderTree()
+                    self.resetCacheAndRenderTree()
                 }
             })
 
         var rightIcon = groupButtonEnter.append("g")
-            .attr("class", "curly-icon curly-right-icon")
+            .attr("class", "brace-icon brace-right-icon")
             .style("opacity", 0)
         rightIcon.append("rect")
             .attr("rx", 5)
@@ -1913,12 +1920,12 @@ export class Topology extends React.Component<Props, {}> {
                 var size = this.props.groupSize || defaultGroupSize
                 if (d.wrapped.state.groupOffset + size < d.wrapped.children.length) {
                     d.wrapped.state.groupOffset++
-                    this.renderTree()
+                    self.resetCacheAndRenderTree()
                 }
             })
 
         var fullIcon = groupButtonEnter.append("g")
-            .attr("class", "curly-icon curly-full-icon")
+            .attr("class", "brace-icon brace-full-icon")
             .style("opacity", 0)
         fullIcon.append("rect")
             .attr("rx", 5)
@@ -1934,18 +1941,15 @@ export class Topology extends React.Component<Props, {}> {
                     select(this).text("\uf146")
                 }
 
-                // invalidate link cache
-                self.visibleLinksCache = undefined
-
-                self.renderTree()
+                self.resetCacheAndRenderTree()
             })
 
         const handleIcons = (g: any, d: NodeWrapper, animated: boolean) => {
             var size = this.props.groupSize || defaultGroupSize
 
-            handleIcon(g.select("g.curly-left-icon"), d, 50, animated, d.wrapped.state.groupFullSize || d.wrapped.state.groupOffset === 0)
-            handleIcon(g.select("g.curly-right-icon"), d, 25, animated, d.wrapped.state.groupFullSize || d.wrapped.state.groupOffset + size >= d.wrapped.children.length)
-            handleIcon(g.select("g.curly-full-icon"), d, 75, animated, false)
+            handleIcon(g.select("g.brace-left-icon"), d, 50, animated, d.wrapped.state.groupFullSize || d.wrapped.state.groupOffset === 0)
+            handleIcon(g.select("g.brace-right-icon"), d, 25, animated, d.wrapped.state.groupFullSize || d.wrapped.state.groupOffset + size >= d.wrapped.children.length)
+            handleIcon(g.select("g.brace-full-icon"), d, 75, animated, false)
         }
 
         groupButtonEnter.each(function (d: NodeWrapper) { handleIcons(select(this), d, true) })
