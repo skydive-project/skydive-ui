@@ -66,7 +66,7 @@ import CapturePanel from './DataPanels/Capture'
 import FlowPanel from './DataPanels/Flow'
 
 import './App.css'
-import ConfigReducer from './Config'
+import ConfigReducer, { Filter } from './Config'
 
 
 // expose app ouside
@@ -106,6 +106,8 @@ interface State {
   isNavOpen: boolean
   nodeTagStates: Map<string, boolean>
   linkTagStates: Map<string, LinkTagState>
+  filters: Map<string, Filter>
+  activeFilter: string
   suggestions: Array<string>
   anchorEl: Map<string, null | HTMLElement>
   isSelectionOpen: boolean
@@ -141,12 +143,14 @@ class App extends React.Component<Props, State> {
       isNavOpen: false,
       nodeTagStates: new Map<string, boolean>(),
       linkTagStates: new Map<string, LinkTagState>(),
+      filters: new Map<string, Filter>(),
       suggestions: new Array<string>(),
       anchorEl: new Map<string, null | HTMLElement>(),
       isSelectionOpen: false,
       wsContext: { GremlinFilter: null },
       isGremlinPanelOpen: false,
-      isCapturePanelOpen: false
+      isCapturePanelOpen: false,
+      activeFilter: ""
     }
 
     this.synced = false
@@ -205,7 +209,7 @@ class App extends React.Component<Props, State> {
       })
     } else {
       var p = this.config.appendURL(id, url).then(() => {
-        this.updateFilter()
+        this.defaultFilter()
         this.sync()
       })
     }
@@ -215,18 +219,33 @@ class App extends React.Component<Props, State> {
     })
   }
 
-  private updateFilter(): boolean {
-    for (let filter of this.config.filters()) {
-      if (filter.id === this.config.defaultFilter()) {
-        if (this.state.wsContext.GremlinFilter !== filter.gremlin) {
-          this.setState({ wsContext: { GremlinFilter: filter.gremlin } })
-          return true
-        }
+  private defaultFilter() {
+    var filter = this.config.defaultFilter()
+    if (filter) {
+      let filters = new Map<string, Filter>()
+      filters.set(filter.id, filter)
+      this.setState({ filters: filters, activeFilter: filter.id })
+
+      filter.callback()
+    }
+  }
+
+  private updateFilters(node: Node) {
+    var updated: boolean = false
+
+    for (let filter of this.config.filters(node)) {
+      if (!this.state.filters.has(filter.id)) {
+        this.state.filters.set(filter.id, filter)
+
+        updated = true
       }
     }
 
-    return false
+    if (updated) {
+      this.debSetState({ filters: this.state.filters })
+    }
   }
+
 
   private updateSuggestions(node: Node, suggestions: Array<string>) {
     var updated: boolean = false
@@ -272,6 +291,8 @@ class App extends React.Component<Props, State> {
 
     this.updateSuggestions(n, this.state.suggestions)
 
+    this.updateFilters(n)
+
     return true
   }
 
@@ -290,10 +311,15 @@ class App extends React.Component<Props, State> {
       return false
     }
 
-    this.tc.updateNode(node.ID, node.Metadata)
+    var n = this.tc.updateNode(node.ID, node.Metadata)
+    if (!n) {
+      return false
+    }
 
     // eventually update the panels
     this.bumpRevision(node.ID)
+
+    this.updateFilters(n)
 
     return true
   }
@@ -544,8 +570,10 @@ class App extends React.Component<Props, State> {
   }
 
   setGremlinFilter(gremlin: string) {
-    this.state.wsContext.GremlinFilter = gremlin
-    this.setWSContext(this.state.wsContext)
+    if (this.state.wsContext.GremlinFilter !== gremlin) {
+      this.state.wsContext.GremlinFilter = gremlin
+      this.setWSContext(this.state.wsContext)
+    }
   }
 
   sync() {
@@ -567,7 +595,7 @@ class App extends React.Component<Props, State> {
     }
 
     this.notify("Connected", "info")
-    this.updateFilter()
+    this.defaultFilter()
     this.sync()
 
     // set API configuration
@@ -787,18 +815,16 @@ class App extends React.Component<Props, State> {
   renderFilterButtons(classes: any) {
     return (
       <React.Fragment>
-        {this.staticDataURL === "" &&
-          <Container className={classes.filtersPanel}>
-            {this.config.filters().map((filter, i) => (
-              <Button variant="contained" key={i} aria-label="delete" size="small"
-                color={this.state.wsContext.GremlinFilter === filter.gremlin ? "primary" : "default"}
-                className={classes.filtersFab}
-                onClick={() => { this.setGremlinFilter(filter.gremlin) }}>
-                {filter.label}
-              </Button>
-            ))}
-          </Container>
-        }
+        <Container className={classes.filtersPanel}>
+          {Array.from(this.state.filters.values()).map((filter) => (
+            <Button variant="contained" key={filter.id} aria-label="delete" size="small"
+              color={this.state.activeFilter === filter.id ? "primary" : "default"}
+              className={classes.filtersFab}
+              onClick={() => { this.setState({ activeFilter: filter.id }); filter.callback() }}>
+              {filter.label}
+            </Button>
+          ))}
+        </Container>
       </React.Fragment>
     )
   }

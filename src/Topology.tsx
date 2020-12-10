@@ -524,10 +524,10 @@ export class Topology extends React.Component<Props, {}> {
         return node
     }
 
-    updateNode(id: string, data: any) {
+    updateNode(id: string, data: any): Node | null {
         var node = this.nodes.get(id)
         if (!node) {
-            return
+            return null
         }
         var prevWeight = node.getWeight()
         node.data = data
@@ -542,6 +542,8 @@ export class Topology extends React.Component<Props, {}> {
 
         // keep it internal for now, don't use real revision number
         node.revision++
+
+        return node
     }
 
     delNode(id: string) {

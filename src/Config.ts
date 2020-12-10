@@ -34,7 +34,7 @@ const WEIGHT_K8S_POD = 103
 export interface Filter {
     id: string
     label: string
-    gremlin: string
+    callback: () => void
 }
 
 export interface MenuItem {
@@ -71,7 +71,7 @@ export interface LinkDataField {
 export interface Config {
     subTitle?(subTitle: string): string
     filters?(filters: Array<Filter>): Array<Filter>
-    defaultFilter?(): string
+    defaultFilter?(): Filter
 
     nodeAttrs?(attrs: NodeAttrs | null, node: Node): NodeAttrs
     nodeSortFnc?(a: Node, b: Node): number
@@ -160,8 +160,8 @@ export default class ConfigReducer {
         return subTitle
     }
 
-    filters(): Array<Filter> {
-        var filters = this.default.filters()
+    filters(node: Node): Array<Filter> {
+        var filters = this.default.filters(node)
         for (let c of this.configs) {
             if (c.config.filters) {
                 filters = c.config.filters(filters)
@@ -170,7 +170,7 @@ export default class ConfigReducer {
         return filters
     }
 
-    defaultFilter(): string {
+    defaultFilter(): Filter {
         var defaultFilter = this.default.defaultFilter()
         for (let c of this.configs) {
             if (c.config.defaultFilter) {
@@ -366,25 +366,34 @@ class DefaultConfig {
         return ""
     }
 
-    filters(): Array<Filter> {
-        return [
-            {
-                id: "default",
-                label: "Default",
-                gremlin: ""
-            },
-            {
-                id: "namespaces",
-                label: "Namespaces",
-                gremlin: "G.V().Has('Type', 'host').as('host')" +
-                    ".out().Has('Type', 'netns').descendants().as('netns')" +
-                    ".select('host', 'netns').SubGraph()"
-            }
-        ]
+    filters(node: Node): Array<Filter> {
+        switch (node.data.Type) {
+            /*case "netns":
+                return [
+                    {
+                        id: node.data.Name,
+                        label: node.data.Name,
+                        callback: () => {
+                            var gremlin = "G.V().Has('Name', '" + node.data.Name + "')" +
+                                ".descendants().SubGraph()"
+
+                            window.App.setGremlinFilter(gremlin)
+                        }
+                    }
+                ]*/
+            default:
+                return []
+        }
     }
 
-    defaultFilter(): string {
-        return 'default'
+    defaultFilter(): Filter {
+        return {
+            id: "default",
+            label: "Default",
+            callback: () => {
+                window.App.setGremlinFilter("")
+            }
+        }
     }
 
     private newAttrs(node: Node): NodeAttrs {
