@@ -125,10 +125,8 @@ class App extends React.Component<Props, State> {
   refreshTopology: any
   bumpRevision: typeof bumpRevision
   checkAuthID: number
-  staticDataURL: string
   apiConf: Configuration
   wsContext: WSContext
-  extraConfigURL: string
   connected: boolean
   debSetState: (state: any) => void
   config: ConfigReducer
@@ -179,6 +177,8 @@ class App extends React.Component<Props, State> {
       this.checkAuthID = window.setInterval(() => {
         this.checkAuth()
       }, 2000)
+    } else {
+      this.loadStaticData(this.props.dataURL)
     }
   }
 
@@ -201,11 +201,13 @@ class App extends React.Component<Props, State> {
     })
   }
 
-  appendConfig(id: string, url: string) {
+  /*appendConfig(id: string, url: string) {
     if (this.props.dataURL) {
       // load first the config and then the data
       var p = this.config.appendURL(id, url).then(() => {
-        this.loadStaticData(this.staticDataURL)
+        if (this.props.dataURL) {
+          this.loadStaticData(this.props.dataURL)
+        }
       })
     } else {
       var p = this.config.appendURL(id, url).then(() => {
@@ -217,7 +219,7 @@ class App extends React.Component<Props, State> {
     p.catch(() => {
       this.notify("Unable to load or parse extra config", "error")
     })
-  }
+  }*/
 
   private defaultFilter() {
     var filter = this.config.defaultFilter()
