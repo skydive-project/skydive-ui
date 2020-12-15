@@ -23,7 +23,17 @@ is currently provided for testing purpose.
 docker run -p 8080:8080 skydive/skydive-ui
 ```
 
-In order to load a local topology dump
+By default the WebUI is trying to connect to a working skydive analyser. Make sure that the analyser is available to the WebUI on localhost:8082
+
+Note: To use different skydive analyzer end-point you need to logout (top-right icon) and select a different end-point on the login screen  
+
+To experience with static kubernetes example open your browser with the following address
+
+```
+http://127.0.0.1:8080/?data=/samples/kubernetes.json
+```
+
+In order to load an example of local topology dump
 
 ```
 docker run -p 8080:8080 -v dump.json:/usr/src/skydive-ui/assets/dump.json skydive/skydive-ui
