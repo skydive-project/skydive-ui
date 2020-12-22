@@ -24,12 +24,14 @@ const WEIGHT_PHYSICAL = 13
 const WEIGHT_BRIDGES = 14
 const WEIGHT_PORTS = 15
 const WEIGHT_VIRTUAL = 17
-const WEIGHT_NAMESPACES = 18
+const WEIGHT_NAMESPACE = 18
 const WEIGHT_VMS = 19
 const WEIGHT_K8S_FEDERATION = 100
 const WEIGHT_K8S_CLUSTER = 101
 const WEIGHT_K8S_NODE = 102
-const WEIGHT_K8S_POD = 103
+const WEIGHT_K8S_NAMESPACE = 103
+const WEIGHT_K8S_POD = 104
+const WEIGHT_K8S_OTHER = 120
 
 export interface Filter {
     id: string
@@ -368,7 +370,7 @@ class DefaultConfig {
 
     filters(node: Node): Array<Filter> {
         switch (node.data.Type) {
-            /*case "netns":
+            case "netns":
                 return [
                     {
                         id: node.data.Name,
@@ -380,7 +382,20 @@ class DefaultConfig {
                             window.App.setGremlinFilter(gremlin)
                         }
                     }
-                ]*/
+                ]
+            case "namespace":
+                return [
+                    {
+                        id: node.data.Name,
+                        label: node.data.Name,
+                        callback: () => {
+                            var gremlin = "G.V().Has('Namespace', '" + node.data.Name + "')" +
+                                ".descendants().SubGraph()"
+
+                            window.App.setGremlinFilter(gremlin)
+                        }
+                    }
+                ]
             default:
                 return []
         }
@@ -423,6 +438,7 @@ class DefaultConfig {
                 attrs.href = "assets/icons/cluster.png"
                 attrs.weight = WEIGHT_K8S_CLUSTER
                 break
+            /*
             case "configmap":
                 attrs.href = "assets/icons/configmap.png"
                 attrs.weight = WEIGHT_K8S_POD
@@ -455,10 +471,6 @@ class DefaultConfig {
                 attrs.href = "assets/icons/job.png"
                 attrs.weight = WEIGHT_K8S_POD
                 break
-            case "node":
-                attrs.icon = "\uf109"
-                attrs.weight = WEIGHT_K8S_NODE
-                break
             case "persistentvolume":
                 attrs.href = "assets/icons/persistentvolume.png"
                 attrs.weight = WEIGHT_K8S_POD
@@ -467,17 +479,9 @@ class DefaultConfig {
                 attrs.href = "assets/icons/persistentvolumeclaim.png"
                 attrs.weight = WEIGHT_K8S_POD
                 break
-            case "pod":
-                attrs.href = "assets/icons/pod.png"
-                attrs.weight = WEIGHT_K8S_POD
-                break
             case "networkpolicy":
                 attrs.href = "assets/icons/networkpolicy.png"
                 attrs.weight = WEIGHT_K8S_POD
-                break
-            case "namespace":
-                attrs.icon = "\uf24d"
-                attrs.weight = WEIGHT_K8S_NODE
                 break
             case "replicaset":
                 attrs.href = "assets/icons/replicaset.png"
@@ -503,9 +507,22 @@ class DefaultConfig {
                 attrs.href = "assets/icons/storageclass.png"
                 attrs.weight = WEIGHT_K8S_NODE
                 break
+            */
+            case "node":
+                attrs.icon = "\uf109"
+                attrs.weight = WEIGHT_K8S_NODE
+                break
+            case "namespace":
+                attrs.icon = "\uf24d"
+                attrs.weight = WEIGHT_K8S_NAMESPACE
+                break
+            case "pod":
+                attrs.href = "assets/icons/pod.png"
+                attrs.weight = WEIGHT_K8S_POD
+                break
             default:
                 attrs.href = "assets/icons/k8s.png"
-                attrs.weight = WEIGHT_K8S_POD
+                attrs.weight = WEIGHT_K8S_OTHER
         }
 
         return attrs
@@ -563,7 +580,7 @@ class DefaultConfig {
                 break
             case "netns":
                 attrs.icon = "\uf24d"
-                attrs.weight = WEIGHT_NAMESPACES
+                attrs.weight = WEIGHT_NAMESPACE
                 break
             case "libvirt":
                 attrs.icon = "\uf109"
@@ -713,12 +730,14 @@ class DefaultConfig {
         wt.set(WEIGHT_BRIDGES, "Bridges")
         wt.set(WEIGHT_PORTS, "Ports")
         wt.set(WEIGHT_VIRTUAL, "Virtual")
-        wt.set(WEIGHT_NAMESPACES, "Namespaces")
+        wt.set(WEIGHT_NAMESPACE, "Namespaces")
         wt.set(WEIGHT_VMS, "VMs")
         wt.set(WEIGHT_K8S_FEDERATION, "Federations")
         wt.set(WEIGHT_K8S_CLUSTER, "Clusters")
         wt.set(WEIGHT_K8S_NODE, "Nodes")
+        wt.set(WEIGHT_K8S_NAMESPACE, "Namespaces")
         wt.set(WEIGHT_K8S_POD, "Pods")
+        wt.set(WEIGHT_K8S_OTHER, "More-Kubernetes")
 
         return wt
     }
