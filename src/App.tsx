@@ -221,7 +221,7 @@ class App extends React.Component<Props, State> {
     })
   }*/
 
-  private defaultFilter() {
+  private defaultFilter(): boolean {
     var filter = this.config.defaultFilter()
     if (filter) {
       let filters = new Map<string, Filter>()
@@ -229,7 +229,11 @@ class App extends React.Component<Props, State> {
       this.setState({ filters: filters, activeFilter: filter.id })
 
       filter.callback()
+
+      return true
     }
+
+    return false
   }
 
   private updateFilters(node: Node) {
@@ -285,6 +289,8 @@ class App extends React.Component<Props, State> {
     if (node.Metadata.Type === "ofrule") {
       return false
     }
+
+    console.log(node.Metadata.Type)
 
     var tags = this.config.nodeTags(node.Metadata)
 
@@ -467,7 +473,10 @@ class App extends React.Component<Props, State> {
     var data: { Type: string, Obj: any } = JSON.parse(msg)
     switch (data.Type) {
       case "SyncReply":
-        this.parseTopology(data.Obj)
+        if (this.tc) {
+          this.tc.resetTree()
+          this.parseTopology(data.Obj)
+        }
         this.synced = true
         break
       case "NodeAdded":
@@ -584,7 +593,6 @@ class App extends React.Component<Props, State> {
     }
 
     // then reset the topology view and re-sync
-    this.tc.resetTree()
     var msg = { "Namespace": "Graph", "Type": "SyncRequest", "Obj": this.state.wsContext }
     this.sendMessage(msg)
   }
@@ -597,8 +605,9 @@ class App extends React.Component<Props, State> {
     }
 
     this.notify("Connected", "info")
-    this.defaultFilter()
-    this.sync()
+    if (!this.defaultFilter()) {
+      this.sync()
+    }
 
     // set API configuration
     this.apiConf = new Configuration({ accessToken: this.props.session.token })
