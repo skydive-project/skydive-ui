@@ -1141,16 +1141,16 @@ export class Topology extends React.Component<Props, {}> {
 
         select("#node-" + id).classed("node-selected", active)
 
-        var d = this.d3nodes.get(id)
-        if (d) {
-            this.highlightNeighborLinks(d, active)
-        }
-
         if (this.props.onNodeSelected) {
             let n = this.nodes.get(id)
             if (n) {
                 this.props.onNodeSelected(n, active)
             }
+        }
+
+        var d = this.d3nodes.get(id)
+        if (d) {
+            this.highlightNeighborLinks(d, active)
         }
     }
 

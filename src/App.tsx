@@ -290,8 +290,6 @@ class App extends React.Component<Props, State> {
       return false
     }
 
-    console.log(node.Metadata.Type)
-
     var tags = this.config.nodeTags(node.Metadata)
 
     let n = this.tc.addNode(node.ID, tags, node.Metadata, (n: Node): number => this.config.nodeAttrs(n).weight)

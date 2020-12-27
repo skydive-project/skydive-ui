@@ -25,7 +25,6 @@ export interface Graph {
 export interface Column {
     name: string
     options: {
-        sortDirection: string
         filterList: Array<any>
         display: string
     }
@@ -55,9 +54,8 @@ export class Result {
         if (index === undefined) {
             this.colIndexes.set(name, this._columns.length)
 
-            let dir = this._columns.length === 0 ? 'none' : 'none'
 
-            this._columns.push({ "name": name, options: { sortDirection: dir, filterList: new Array<any>(), display: 'true' } })
+            this._columns.push({ "name": name, options: { filterList: new Array<any>(), display: 'true' } })
         }
     }
 

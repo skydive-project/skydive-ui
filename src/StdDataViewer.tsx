@@ -40,8 +40,8 @@ interface Props {
 }
 
 interface State {
+    sortOrder: Map<any, any>
     sortField: string
-    sortDirection: string
     filterList: Map<string, Array<any>>
     graph?: Graph
     rowsExpanded: Array<number>
@@ -58,8 +58,8 @@ export class DataViewer extends React.Component<Props, State> {
         this.applyDefaultColumns = true
 
         this.state = {
+            sortOrder: new Map<any, any>(),
             sortField: "",
-            sortDirection: "none",
             filterList: new Map<string, Array<any>>(),
             rowsExpanded: new Array<number>()
         }
@@ -93,7 +93,7 @@ export class DataViewer extends React.Component<Props, State> {
         const options = {
             filterType: 'multiselect',
             selectableRows: 'none',
-            responsive: 'stacked',
+            responsive: 'vertical',
             print: false,
             download: false,
             customToolbar: () => {
@@ -112,6 +112,7 @@ export class DataViewer extends React.Component<Props, State> {
                 return {}
             },
             expandableRows: true,
+            expandableRowsHeader: false,
             expandableRowsOnClick: true,
             isRowExpandable: (dataIndex, expandedRows) => {
                 if (this.props.details.get(dataIndex)) {
@@ -132,15 +133,13 @@ export class DataViewer extends React.Component<Props, State> {
                 )
             },
             rowsExpanded: this.state.rowsExpanded,
-            onRowsExpand: (currentRowsExpanded, allRowsExpanded) => {
+            onRowExpansionChange: (currentRowsExpanded, allRowsExpanded) => {
                 this.setState({ rowsExpanded: allRowsExpanded.map(entry => entry.dataIndex) })
             },
             onColumnSortChange: (field: string, direction: string) => {
-                this.setState({ sortField: field, sortDirection: direction })
+                this.setState({ sortField: field })
             },
             onColumnViewChange: (column: string, action: string) => {
-                console.log(column)
-                console.log(action)
             },
             onFilterChange: (field: string, filterList: Array<any>) => {
                 var newList = new Array<any>()
@@ -154,11 +153,12 @@ export class DataViewer extends React.Component<Props, State> {
                 this.state.filterList.set(field, newList)
                 this.setState({ filterList: this.state.filterList })
             },
+            sortOrder: this.state.sortOrder
         }
 
         // re-apply sort and filter if need
         for (let column of this.props.columns) {
-            if (column.name === this.state.sortField && this.state.sortDirection) {
+            /*if (column.name === this.state.sortField && this.state.sortDirection) {
                 switch (this.state.sortDirection) {
                     case "ascending":
                         column.options.sortDirection = "asc"
@@ -170,7 +170,7 @@ export class DataViewer extends React.Component<Props, State> {
                         column.options.sortDirection = "none"
                         break
                 }
-            }
+            }*/
 
             if (this.applyDefaultColumns && this.props.defaultColumns) {
                 if (!this.props.defaultColumns.includes(column.name)) {
