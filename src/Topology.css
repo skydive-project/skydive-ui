@@ -7,7 +7,7 @@ svg {
 }
 
 .level-zone {
-    stroke: #000;
+    stroke: #888;
     stroke-dasharray: 5, 10;
     fill: #f6f6f6;
 }

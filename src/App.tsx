@@ -47,7 +47,8 @@ import Menu from '@material-ui/core/Menu'
 import Fab from '@material-ui/core/Fab'
 import Badge from '@material-ui/core/Badge'
 import ListIcon from '@material-ui/icons/List'
-import Button from '@material-ui/core/Button'
+import Autocomplete from '@material-ui/lab/Autocomplete'
+import TextField from '@material-ui/core/TextField'
 
 import { styles } from './AppStyles'
 import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState, Link } from './Topology'
@@ -106,8 +107,8 @@ interface State {
   isNavOpen: boolean
   nodeTagStates: Map<string, boolean>
   linkTagStates: Map<string, LinkTagState>
-  filters: Map<string, Filter>
-  activeFilter: string
+  filters: Array<Filter>
+  activeFilter: Filter | null
   suggestions: Array<string>
   anchorEl: Map<string, null | HTMLElement>
   isSelectionOpen: boolean
@@ -130,6 +131,7 @@ class App extends React.Component<Props, State> {
   connected: boolean
   debSetState: (state: any) => void
   config: ConfigReducer
+  filters: Map<string, Filter>
 
   constructor(props) {
     super(props)
@@ -141,14 +143,14 @@ class App extends React.Component<Props, State> {
       isNavOpen: false,
       nodeTagStates: new Map<string, boolean>(),
       linkTagStates: new Map<string, LinkTagState>(),
-      filters: new Map<string, Filter>(),
+      filters: new Array<Filter>(),
       suggestions: new Array<string>(),
       anchorEl: new Map<string, null | HTMLElement>(),
       isSelectionOpen: false,
       wsContext: { GremlinFilter: null },
       isGremlinPanelOpen: false,
       isCapturePanelOpen: false,
-      activeFilter: ""
+      activeFilter: null
     }
 
     this.synced = false
@@ -163,6 +165,8 @@ class App extends React.Component<Props, State> {
 
     // will handle multiple configuration files
     this.config = new ConfigReducer()
+
+    this.filters = new Map<string, Filter>()
   }
 
   componentDidMount() {
@@ -201,33 +205,9 @@ class App extends React.Component<Props, State> {
     })
   }
 
-  /*appendConfig(id: string, url: string) {
-    if (this.props.dataURL) {
-      // load first the config and then the data
-      var p = this.config.appendURL(id, url).then(() => {
-        if (this.props.dataURL) {
-          this.loadStaticData(this.props.dataURL)
-        }
-      })
-    } else {
-      var p = this.config.appendURL(id, url).then(() => {
-        this.defaultFilter()
-        this.sync()
-      })
-    }
-
-    p.catch(() => {
-      this.notify("Unable to load or parse extra config", "error")
-    })
-  }*/
-
-  private defaultFilter(): boolean {
+  private applyDefaultFilter(): boolean {
     var filter = this.config.defaultFilter()
     if (filter) {
-      let filters = new Map<string, Filter>()
-      filters.set(filter.id, filter)
-      this.setState({ filters: filters, activeFilter: filter.id })
-
       filter.callback()
 
       return true
@@ -236,24 +216,36 @@ class App extends React.Component<Props, State> {
     return false
   }
 
+  private applyFilter(filter: Filter | null) {
+    this.state.activeFilter = filter
+    this.debSetState(this.state)
+
+    if (filter) {
+      filter.callback()
+    } else {
+      this.applyDefaultFilter()
+    }
+  }
+
   private updateFilters(node: Node) {
     var updated: boolean = false
 
     for (let filter of this.config.filters(node)) {
-      if (!this.state.filters.has(filter.id)) {
-        this.state.filters.set(filter.id, filter)
+      if (!this.filters.has(filter.id)) {
+        this.filters.set(filter.id, filter)
 
         updated = true
       }
     }
 
     if (updated) {
-      this.debSetState({ filters: this.state.filters })
+      this.state.filters = Array.from(this.filters.values()).sort((a: Filter, b: Filter) => { return a.label.localeCompare(b.label) })
+      this.debSetState(this.state)
     }
   }
 
-
-  private updateSuggestions(node: Node, suggestions: Array<string>) {
+  private updateSuggestions(node: Node) {
+    var suggestions = this.state.suggestions
     var updated: boolean = false
 
     for (let key of this.config.suggestions()) {
@@ -276,7 +268,8 @@ class App extends React.Component<Props, State> {
     }
 
     if (updated) {
-      this.debSetState({ suggestions: this.state.suggestions })
+      this.state.suggestions = suggestions
+      this.debSetState(this.state)
     }
   }
 
@@ -295,7 +288,7 @@ class App extends React.Component<Props, State> {
     let n = this.tc.addNode(node.ID, tags, node.Metadata, (n: Node): number => this.config.nodeAttrs(n).weight)
     this.tc.setParent(n, this.tc.root)
 
-    this.updateSuggestions(n, this.state.suggestions)
+    this.updateSuggestions(n)
 
     this.updateFilters(n)
 
@@ -414,7 +407,8 @@ class App extends React.Component<Props, State> {
 
     this.tc.activeNodeTag(this.config.defaultNodeTag())
 
-    this.setState({ nodeTagStates: this.tc.nodeTagStates })
+    this.state.nodeTagStates = this.tc.nodeTagStates
+    this.debSetState(this.state)
 
     this.tc.zoomFit()
   }
@@ -471,6 +465,7 @@ class App extends React.Component<Props, State> {
     var data: { Type: string, Obj: any } = JSON.parse(msg)
     switch (data.Type) {
       case "SyncReply":
+        this.state.suggestions = []
         if (this.tc) {
           this.tc.resetTree()
           this.parseTopology(data.Obj)
@@ -510,7 +505,8 @@ class App extends React.Component<Props, State> {
           this.refreshTopology()
 
           if (this.tc) {
-            this.setState({ linkTagStates: this.tc.linkTagStates })
+            this.state.linkTagStates = this.tc.linkTagStates
+            this.debSetState(this.state)
           }
         }
         break
@@ -574,7 +570,8 @@ class App extends React.Component<Props, State> {
   }
 
   setWSContext(context: WSContext) {
-    this.setState({ wsContext: context })
+    this.state.wsContext = context
+    this.setState(this.state)
     this.sync()
   }
 
@@ -603,7 +600,7 @@ class App extends React.Component<Props, State> {
     }
 
     this.notify("Connected", "info")
-    if (!this.defaultFilter()) {
+    if (!this.applyDefaultFilter()) {
       this.sync()
     }
 
@@ -623,11 +620,13 @@ class App extends React.Component<Props, State> {
   }
 
   openDrawer() {
-    this.setState({ isNavOpen: true })
+    this.state.isNavOpen = true
+    this.setState(this.state)
   }
 
   closeDrawer() {
-    this.setState({ isNavOpen: false })
+    this.state.isNavOpen = false
+    this.setState(this.state)
   }
 
   onLinkTagStateChange(event) {
@@ -649,7 +648,8 @@ class App extends React.Component<Props, State> {
   }
 
   onLinkTagChange(tags: Map<string, LinkTagState>) {
-    this.setState({ linkTagStates: tags })
+    this.state.linkTagStates = tags
+    this.debSetState(this.state)
   }
 
   onSearchChange(selected: Array<string>) {
@@ -678,12 +678,12 @@ class App extends React.Component<Props, State> {
 
   openMenu(id: string, event: React.MouseEvent<HTMLElement>) {
     this.state.anchorEl.set(id, event.currentTarget)
-    this.setState({ anchorEl: this.state.anchorEl })
+    this.setState(this.state)
   }
 
   closeMenu(id) {
     this.state.anchorEl.set(id, null)
-    this.setState({ anchorEl: this.state.anchorEl })
+    this.setState(this.state)
   }
 
   logout() {
@@ -697,7 +697,9 @@ class App extends React.Component<Props, State> {
     }
 
     this.tc.activeNodeTag(tag)
-    this.setState({ nodeTagStates: this.tc.nodeTagStates })
+
+    this.state.nodeTagStates = this.tc.nodeTagStates
+    this.setState(this.state)
   }
 
   onSelectionLocation(el: Node | Link) {
@@ -714,7 +716,8 @@ class App extends React.Component<Props, State> {
   }
 
   onTopologyClick() {
-    this.setState({ isSelectionOpen: false })
+    this.state.isSelectionOpen = false
+    this.setState(this.state)
   }
 
   onSelectionClose(el: Node | Link) {
@@ -734,7 +737,8 @@ class App extends React.Component<Props, State> {
   }
 
   openSelection() {
-    this.setState({ isSelectionOpen: true })
+    this.state.isSelectionOpen = true
+    this.setState(this.state)
   }
 
   unselectAll() {
@@ -803,8 +807,14 @@ class App extends React.Component<Props, State> {
   actionButtons(el: Node | Link) {
     return (
       <React.Fragment>
-        <GremlinButton el={el} onClick={() => { this.setState({ isGremlinPanelOpen: !this.state.isGremlinPanelOpen }) }} />
-        <CaptureButton el={el} onClick={() => { this.setState({ isCapturePanelOpen: !this.state.isCapturePanelOpen }) }} />
+        <GremlinButton el={el} onClick={() => {
+          this.state.isGremlinPanelOpen = !this.state.isGremlinPanelOpen
+          this.setState(this.state) 
+        }} />
+        <CaptureButton el={el} onClick={() => {
+          this.state.isCapturePanelOpen = !this.state.isCapturePanelOpen
+          this.setState(this.state) 
+        }} />
       </React.Fragment>
     )
   }
@@ -823,18 +833,20 @@ class App extends React.Component<Props, State> {
 
   renderFilterButtons(classes: any) {
     return (
-      <React.Fragment>
-        <Container className={classes.filtersPanel}>
-          {Array.from(this.state.filters.values()).map((filter) => (
-            <Button variant="contained" key={filter.id} aria-label="delete" size="small"
-              color={this.state.activeFilter === filter.id ? "primary" : "default"}
-              className={classes.filtersFab}
-              onClick={() => { this.setState({ activeFilter: filter.id }); filter.callback() }}>
-              {filter.label}
-            </Button>
-          ))}
-        </Container>
-      </React.Fragment>
+      <Container className={classes.filtersPanel}>
+        <Autocomplete
+          options={this.state.filters}
+          value={this.state.activeFilter}
+          onChange={(event: any, filter: Filter | null) => {
+            this.applyFilter(filter)
+          }}
+          getOptionLabel={(filter: Filter) => filter.label}
+          groupBy={(filter: Filter) => filter.label.charAt(0)}
+          style={{ width: 300 }}
+          size="small"
+          renderInput={(params) => <TextField {...params} label="Filter" variant="outlined" />}
+        />
+      </Container>
     )
   }
 

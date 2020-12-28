@@ -149,7 +149,7 @@ export const styles = (theme: Theme) => createStyles({
   },
   nodeTagsPanel: {
     position: 'absolute',
-    left: 20,
+    left: 15,
     top: 80,
     maxWidth: 'unset',
     width: 'unset',
@@ -212,6 +212,7 @@ export const styles = (theme: Theme) => createStyles({
     paddingBottom: theme.spacing(0),
     paddingLeft: theme.spacing(0),
     paddingRight: theme.spacing(0),
+    backgroundColor: theme.palette.common.white,
   },
   filtersFab: {
     margin: theme.spacing(1),

@@ -158,20 +158,6 @@ export class DataViewer extends React.Component<Props, State> {
 
         // re-apply sort and filter if need
         for (let column of this.props.columns) {
-            /*if (column.name === this.state.sortField && this.state.sortDirection) {
-                switch (this.state.sortDirection) {
-                    case "ascending":
-                        column.options.sortDirection = "asc"
-                        break
-                    case "descending":
-                        column.options.sortDirection = "desc"
-                        break
-                    default:
-                        column.options.sortDirection = "none"
-                        break
-                }
-            }*/
-
             if (this.applyDefaultColumns && this.props.defaultColumns) {
                 if (!this.props.defaultColumns.includes(column.name)) {
                     column.options.display = 'false'
