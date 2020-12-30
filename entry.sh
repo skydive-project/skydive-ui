@@ -7,4 +7,5 @@ if [ -f /dump.json ]; then
     /usr/bin/skydive client topology import --file /dump.json
 fi
 
+echo "########## Skydive WebUI - HTTP Server started ##########"
 python3 -m http.server 8080 --directory dist/
