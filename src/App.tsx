@@ -242,7 +242,14 @@ class App extends React.Component<Props, State> {
     }
 
     if (updated) {
-      this.state.filters = Array.from(this.filters.values()).sort((a: Filter, b: Filter) => { return a.label.localeCompare(b.label) })
+      let fnc = (a: Filter, b: Filter) => {
+        if (a.category == b.category) {
+          return a.label.localeCompare(b.label)
+        }
+        return a.category.localeCompare(b.category)
+      }
+
+      this.state.filters = Array.from(this.filters.values()).sort(fnc)
       this.debSetState(this.state)
     }
   }
