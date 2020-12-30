@@ -389,8 +389,10 @@ class DefaultConfig {
                         id: node.data.Name,
                         label: node.data.Name,
                         callback: () => {
-                            var gremlin = "G.V().Has('Namespace', '" + node.data.Name + "')" +
-                                ".descendants().SubGraph()"
+                            var gremlin = "G.V().Has(" +
+                                "'Name','" + node.data.Name + "'," +
+                                "'Type','namespace'" +
+                                ").descendants().SubGraph()"
 
                             window.App.setGremlinFilter(gremlin)
                         }

@@ -218,6 +218,7 @@ export class Topology extends React.Component<Props, {}> {
     private d3nodes: Map<string, D3Node>
     private absTransformX: number
     private absTransformY: number
+    private nodeTagActive: string
     private nodeTagCount: Map<string, number>
     private linkTagCount: Map<string, number>
     private invalidated: boolean
@@ -448,6 +449,7 @@ export class Topology extends React.Component<Props, {}> {
         this.nodes = new Map<string, Node>()
         this.nodeTagStates = new Map<string, boolean>()
         this.nodeTagCount = new Map<string, number>()
+        this.nodeTagActive = ""
 
         this.links = new Map<string, Link>()
         this.linkTagStates = new Map<string, LinkTagState>()
@@ -469,16 +471,16 @@ export class Topology extends React.Component<Props, {}> {
         this.resetCacheAndRenderTree()
     }
 
-    showNodeTag(tag: string, active: boolean) {
-        this.nodeTagStates.set(tag, active)
-        this.invalidate()
-    }
-
     activeNodeTag(tag: string) {
         for (const [key, state] of this.nodeTagStates.entries()) {
             this.nodeTagStates.set(key, false)
         }
-        this.nodeTagStates.set(tag, true)
+        if (this.nodeTagStates.has(tag)) {
+            this.nodeTagStates.set(tag, true)
+            this.nodeTagActive = tag
+        } else {
+            this.nodeTagStates.set(this.nodeTagActive, true)
+        }
         this.invalidate()
     }
 
@@ -509,11 +511,15 @@ export class Topology extends React.Component<Props, {}> {
         this.nodes.set(id, node)
 
         tags.forEach(tag => {
+            if (!this.nodeTagActive) {
+                this.nodeTagActive = tag
+            }
+
             var count = this.nodeTagCount.get(tag) || 0
             this.nodeTagCount.set(tag, count + 1)
 
             if (!this.nodeTagStates.has(tag)) {
-                this.nodeTagStates.set(tag, false)
+                this.nodeTagStates.set(tag, this.nodeTagActive == tag)
             }
         })
 
@@ -546,6 +552,11 @@ export class Topology extends React.Component<Props, {}> {
         return node
     }
 
+    private getRandKey(m: Map<any, any>): any {
+        let keys = Array.from(m.keys());
+        return keys[Math.floor(Math.random() * keys.length)];
+    }
+
     delNode(id: string) {
         var node = this.nodes.get(id)
         if (!node) {
@@ -568,6 +579,11 @@ export class Topology extends React.Component<Props, {}> {
             if (!count) {
                 this.nodeTagCount.delete(tag)
                 this.nodeTagStates.delete(tag)
+
+                if (this.nodeTagActive == tag) {
+                    let tag = this.getRandKey(this.nodeTagStates)
+                    this.nodeTagStates.set(tag, true)
+                }
             } else {
                 this.nodeTagCount.set(tag, count - 1)
             }

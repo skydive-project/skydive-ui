@@ -386,22 +386,20 @@ class App extends React.Component<Props, State> {
       this.addNode(node)
     }
 
-    if (!data.Edges) {
-      return
-    }
-
-    // then add ownership links
-    for (let edge of data.Edges) {
-      if (edge.Metadata.RelationType === "ownership") {
-        this.addEdge(edge)
+    if (data.Edges) {
+      // then add ownership links
+      for (let edge of data.Edges) {
+        if (edge.Metadata.RelationType === "ownership") {
+          this.addEdge(edge)
+        }
       }
-    }
 
-    // finally add remaining links
-    // then add ownership links
-    for (let edge of data.Edges) {
-      if (edge.Metadata.RelationType !== "ownership") {
-        this.addEdge(edge)
+      // finally add remaining links
+      // then add ownership links
+      for (let edge of data.Edges) {
+        if (edge.Metadata.RelationType !== "ownership") {
+          this.addEdge(edge)
+        }
       }
     }
 
