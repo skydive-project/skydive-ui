@@ -19,7 +19,7 @@ import * as React from 'react'
 import { withStyles } from '@material-ui/core/styles'
 import Collapse from '@material-ui/core/Collapse'
 import CodeIcon from '@material-ui/icons/Code'
-import Highlight from 'react-highlight'
+import SyntaxHighlighter from 'react-syntax-highlighter'
 
 import Panel from './Panel'
 import { styles } from './GremlinStyles'
@@ -52,9 +52,9 @@ export class GremlinPanel extends React.Component<Props> {
             <Collapse in={this.props.expanded} timeout="auto" unmountOnExit className={classes.panel}>
                 <Panel icon={<CodeIcon />} title="Gremlin expression" content={
                     <div className={classes.gremlinExpr}>
-                        <Highlight language="bash">
+                        <SyntaxHighlighter language="bash">
                             {gremlin}
-                        </Highlight>
+                        </SyntaxHighlighter>
                     </div>
                 } />
             </Collapse>
