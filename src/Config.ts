@@ -36,6 +36,8 @@ const WEIGHT_K8S_OTHER = 120
 export interface Filter {
     id: string
     label: string
+    category: string
+    tag: string
     callback: () => void
 }
 
@@ -375,6 +377,8 @@ class DefaultConfig {
                     {
                         id: node.data.Name,
                         label: node.data.Name,
+                        category: "netns",
+                        tag: "infrastructure",
                         callback: () => {
                             var gremlin = "G.V().Has('Name', '" + node.data.Name + "')" +
                                 ".descendants().SubGraph()"
@@ -388,6 +392,8 @@ class DefaultConfig {
                     {
                         id: node.data.Name,
                         label: node.data.Name,
+                        category: "namespaces",
+                        tag: "kubernetes",
                         callback: () => {
                             var gremlin = "G.V().Has(" +
                                 "'Name','" + node.data.Name + "'," +
@@ -407,6 +413,8 @@ class DefaultConfig {
         return {
             id: "default",
             label: "Default",
+            category: "default",
+            tag: "infrastructure",
             callback: () => {
                 window.App.setGremlinFilter("")
             }

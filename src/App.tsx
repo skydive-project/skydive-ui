@@ -132,6 +132,7 @@ class App extends React.Component<Props, State> {
   debSetState: (state: any) => void
   config: ConfigReducer
   filters: Map<string, Filter>
+  nextTag: string
 
   constructor(props) {
     super(props)
@@ -208,6 +209,7 @@ class App extends React.Component<Props, State> {
   private applyDefaultFilter(): boolean {
     var filter = this.config.defaultFilter()
     if (filter) {
+      this.nextTag = filter.tag
       filter.callback()
 
       return true
@@ -221,6 +223,7 @@ class App extends React.Component<Props, State> {
     this.debSetState(this.state)
 
     if (filter) {
+      this.nextTag = filter.tag
       filter.callback()
     } else {
       this.applyDefaultFilter()
@@ -403,7 +406,12 @@ class App extends React.Component<Props, State> {
       }
     }
 
-    this.tc.activeNodeTag(this.config.defaultNodeTag())
+    if (this.nextTag) {
+      this.tc.activeNodeTag(this.nextTag)
+      this.nextTag = ""
+    } else {
+      this.tc.activeNodeTag(this.config.defaultNodeTag())
+    }
 
     this.state.nodeTagStates = this.tc.nodeTagStates
     this.debSetState(this.state)
@@ -807,11 +815,11 @@ class App extends React.Component<Props, State> {
       <React.Fragment>
         <GremlinButton el={el} onClick={() => {
           this.state.isGremlinPanelOpen = !this.state.isGremlinPanelOpen
-          this.setState(this.state) 
+          this.setState(this.state)
         }} />
         <CaptureButton el={el} onClick={() => {
           this.state.isCapturePanelOpen = !this.state.isCapturePanelOpen
-          this.setState(this.state) 
+          this.setState(this.state)
         }} />
       </React.Fragment>
     )
@@ -839,7 +847,7 @@ class App extends React.Component<Props, State> {
             this.applyFilter(filter)
           }}
           getOptionLabel={(filter: Filter) => filter.label}
-          groupBy={(filter: Filter) => filter.label.charAt(0)}
+          groupBy={(filter: Filter) => filter.category}
           style={{ width: 300 }}
           size="small"
           renderInput={(params) => <TextField {...params} label="Filter" variant="outlined" />}
