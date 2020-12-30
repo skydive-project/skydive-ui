@@ -1,6 +1,8 @@
 const HtmlWebPackPlugin = require("html-webpack-plugin");
 const CopyWebPackPlugin = require('copy-webpack-plugin');
 
+var path = require('path');
+
 const htmlPlugin = new HtmlWebPackPlugin({
     template: "./src/index.html",
     filename: "./index.html"
@@ -55,6 +57,9 @@ module.exports = {
 
     devServer: {
         historyApiFallback: true,
+        contentBase: path.join(__dirname, 'dist'),
+        compress: true,
+        port: 8080
     },
 
     devtool: "source-map",

@@ -1,5 +1,5 @@
 {
-  "name": "topsky",
+  "name": "skydive-ui",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -69,8 +69,8 @@
     "webpack-dev-server": "^3.11.0"
   },
   "scripts": {
-    "start": "webpack serve --mode development --disable-host-check --host 0.0.0.0 --open-page=$PAGE",
-    "build": "webpack --mode production",
+    "start": "webpack serve --mode development --disable-host-check --host 0.0.0.0",
+    "build": "webpack",
     "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' mocha -r ts-node/register tests/**/*.test.ts",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test"
   }
