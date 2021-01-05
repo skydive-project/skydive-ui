@@ -26,11 +26,14 @@ const WEIGHT_PORTS = 15
 const WEIGHT_VIRTUAL = 17
 const WEIGHT_NAMESPACE = 18
 const WEIGHT_VMS = 19
+const WEIGHT_CONTAINERS = 20
 const WEIGHT_K8S_FEDERATION = 100
 const WEIGHT_K8S_CLUSTER = 101
 const WEIGHT_K8S_NODE = 102
 const WEIGHT_K8S_NAMESPACE = 103
 const WEIGHT_K8S_POD = 104
+const WEIGHT_K8S_CONTAINER = 105
+const WEIGHT_K8S_SERVICE = 106
 const WEIGHT_K8S_OTHER = 120
 
 export interface Filter {
@@ -372,16 +375,18 @@ class DefaultConfig {
 
     filters(node: Node): Array<Filter> {
         switch (node.data.Type) {
-            case "netns":
+            case "host":
                 return [
                     {
                         id: node.data.Name,
                         label: node.data.Name,
-                        category: "netns",
+                        category: "host",
                         tag: "infrastructure",
                         callback: () => {
-                            var gremlin = "G.V().Has('Name', '" + node.data.Name + "')" +
-                                ".descendants().SubGraph()"
+                            var gremlin = "G.V().Has(" +
+                                "'Name','" + node.data.Name + "'," +
+                                "'Type','host'" +
+                                ").descendants().SubGraph()"
 
                             window.App.setGremlinFilter(gremlin)
                         }
@@ -416,7 +421,8 @@ class DefaultConfig {
             category: "default",
             tag: "infrastructure",
             callback: () => {
-                window.App.setGremlinFilter("")
+                var gremlin = "G.V().Has(" + "'Type',Regex('host|cluster|node|namespace')" + ").descendants().SubGraph()"            
+                window.App.setGremlinFilter(gremlin)
             }
         }
     }
@@ -451,10 +457,6 @@ class DefaultConfig {
             /*
             case "configmap":
                 attrs.href = "assets/icons/configmap.png"
-                attrs.weight = WEIGHT_K8S_POD
-                break
-            case "container":
-                attrs.href = "assets/icons/container.png"
                 attrs.weight = WEIGHT_K8S_POD
                 break
             case "cronjob":
@@ -505,10 +507,6 @@ class DefaultConfig {
                 attrs.href = "assets/icons/secret.png"
                 attrs.weight = WEIGHT_K8S_POD
                 break
-            case "service":
-                attrs.href = "assets/icons/service.png"
-                attrs.weight = WEIGHT_K8S_POD
-                break
             case "statefulset":
                 attrs.href = "assets/icons/statefulset.png"
                 attrs.weight = WEIGHT_K8S_POD
@@ -529,6 +527,14 @@ class DefaultConfig {
             case "pod":
                 attrs.href = "assets/icons/pod.png"
                 attrs.weight = WEIGHT_K8S_POD
+                break
+            case "container":
+                attrs.href = "assets/icons/container.png"
+                attrs.weight = WEIGHT_K8S_CONTAINER
+                break
+            case "service":
+                attrs.href = "assets/icons/service.png"
+                attrs.weight = WEIGHT_K8S_SERVICE
                 break
             default:
                 attrs.href = "assets/icons/k8s.png"
@@ -592,6 +598,10 @@ class DefaultConfig {
                 attrs.icon = "\uf24d"
                 attrs.weight = WEIGHT_NAMESPACE
                 break
+            case "container":
+                attrs.icon = "\uf49e"
+                attrs.weight = WEIGHT_CONTAINERS
+                break
             case "libvirt":
                 attrs.icon = "\uf109"
                 attrs.weight = WEIGHT_VMS
@@ -599,8 +609,9 @@ class DefaultConfig {
         }
 
         if (node.data.Manager === "docker") {
-            attrs.icon = "\uf395"
-            attrs.iconClass = "font-brands"
+            attrs.badges = [{ text: "\uf395", iconClass: 'font-brands' }]
+        } else if (node.data.Manager === "runc") {
+            attrs.badges = [{ text: "\uf7bc", iconClass: 'font-brands' }]
         }
 
         if (node.data.IPV4 && node.data.IPV4.length) {
@@ -617,7 +628,7 @@ class DefaultConfig {
         }
 
         if (node.data.Captures) {
-            attrs.badges = ["\uf03d"]
+            attrs.badges = [{ text: "\uf03d" }]
         }
 
         return attrs
@@ -663,9 +674,21 @@ class DefaultConfig {
 
     nodeTags(data: any): Array<string> {
         if (data.Manager && data.Manager === "k8s") {
-            return ["kubernetes"]
+            switch (data.Type) {
+                case "container":
+                case "pod":
+                    return ["kubernetes", "compute"]
+                default:
+                    return ["kubernetes"]
+            }
         } else {
-            return ["infrastructure"]
+            switch (data.Type) {
+                case "host":
+                case "container":
+                    return ["infrastructure", "compute"]
+                default:
+                    return ["infrastructure"]
+            }
         }
     }
 
@@ -714,7 +737,7 @@ class DefaultConfig {
         if (node.data.K8s) {
             var labels = node.data.K8s.Labels
             if (!labels) {
-                return name
+                return name + "(s)"
             }
 
             var app = labels["k8s-app"] || labels["app"]
@@ -742,12 +765,15 @@ class DefaultConfig {
         wt.set(WEIGHT_VIRTUAL, "Virtual")
         wt.set(WEIGHT_NAMESPACE, "Namespaces")
         wt.set(WEIGHT_VMS, "VMs")
-        wt.set(WEIGHT_K8S_FEDERATION, "Federations")
-        wt.set(WEIGHT_K8S_CLUSTER, "Clusters")
-        wt.set(WEIGHT_K8S_NODE, "Nodes")
-        wt.set(WEIGHT_K8S_NAMESPACE, "Namespaces")
-        wt.set(WEIGHT_K8S_POD, "Pods")
-        wt.set(WEIGHT_K8S_OTHER, "More-Kubernetes")
+        wt.set(WEIGHT_CONTAINERS, "Containers")
+        wt.set(WEIGHT_K8S_FEDERATION, "k8s-Federations")
+        wt.set(WEIGHT_K8S_CLUSTER, "k8s-clusters")
+        wt.set(WEIGHT_K8S_NODE, "k8s-nodes")
+        wt.set(WEIGHT_K8S_NAMESPACE, "k8s-namespaces")
+        wt.set(WEIGHT_K8S_POD, "k8s-pods")
+        wt.set(WEIGHT_K8S_CONTAINER, "k8s-containers")
+        wt.set(WEIGHT_K8S_SERVICE, "k8s-services")
+        wt.set(WEIGHT_K8S_OTHER, "k8s-more")
 
         return wt
     }
@@ -804,6 +830,12 @@ class DefaultConfig {
                 field: "Docker",
                 expanded: false,
                 icon: "\uf395",
+                iconClass: "font-brands"
+            },
+            {
+                field: "Runc",
+                expanded: false,
+                icon: "\uf7bc",
                 iconClass: "font-brands"
             },
             {
