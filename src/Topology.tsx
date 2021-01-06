@@ -157,7 +157,7 @@ export interface NodeAttrs {
     icon: string
     iconClass: string
     href: string
-    badges: Array<string>
+    badges: Array<BadgeAttrs>
     weight: number
 }
 
@@ -168,6 +168,11 @@ export interface LinkAttrs {
     icon: string
     iconClass: string
     href: string
+}
+
+export interface BadgeAttrs {
+    text: string
+    iconClass?: string
 }
 
 interface Props {
@@ -757,7 +762,7 @@ export class Topology extends React.Component<Props, {}> {
     private cloneTree(node: Node, parent: NodeWrapper | null): NodeWrapper | null {
         // always return root node as it is the base of the tree and thus all the
         // nodes
-        if (!node.tags.some(tag => tag === "root" || this.nodeTagStates.get(tag) === true)) {
+        if (!node.tags.some(tag => tag === "root" || this.nodeTagStates.get(tag))) {
             return null
         }
 
@@ -2150,7 +2155,7 @@ export class Topology extends React.Component<Props, {}> {
 
             badgeEnter
                 .append("rect")
-                .attr("x", (d: string, i: number) => 38 - i * 28)
+                .attr("x", (d: BadgeAttrs, i: number) => 38 - i * 28)
                 .attr("y", -60)
                 .attr("width", 24)
                 .attr("height", 24)
@@ -2159,9 +2164,10 @@ export class Topology extends React.Component<Props, {}> {
 
             badgeEnter
                 .append("text")
-                .attr("dx", (d: string, i: number) => 50 - i * 28)
+                .attr("class", (d: BadgeAttrs) => d.iconClass ? d.iconClass : "")
+                .attr("dx", (d: BadgeAttrs, i: number) => 50 - i * 28)
                 .attr("dy", -42)
-                .text(d => d)
+                .text((d: BadgeAttrs) => d.text)
                 .attr("pointer-events", "none")
         }
 

@@ -126,14 +126,14 @@ svg {
 }
 
 .node-badge rect {
-    fill: #6975a9;
+    fill: #ddd;
 }
 
 .node-badge text {
     font-size: 16px;
     text-anchor: middle;
-    font-family: 'Font Awesome 5 Free' !important;
-    fill: #fff;
+    font-family: 'Font Awesome 5 Free';
+    fill: #f44336;
     font-weight: 900;
 }
 
