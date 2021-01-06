@@ -421,7 +421,7 @@ class DefaultConfig {
             category: "default",
             tag: "infrastructure",
             callback: () => {
-                var gremlin = "G.V().Has(" + "'Type',Regex('host|cluster|node|namespace')" + ").descendants().SubGraph()"            
+                var gremlin = ""            
                 window.App.setGremlinFilter(gremlin)
             }
         }
