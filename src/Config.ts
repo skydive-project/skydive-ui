@@ -421,7 +421,7 @@ class DefaultConfig {
             category: "default",
             tag: "infrastructure",
             callback: () => {
-                var gremlin = ""
+                var gremlin = ""            
                 window.App.setGremlinFilter(gremlin)
             }
         }
@@ -609,9 +609,9 @@ class DefaultConfig {
         }
 
         if (node.data.Manager === "docker") {
-            attrs.badges = [{ text: "\uf395", iconClass: 'font-brands', fill: '#3888ae', stroke: '#fff' }]
+            attrs.badges = [{ text: "\uf395", iconClass: 'font-brands' }]
         } else if (node.data.Manager === "runc") {
-            attrs.badges = [{ text: "\uf7bc", iconClass: 'font-brands', fill: '#000', stroke: '#f44336' }]
+            attrs.badges = [{ text: "\uf7bc", iconClass: 'font-brands' }]
         }
 
         if (node.data.IPV4 && node.data.IPV4.length) {
@@ -683,6 +683,7 @@ class DefaultConfig {
             }
         } else {
             switch (data.Type) {
+                case "host":
                 case "container":
                     return ["infrastructure", "compute"]
                 default:

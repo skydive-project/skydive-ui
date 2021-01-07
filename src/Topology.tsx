@@ -173,8 +173,6 @@ export interface LinkAttrs {
 export interface BadgeAttrs {
     text: string
     iconClass?: string
-    fill?: string
-    stroke?: string
 }
 
 interface Props {
@@ -762,33 +760,33 @@ export class Topology extends React.Component<Props, {}> {
 
     // clone using wrapped node
     private cloneTree(node: Node, parent: NodeWrapper | null): NodeWrapper | null {
-        if (node.tags.some(tag => tag === "root" || this.nodeTagStates.get(tag))) {
-            parent = new NodeWrapper(node.id, WrapperType.Normal, node, parent)
+        // always return root node as it is the base of the tree and thus all the
+        // nodes
+        if (!node.tags.some(tag => tag === "root" || this.nodeTagStates.get(tag))) {
+            return null
         }
 
-        if (!parent) {
-            return null;
-        }
+        let cloned = new NodeWrapper(node.id, WrapperType.Normal, node, parent)
 
-        if (parent.wrapped.state.expanded) {
+        if (node.state.expanded) {
             node.children.forEach(child => {
-                let subCloned = this.cloneTree(child, parent)
-                if (subCloned && parent && subCloned !== parent) {
-                    parent.children.push(subCloned)
+                let subCloned = this.cloneTree(child, cloned)
+                if (subCloned) {
+                    cloned.children.push(subCloned)
                 }
             })
             if (this.props.sortNodesFnc) {
-                parent.children.sort((a, b) => this.props.sortNodesFnc(a.wrapped, b.wrapped))
+                cloned.children.sort((a, b) => this.props.sortNodesFnc(a.wrapped, b.wrapped))
             }
-            for (const [gid, group] of this.groupify(parent).entries()) {
+            for (const [gid, group] of this.groupify(cloned).entries()) {
                 this.groups.set(gid, group)
             }
         }
 
-        return parent
+        return cloned
     }
 
-    private normalizeTree(root: Node): NodeWrapper | null {
+    private normalizeTree(node: Node): NodeWrapper | null {
         // return depth of the given layer
         let layerHeight = (node: NodeWrapper, weight: number, currDepth: number): number => {
             if (node.wrapped.getWeight() > weight) {
@@ -859,7 +857,7 @@ export class Topology extends React.Component<Props, {}> {
         this.groups.clear()
         this.nodeGroup.clear()
 
-        var tree = this.cloneTree(root, null)
+        var tree = this.cloneTree(node, null)
         if (!tree) {
             return null
         }
@@ -2163,16 +2161,14 @@ export class Topology extends React.Component<Props, {}> {
                 .attr("height", 24)
                 .attr("rx", 5)
                 .attr("ry", 5)
-                .attr("fill", (d: BadgeAttrs) => d.fill ? d.fill : "#6975a9")
 
             badgeEnter
                 .append("text")
                 .attr("class", (d: BadgeAttrs) => d.iconClass ? d.iconClass : "")
                 .attr("dx", (d: BadgeAttrs, i: number) => 50 - i * 28)
-                .attr("dy", -41)
+                .attr("dy", -42)
                 .text((d: BadgeAttrs) => d.text)
                 .attr("pointer-events", "none")
-                .attr("fill", (d: BadgeAttrs) => d.stroke ? d.stroke : "#fff")
         }
 
         nodeEnter
