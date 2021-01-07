@@ -125,15 +125,10 @@ svg {
     font-weight: 900;
 }
 
-.node-badge rect {
-    fill: #ddd;
-}
-
 .node-badge text {
-    font-size: 16px;
+    font-size: 18px;
     text-anchor: middle;
     font-family: 'Font Awesome 5 Free';
-    fill: #f44336;
     font-weight: 900;
 }
 
