@@ -173,6 +173,8 @@ export interface LinkAttrs {
 export interface BadgeAttrs {
     text: string
     iconClass?: string
+    fill?: string
+    stroke?: string
 }
 
 interface Props {
@@ -759,31 +761,44 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     // clone using wrapped node
-    private cloneTree(node: Node, parent: NodeWrapper | null): NodeWrapper | null {
-        // always return root node as it is the base of the tree and thus all the
-        // nodes
-        if (!node.tags.some(tag => tag === "root" || this.nodeTagStates.get(tag))) {
-            return null
+    private cloneTree(node: Node, parent: NodeWrapper | null): [NodeWrapper | null, Array<NodeWrapper> | null] {
+        var cloned = new NodeWrapper(node.id, WrapperType.Normal, node, parent)
+
+        var matchTags = node.tags.some(tag => this.nodeTagStates.get(tag))
+        if (matchTags && !node.state.expanded) {
+            console.log(matchTags)
+            return [cloned, null]
         }
 
-        let cloned = new NodeWrapper(node.id, WrapperType.Normal, node, parent)
+        node.children.forEach(child => {
+            let [subCloned, subChildren] = this.cloneTree(child, cloned)
 
-        if (node.state.expanded) {
-            node.children.forEach(child => {
-                let subCloned = this.cloneTree(child, cloned)
-                if (subCloned) {
-                    cloned.children.push(subCloned)
-                }
-            })
-            if (this.props.sortNodesFnc) {
-                cloned.children.sort((a, b) => this.props.sortNodesFnc(a.wrapped, b.wrapped))
+            if (node.id === "root") {
+                console.log(subCloned)
+                console.log(subChildren)
             }
-            for (const [gid, group] of this.groupify(cloned).entries()) {
-                this.groups.set(gid, group)
+            if (subCloned) {
+                cloned.children.push(subCloned)
+            } else if (subChildren) {
+                subChildren.forEach(subChild => {
+                    subChild.parent = cloned
+                    cloned.children.push(subChild)
+                })
             }
+        })
+        if (this.props.sortNodesFnc) {
+            cloned.children.sort((a, b) => this.props.sortNodesFnc(a.wrapped, b.wrapped))
+        }
+        for (const [gid, group] of this.groupify(cloned).entries()) {
+            this.groups.set(gid, group)
         }
 
-        return cloned
+        if (node.id === "root" || matchTags) {
+            console.log(cloned.children)
+            return [cloned, null]
+        }
+
+        return [null, cloned.children]
     }
 
     private normalizeTree(node: Node): NodeWrapper | null {
@@ -857,10 +872,12 @@ export class Topology extends React.Component<Props, {}> {
         this.groups.clear()
         this.nodeGroup.clear()
 
-        var tree = this.cloneTree(node, null)
+        var [tree, _] = this.cloneTree(node, null)
         if (!tree) {
             return null
         }
+
+        console.log(tree)
 
         for (let weight of this.weights) {
             let cache = { chains: new Map<string, { first: NodeWrapper, last: NodeWrapper }>() }
@@ -1748,7 +1765,7 @@ export class Topology extends React.Component<Props, {}> {
             .style("opacity", 0)
         group.exit().remove()
 
-        const curlyBrace = (x1: number, y1: number, x2: number, y2: number, w: number) => {
+        /*const curlyBrace = (x1: number, y1: number, x2: number, y2: number, w: number) => {
             var len = y2 - y1
 
             var qx1 = x1 - w, qy1 = y1
@@ -1761,8 +1778,7 @@ export class Topology extends React.Component<Props, {}> {
                 " T " + qx3 + " " + qy3 +
                 " Q " + qx4 + " " + qy4 + " " + qx5 + " " + qy5 +
                 " T " + x2 + " " + y2
-        }
-
+        }*/
 
         const straightBrace = (x1: number, y1: number, x2: number, y2: number, m: number) => {
             return "M " + (x1 - m) + " " + y1 +
@@ -1779,7 +1795,7 @@ export class Topology extends React.Component<Props, {}> {
             var y1 = bb.y + 70
             var x2 = bb.x + bb.width - 15
             var y2 = bb.y + bb.height - 70
-            var margin = 15
+            var margin = 12
 
             //var left = curlyBrace(x1, y1, x1, y2, 15)
             //var right = curlyBrace(x2, y2, x2, y1, -15)
@@ -2161,14 +2177,16 @@ export class Topology extends React.Component<Props, {}> {
                 .attr("height", 24)
                 .attr("rx", 5)
                 .attr("ry", 5)
+                .attr("fill", (d: BadgeAttrs) => d.fill ? d.fill : "#6975a9")
 
             badgeEnter
                 .append("text")
                 .attr("class", (d: BadgeAttrs) => d.iconClass ? d.iconClass : "")
                 .attr("dx", (d: BadgeAttrs, i: number) => 50 - i * 28)
-                .attr("dy", -42)
+                .attr("dy", -41)
                 .text((d: BadgeAttrs) => d.text)
                 .attr("pointer-events", "none")
+                .attr("fill", (d: BadgeAttrs) => d.stroke ? d.stroke : "#fff")
         }
 
         nodeEnter
