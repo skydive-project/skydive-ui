@@ -105,6 +105,13 @@ class DataPanel extends React.Component<Props, State> {
 
         const iconClass = this.props.iconClass === "font-brands" ? classes.panelIconBrands : classes.panelIconFree
 
+        var details = <Typography>No data available</Typography>
+        if (this.state.data.rows.length) {
+            details = <DataViewer columns={this.state.data.columns} data={this.state.data.rows} filterKeys={this.state.filterKeys}
+                graph={this.state.data.graph} details={this.state.data.details} onFilterReset={this.onFilterReset.bind(this)}
+                defaultColumns={this.props.defaultColumns} />
+        }
+
         return (
             <Accordion defaultExpanded={this.props.defaultExpanded} onChange={this.onExpandChange.bind(this)}>
                 <AccordionSummary
@@ -115,14 +122,7 @@ class DataPanel extends React.Component<Props, State> {
                     <Typography>{this.props.title}</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                    {
-                        this.state.data.rows.length && this.state.isExpanded &&
-                        (
-                            <DataViewer columns={this.state.data.columns} data={this.state.data.rows} filterKeys={this.state.filterKeys}
-                                graph={this.state.data.graph} details={this.state.data.details} onFilterReset={this.onFilterReset.bind(this)}
-                                defaultColumns={this.props.defaultColumns} />
-                        )
-                    }
+                    {this.state.isExpanded && details}
                 </AccordionDetails>
             </Accordion>
         )

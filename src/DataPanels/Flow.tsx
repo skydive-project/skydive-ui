@@ -60,8 +60,6 @@ class FlowPanel extends React.Component<Props, State> {
     normalizer(data: Array<any>): any {
         return data.map(flow => {
 
-            console.log(flow)
-
             // TODO(safchain) add more
             var result = {
                 "Application": flow.Application,
