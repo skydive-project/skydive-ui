@@ -67,7 +67,7 @@ class CaptureForm extends React.Component<Props, State> {
     }
 
     onClick() {
-        var conf = new Configuration({ accessToken: this.props.session.token })
+        var conf = new Configuration({ basePath: this.props.session.endpoint + "/api", accessToken: this.props.session.token })
         var api = new CapturesApi(conf)
 
         api.createCapture({ GremlinQuery: this.props.gremlin }).then(result => {

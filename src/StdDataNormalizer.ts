@@ -138,7 +138,7 @@ export class DataNormalizer {
     exclude: Array<string> | null
     sortKeys: Array<string> | null
 
-    constructor(normalizer?: (any) => any, graph?: ((any) => Graph), exclude?: Array<string>, sortKeys?: Array<string>) {
+    constructor(normalizer?: (data: any) => any, graph?: ((data: any) => Graph), exclude?: Array<string>, sortKeys?: Array<string>) {
         this.normalizer = normalizer || null
         this.graph = graph || null
         this.exclude = exclude || []

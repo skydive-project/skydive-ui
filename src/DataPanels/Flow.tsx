@@ -35,7 +35,6 @@ interface Props {
 }
 
 interface State {
-    data: any
 }
 
 class FlowPanel extends React.Component<Props, State> {
@@ -46,15 +45,9 @@ class FlowPanel extends React.Component<Props, State> {
     constructor(props) {
         super(props)
 
-        this.state = {
-            data: []
-        }
+        this.state = {}
 
         this.gremlin = `G.V('${this.props.el.id}').Flows()`
-    }
-
-    componentDidMount() {
-        this.fetchData()
     }
 
     normalizer(data: Array<any>): any {
@@ -112,13 +105,11 @@ class FlowPanel extends React.Component<Props, State> {
         })
     }
 
-    fetchData(): any {
-        var conf = new Configuration({ accessToken: this.props.session.token })
+    fetchData(): Promise<any> {
+        var conf = new Configuration({ basePath: this.props.session.endpoint + "/api", accessToken: this.props.session.token })
         var api = new TopologyApi(conf)
 
-        api.searchTopology({ GremlinQuery: this.gremlin }).then(result => {
-            this.setState({ data: result })
-        })
+        return api.searchTopology({ GremlinQuery: this.gremlin })
     }
 
     render() {
@@ -129,7 +120,7 @@ class FlowPanel extends React.Component<Props, State> {
         return (
             <div className={classes.panel}>
                 <DataPanel title="Flow table"
-                    defaultExpanded={false} data={this.state.data} defaultColumns={defaultColumns}
+                    defaultExpanded={false} fetch={this.fetchData.bind(this)} defaultColumns={defaultColumns}
                     icon={"\uf0ce"} normalizer={this.normalizer.bind(this)} />
             </div>
         )

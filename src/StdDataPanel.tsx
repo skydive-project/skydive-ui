@@ -32,7 +32,8 @@ interface Props {
     title: string
     icon?: string
     iconClass?: string
-    data: any
+    data?: any
+    fetch?: () => Promise<any>
     classes: any
     defaultExpanded?: boolean
     normalizer?: (data: any) => any
@@ -44,10 +45,11 @@ interface Props {
 }
 
 interface State {
-    isExpanded: boolean
-    data: Result
+    data?: any
+    result?: Result
     filterKeys?: Array<string>
     columns?: Array<string>
+    error?: string
 }
 
 class DataPanel extends React.Component<Props, State> {
@@ -58,9 +60,7 @@ class DataPanel extends React.Component<Props, State> {
         super(props)
 
         this.state = {
-            isExpanded: props.defaultExpanded,
-            data: DataPanel.normalizeData(props.data, props.normalizer),
-            filterKeys: DataPanel.normalizeFilterKeys(props.data, props.filterKeys),
+            data: props.data,
             columns: props.columns,
         }
     }
@@ -78,26 +78,43 @@ class DataPanel extends React.Component<Props, State> {
     }
 
     static getDerivedStateFromProps(props, state) {
-        if (state.isExpanded) {
-            return {
-                data: DataPanel.normalizeData(props.data, props.normalizer, props.graph, props.exclude, props.sortKeys),
-                filterKeys: DataPanel.normalizeFilterKeys(props.data, props.filterKeys)
-            }
+        return {
+            data: props.data,
+            columns: props.columns,
         }
-        return null
+    }
+
+    componentDidMount() {
+        this.refreshData()
+    }
+
+    private refreshData() {
+        if (this.state.data) {
+            this.setState({
+                result: DataPanel.normalizeData(this.state.data, this.props.normalizer, this.props.graph, this.props.exclude, this.props.sortKeys),
+                filterKeys: DataPanel.normalizeFilterKeys(this.state.data, this.props.filterKeys),
+            })
+        } else if (this.props.fetch) {
+            this.props.fetch().then(data => {
+                this.setState({
+                    result: DataPanel.normalizeData(data, this.props.normalizer, this.props.graph, this.props.exclude, this.props.sortKeys),
+                    filterKeys: DataPanel.normalizeFilterKeys(data, this.props.filterKeys),
+                    error: undefined
+                })
+            }).catch(err => {
+                this.setState({ error: err.message })
+            })
+        }
     }
 
     private onExpandChange(event: object, expanded: boolean) {
-        this.setState({ isExpanded: expanded })
+        if (expanded) {
+            this.refreshData()
+        }
     }
 
     private onFilterReset() {
-        this.setState(
-            {
-                data: DataPanel.normalizeData(this.state.data, this.props.normalizer, this.props.graph, this.props.exclude, this.props.sortKeys),
-                filterKeys: DataPanel.normalizeFilterKeys(this.state.data, this.props.filterKeys),
-            }
-        )
+        this.refreshData()
     }
 
     render() {
@@ -106,9 +123,11 @@ class DataPanel extends React.Component<Props, State> {
         const iconClass = this.props.iconClass === "font-brands" ? classes.panelIconBrands : classes.panelIconFree
 
         var details = <Typography>No data available</Typography>
-        if (this.state.data.rows.length) {
-            details = <DataViewer columns={this.state.data.columns} data={this.state.data.rows} filterKeys={this.state.filterKeys}
-                graph={this.state.data.graph} details={this.state.data.details} onFilterReset={this.onFilterReset.bind(this)}
+        if (this.state.error) {
+            details = <Typography>{this.state.error}</Typography>
+        } else if (this.state.result && this.state.result.rows.length) {
+            details = <DataViewer columns={this.state.result.columns} data={this.state.result.rows} filterKeys={this.state.filterKeys}
+                graph={this.state.result.graph} details={this.state.result.details} onFilterReset={this.onFilterReset.bind(this)}
                 defaultColumns={this.props.defaultColumns} />
         }
 
@@ -122,7 +141,7 @@ class DataPanel extends React.Component<Props, State> {
                     <Typography>{this.props.title}</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                    {this.state.isExpanded && details}
+                    {details}
                 </AccordionDetails>
             </Accordion>
         )

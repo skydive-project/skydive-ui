@@ -59,6 +59,7 @@ import { withRouter } from 'react-router-dom'
 import SelectionPanel from './SelectionPanel'
 import { Configuration } from './api/configuration'
 import * as api from './api/api'
+import { StatusApi } from './api'
 import Tools from './Tools'
 import GremlinButton from './ActionButtons/Gremlin'
 import CaptureButton from './ActionButtons/Capture'
@@ -560,20 +561,11 @@ class App extends React.Component<Props, State> {
     this.checkAuth()
   }
 
-  async checkAuth(): Promise<void> {
-    const requestOptions = {
-      method: 'GET',
-      headers: {
-        'X-Auth-Token': this.props.session.token
-      }
-    }
+  checkAuth() {
+    var conf = new Configuration({ basePath: this.props.session.endpoint + "/api", accessToken: this.props.session.token })
+    var api = new StatusApi(conf)
 
-    return fetch(`${this.props.session.endpoint}/api/status`, requestOptions)
-      .then(response => {
-        if (response.status !== 200) {
-          this.logout()
-        }
-      })
+    api.getStatus().catch(() => this.logout())
   }
 
   sendMessage(data: any) {
@@ -618,7 +610,7 @@ class App extends React.Component<Props, State> {
     }
 
     // set API configuration
-    this.apiConf = new Configuration({ accessToken: this.props.session.token })
+    this.apiConf = new Configuration({ basePath: this.props.session.endpoint + "/api", accessToken: this.props.session.token })
   }
 
   notify(msg, variant) {
