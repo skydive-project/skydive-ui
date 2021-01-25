@@ -132,7 +132,7 @@ class DataPanel extends React.Component<Props, State> {
         }
 
         return (
-            <Accordion defaultExpanded={this.props.defaultExpanded} onChange={this.onExpandChange.bind(this)}>
+            <Accordion defaultExpanded={this.props.defaultExpanded} onChange={this.onExpandChange.bind(this)} TransitionProps={{ unmountOnExit: true }}>
                 <AccordionSummary
                     expandIcon={<ExpandMoreIcon />}
                     aria-controls="panel1a-content"
