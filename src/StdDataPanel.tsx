@@ -85,7 +85,9 @@ class DataPanel extends React.Component<Props, State> {
     }
 
     componentDidMount() {
-        this.refreshData()
+        if (this.props.defaultExpanded) {
+            this.refreshData()
+        }
     }
 
     private refreshData() {
