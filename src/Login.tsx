@@ -47,7 +47,7 @@ interface State {
     username: string
     password: string
     submitted: boolean
-    failure: boolean
+    failure?: string
     persistent: boolean
 }
 
@@ -63,7 +63,6 @@ class Login extends React.Component<Props, State> {
             username: "",
             password: "",
             submitted: false,
-            failure: false,
             persistent: false
         }
     }
@@ -99,18 +98,18 @@ class Login extends React.Component<Props, State> {
 
         var conf = new Configuration({ basePath: endpoint })
         var api = new LoginApi(conf)
-        
+
         api.login(this.state.username, this.state.password)
-            .catch(() => {
-                this.setState({ failure: true })
-            })
             .then(response => {
                 if (response) {
-                    this.setState({ failure: false })
+                    this.setState({ failure: undefined })
                     return response.json()
                 } else {
-                    this.setState({ failure: true })
+                    this.setState({ failure: "empty response" })
                 }
+            })
+            .catch(err => {
+                this.setState({ failure: err.statusText ? err.statusText : err.message })
             })
             .then(data => {
                 if (data) {
@@ -122,6 +121,9 @@ class Login extends React.Component<Props, State> {
                     }
                     this.props.history.push(from)
                 }
+            })
+            .catch(err => {
+                this.setState({ failure: err.statusText })
             })
     }
 
@@ -140,8 +142,8 @@ class Login extends React.Component<Props, State> {
                 <div className={classes.paper}>
                     {this.state.failure &&
                         <React.Fragment>
-                            <div className={classes.failure}>Login failure</div>
-                            <div className={classes.failure}>bad Endpoint, Username or Password</div>
+                            <div className={classes.failure}>{this.state.failure}</div>
+                            <div>Please check Endpoint, Username or Password</div>
                         </React.Fragment>
                     }
                     <form className={classes.form} noValidate onSubmit={this.handleSubmit.bind(this)}>
