@@ -565,7 +565,10 @@ class App extends React.Component<Props, State> {
     var conf = new Configuration({ basePath: this.props.session.endpoint + "/api", accessToken: this.props.session.token })
     var api = new StatusApi(conf)
 
-    api.getStatus().catch(() => this.logout())
+    api.getStatus().catch(() => {
+        //this.logout()
+      }
+    )
   }
 
   sendMessage(data: any) {
