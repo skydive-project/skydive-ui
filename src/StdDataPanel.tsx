@@ -98,11 +98,15 @@ class DataPanel extends React.Component<Props, State> {
             })
         } else if (this.props.fetch) {
             this.props.fetch().then(data => {
-                this.setState({
-                    result: DataPanel.normalizeData(data, this.props.normalizer, this.props.graph, this.props.exclude, this.props.sortKeys),
-                    filterKeys: DataPanel.normalizeFilterKeys(data, this.props.filterKeys),
-                    error: undefined
-                })
+                if (data) {
+                    this.setState({
+                        result: DataPanel.normalizeData(data, this.props.normalizer, this.props.graph, this.props.exclude, this.props.sortKeys),
+                        filterKeys: DataPanel.normalizeFilterKeys(data, this.props.filterKeys),
+                        error: undefined
+                    })
+                } else {
+                    this.setState({ error: "No data available" })
+                }
             }).catch(err => {
                 this.setState({ error: err.message })
             })
@@ -124,7 +128,7 @@ class DataPanel extends React.Component<Props, State> {
 
         const iconClass = this.props.iconClass === "font-brands" ? classes.panelIconBrands : classes.panelIconFree
 
-        var details = <Typography>No data available</Typography>
+        var details = <Typography>Loading...</Typography>
         if (this.state.error) {
             details = <Typography>{this.state.error}</Typography>
         } else if (this.state.result && this.state.result.rows.length) {
