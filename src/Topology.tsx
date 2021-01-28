@@ -766,17 +766,11 @@ export class Topology extends React.Component<Props, {}> {
 
         var matchTags = node.tags.some(tag => this.nodeTagStates.get(tag))
         if (matchTags && !node.state.expanded) {
-            console.log(matchTags)
             return [cloned, null]
         }
 
         node.children.forEach(child => {
             let [subCloned, subChildren] = this.cloneTree(child, cloned)
-
-            if (node.id === "root") {
-                console.log(subCloned)
-                console.log(subChildren)
-            }
             if (subCloned) {
                 cloned.children.push(subCloned)
             } else if (subChildren) {
@@ -789,12 +783,12 @@ export class Topology extends React.Component<Props, {}> {
         if (this.props.sortNodesFnc) {
             cloned.children.sort((a, b) => this.props.sortNodesFnc(a.wrapped, b.wrapped))
         }
-        for (const [gid, group] of this.groupify(cloned).entries()) {
-            this.groups.set(gid, group)
-        }
 
         if (node.id === "root" || matchTags) {
-            console.log(cloned.children)
+            for (const [gid, group] of this.groupify(cloned).entries()) {
+                this.groups.set(gid, group)
+            }
+
             return [cloned, null]
         }
 
@@ -876,8 +870,6 @@ export class Topology extends React.Component<Props, {}> {
         if (!tree) {
             return null
         }
-
-        console.log(tree)
 
         for (let weight of this.weights) {
             let cache = { chains: new Map<string, { first: NodeWrapper, last: NodeWrapper }>() }
@@ -1839,7 +1831,7 @@ export class Topology extends React.Component<Props, {}> {
                     .duration(animDuration)
                     .style("opacity", d.wrapped.state.expanded ? 1 : 0)
             } else {
-                brace.style("opacity", 0)
+                brace.style("opacity", d.wrapped.state.expanded ? 1 : 0)
             }
 
             let d3node = this.d3nodes.get(d.id)
@@ -1865,7 +1857,7 @@ export class Topology extends React.Component<Props, {}> {
 
         groupEnter.append("path")
             .attr("class", "group-brace-owner-bg")
-            .style("opacity", 0)
+            .style("opacity", 1)
 
         groupEnter.append("path")
             .attr("class", "group-brace group-brace-left")
@@ -1876,11 +1868,7 @@ export class Topology extends React.Component<Props, {}> {
         groupEnter.each(function (d: NodeWrapper) { handleBraces(select(this), d, false) })
         group.each(function (d: NodeWrapper) { handleBraces(select(this), d, true) })
 
-        group.transition()
-            .duration(animDuration)
-            .style("opacity", 1)
-
-        const handleIcon = (gIcon: any, d: NodeWrapper, dy: number, animated: boolean, disabled: boolean) => {
+        const handleIcon = (gIcon: any, d: NodeWrapper, dy: number, disabled: boolean) => {
             let d3node = this.d3nodes.get(d.id)
             if (!d3node) {
                 return
@@ -1899,10 +1887,8 @@ export class Topology extends React.Component<Props, {}> {
                 .attr("width", bb.width - 4)
                 .attr("height", bb.height - 4)
 
-            if (animated) {
-                gIcon = gIcon.transition()
-                    .duration(animDuration)
-            }
+            gIcon = gIcon.transition()
+                .duration(animDuration)
 
             var opacity = 0
             if (d.wrapped.state.expanded) {
@@ -1921,7 +1907,6 @@ export class Topology extends React.Component<Props, {}> {
             .append("g")
             .attr("class", "group-button")
             .attr("id", (d: Group) => d.id)
-            .style("opacity", 0)
         groupButton.exit().remove()
 
         var leftIcon = groupButtonEnter.append("g")
@@ -1983,20 +1968,16 @@ export class Topology extends React.Component<Props, {}> {
                 self.resetCacheAndRenderTree()
             })
 
-        const handleIcons = (g: any, d: NodeWrapper, animated: boolean) => {
+        const handleIcons = (g: any, d: NodeWrapper) => {
             var size = this.props.groupSize || defaultGroupSize
 
-            handleIcon(g.select("g.brace-left-icon"), d, 50, animated, d.wrapped.state.groupFullSize || d.wrapped.state.groupOffset === 0)
-            handleIcon(g.select("g.brace-right-icon"), d, 25, animated, d.wrapped.state.groupFullSize || d.wrapped.state.groupOffset + size >= d.wrapped.children.length)
-            handleIcon(g.select("g.brace-full-icon"), d, 75, animated, false)
+            handleIcon(g.select("g.brace-left-icon"), d, 50, d.wrapped.state.groupFullSize || d.wrapped.state.groupOffset === 0)
+            handleIcon(g.select("g.brace-right-icon"), d, 25, d.wrapped.state.groupFullSize || d.wrapped.state.groupOffset + size >= d.wrapped.children.length)
+            handleIcon(g.select("g.brace-full-icon"), d, 75, false)
         }
 
-        groupButtonEnter.each(function (d: NodeWrapper) { handleIcons(select(this), d, true) })
-        groupButton.each(function (d: NodeWrapper) { handleIcons(select(this), d, true) })
-
-        groupButton.transition()
-            .duration(animDuration)
-            .style("opacity", 1)
+        groupButtonEnter.each(function (d: NodeWrapper) { handleIcons(select(this), d) })
+        groupButton.each(function (d: NodeWrapper) { handleIcons(select(this), d) })
     }
 
     private renderNodes(root: any) {
@@ -2457,8 +2438,6 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     renderTree() {
-        var self = this
-
         var normRoot = this.normalizeTree(this.root)
 
         var root = hierarchy(normRoot)
@@ -2472,8 +2451,8 @@ export class Topology extends React.Component<Props, {}> {
 
         this.renderLevels()
         this.renderHieraLinks(root)
-        this.renderGroups()
         this.renderNodes(root)
+        this.renderGroups()
         this.renderLinks()
 
         this.invalidated = false
