@@ -71,11 +71,11 @@ export class DataViewer extends React.Component<Props, State> {
         }
 
         if (props.graph) {
-            var graph = props.graph
             if (state.graph) {
-                graph.data = state.graph.data.concat(graph.data.slice(1))
+                state.graph.data = state.graph.data.concat(props.graph.data.slice(1))
+            } else {
+                state.graph = props.graph
             }
-            state.graph = graph
         }
 
         return state

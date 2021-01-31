@@ -31,6 +31,7 @@ import { a11yProps, TabPanel } from './Tabs'
 import { AppState } from './Store'
 import { styles } from './SelectionPanelStyles'
 import ConfigReducer from './Config'
+import { Typography } from "@material-ui/core"
 
 
 interface Props {
@@ -190,7 +191,7 @@ class SelectionPanel extends React.Component<Props, State> {
 
                 var suffix = title.toLowerCase().replace(" ", "-")
                 return (
-                  <DataPanel key={"dataviewer-" + el.id + "-" + suffix} title={title}
+                  <DataPanel key={"dataviewer-" + el.id + "-" + suffix} title={title} revision={this.props.revision}
                     defaultExpanded={entry.expanded} data={data} exclude={exclude} sortKeys={sortKeys} filterKeys={filterKeys}
                     normalizer={entry.normalizer} graph={entry.graph} icon={entry.icon} iconClass={entry.iconClass} />
                 )
@@ -222,6 +223,7 @@ class SelectionPanel extends React.Component<Props, State> {
           {this.renderTabs(classes)}
         </Tabs>
         <div className={classes.rightPanelPaperContent} style={{ overflow: "auto" }}>
+          <Typography>{this.props.revision} </Typography>
           {this.renderTabPanels(classes)}
         </div>
       </div>

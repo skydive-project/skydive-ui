@@ -119,7 +119,7 @@ class FlowPanel extends React.Component<Props, State> {
 
         return (
             <div className={classes.panel}>
-                <DataPanel title="Flow table"
+                <DataPanel title="Flow table" revision={0}
                     defaultExpanded={false} fetch={this.fetchData.bind(this)} defaultColumns={defaultColumns}
                     icon={"\uf0ce"} normalizer={this.normalizer.bind(this)} />
             </div>

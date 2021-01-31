@@ -42,6 +42,7 @@ interface Props {
     sortKeys?: Array<string>
     filterKeys?: Array<string>
     defaultColumns?: Array<string>
+    revision: number
 }
 
 interface State {
@@ -86,6 +87,12 @@ class DataPanel extends React.Component<Props, State> {
 
     componentDidMount() {
         if (this.props.defaultExpanded) {
+            this.refreshData()
+        }
+    }
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.revision !== this.props.revision) {
             this.refreshData()
         }
     }
