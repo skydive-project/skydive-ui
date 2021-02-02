@@ -710,6 +710,8 @@ class App extends React.Component<Props, State> {
 
     this.state.nodeTagStates = this.tc.nodeTagStates
     this.setState(this.state)
+
+    this.tc.zoomFit()
   }
 
   onSelectionLocation(el: Node | Link) {

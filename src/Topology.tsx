@@ -27,6 +27,7 @@ import './Topology.css'
 
 const animDuration = 500
 const defaultGroupSize = 4
+const defaultMaxExpandSize = 8
 
 export enum LinkTagState {
     Hidden = 1,
@@ -1874,11 +1875,9 @@ export class Topology extends React.Component<Props, {}> {
                 return
             }
 
-            var y = d3node.y - this.nodeWidth / 2 + 20
+            var y = d3node.y - this.nodeWidth / 2
 
             var text = gIcon.select("text")
-                .attr("x", 0)
-                .attr("y", 0)
             var bb = text.node().getBBox()
 
             gIcon.select("rect")
@@ -1900,6 +1899,39 @@ export class Topology extends React.Component<Props, {}> {
                 .attr("transform", (d: D3Node) => d3node ? `translate(${d3node.x + this.nodeWidth / 2},${y + dy})` : ``)
         }
 
+        const handleOffset = (gIcon: any, d: NodeWrapper, dy: number, offset: number, disabled: boolean) => {
+            let d3node = this.d3nodes.get(d.id)
+            if (!d3node) {
+                return
+            }
+
+            var y = d3node.y - this.nodeWidth / 2
+
+            var text = gIcon.select("text")
+            text.text(offset)
+
+            var bb = text.node().getBBox()
+            text
+                .attr("dx", 6)
+                .attr("dy", 1)
+
+            gIcon.select("rect")
+                .attr("x", bb.x - 6)
+                .attr("y", bb.y - 1)
+                .attr("width", bb.width + 12)
+                .attr("height", 21)
+
+            var opacity = 0
+            if (d.wrapped.state.expanded) {
+                opacity = disabled ? 0.5 : 1
+            }
+
+            gIcon = gIcon.transition()
+                .duration(animDuration)
+                .style("opacity", opacity)
+                .attr("transform", (d: D3Node) => d3node ? `translate(${d3node.x + this.nodeWidth / 2},${y + dy})` : ``)
+        }
+
         var groupButton = this.gGroupButtons.selectAll('g.group-button')
             .interrupt()
             .data(Array.from(this.groups.values()), (d: NodeWrapper) => d.id)
@@ -1908,6 +1940,14 @@ export class Topology extends React.Component<Props, {}> {
             .attr("class", "group-button")
             .attr("id", (d: Group) => d.id)
         groupButton.exit().remove()
+
+        var offsetIcon = groupButtonEnter.append("g")
+            .attr("class", "brace-offset")
+            .style("opacity", 1)
+        offsetIcon.append("rect")
+            .attr("rx", 2)
+            .attr("ry", 2)
+        offsetIcon.append("text")
 
         var leftIcon = groupButtonEnter.append("g")
             .attr("class", "brace-icon brace-left-icon")
@@ -1971,9 +2011,14 @@ export class Topology extends React.Component<Props, {}> {
         const handleIcons = (g: any, d: NodeWrapper) => {
             var size = this.props.groupSize || defaultGroupSize
 
-            handleIcon(g.select("g.brace-left-icon"), d, 50, d.wrapped.state.groupFullSize || d.wrapped.state.groupOffset === 0)
-            handleIcon(g.select("g.brace-right-icon"), d, 25, d.wrapped.state.groupFullSize || d.wrapped.state.groupOffset + size >= d.wrapped.children.length)
-            handleIcon(g.select("g.brace-full-icon"), d, 75, false)
+
+            handleOffset(g.select("g.brace-offset"), d, 25, d.wrapped.state.groupOffset, d.wrapped.state.groupFullSize)
+
+            handleIcon(g.select("g.brace-left-icon"), d, 80, d.wrapped.state.groupFullSize || d.wrapped.state.groupOffset === 0)
+            handleIcon(g.select("g.brace-right-icon"), d, 55, d.wrapped.state.groupFullSize || d.wrapped.state.groupOffset + size >= d.wrapped.children.length)
+            if (d.wrapped.children.length <= defaultMaxExpandSize) {
+                handleIcon(g.select("g.brace-full-icon"), d, 105, false)
+            }
         }
 
         groupButtonEnter.each(function (d: NodeWrapper) { handleIcons(select(this), d) })
