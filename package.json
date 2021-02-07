@@ -1,7 +1,7 @@
 {
-  "name": "skydive-ui",
+  "name": "@skydive-project/skydive-ui",
   "version": "0.1.0",
-  "private": true,
+  "main": "y",
   "dependencies": {
     "redux": "^4.0.5"
   },
@@ -72,5 +72,24 @@
     "build": "webpack",
     "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' mocha -r ts-node/register tests/**/*.test.ts",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skydive-project/skydive-ui.git"
+  },
+  "keywords": [
+    "Skydive",
+    "WebUI",
+    "v2"
+  ],
+  "author": "Sylvain Afchain",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/skydive-project/skydive-ui/issues"
+  },
+  "homepage": "https://github.com/skydive-project/skydive-ui#readme",
+  "description": "Skydive WebUI v2",
+  "directories": {
+    "test": "tests"
   }
 }
