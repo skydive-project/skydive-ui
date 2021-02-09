@@ -102,7 +102,7 @@ export function closeSession(): closeSessionAction {
 export type ActionTypes = selectElementAction | unselectElementAction | bumpRevisionAction | openSessionAction | closeSessionAction
 
 const emptySession = {
-    endpoint: `${window.location.protocol}//${window.location.hostname}:8082`,
+    endpoint: `${window.location.protocol}//${window.location.hostname}:${window.location.port}`,
     username: "",
     token: "",
     permissions: {},

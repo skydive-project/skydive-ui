@@ -90,10 +90,6 @@ class Login extends React.Component<Props, State> {
 
         this.setState({ submitted: true })
 
-        if (!this.state.username || !this.state.password) {
-            return
-        }
-
         var endpoint = this.state.endpoint || this.props.session.endpoint
 
         var conf = new Configuration({ basePath: endpoint })
@@ -166,7 +162,6 @@ class Login extends React.Component<Props, State> {
                         <TextField
                             variant="outlined"
                             margin="normal"
-                            required
                             fullWidth
                             id="username"
                             label="Username"
@@ -176,13 +171,9 @@ class Login extends React.Component<Props, State> {
                             value={this.state.username}
                             onChange={this.handleChange.bind(this)}
                         />
-                        {this.state.submitted && !this.state.username &&
-                            <div className={classes.error}>Username is required</div>
-                        }
                         <TextField
                             variant="outlined"
                             margin="normal"
-                            required
                             fullWidth
                             name="password"
                             label="Password"
@@ -192,9 +183,6 @@ class Login extends React.Component<Props, State> {
                             value={this.state.password}
                             onChange={this.handleChange.bind(this)}
                         />
-                        {this.state.submitted && !this.state.password &&
-                            <div className={classes.error}>Password is required</div>
-                        }
                         <FormControlLabel
                             control={<Checkbox value="remember" color="primary" />}
                             label="Remember me"
