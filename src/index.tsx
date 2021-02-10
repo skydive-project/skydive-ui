@@ -72,7 +72,7 @@ class SkydiveApp extends React.Component<Props> {
 ReactDOM.render(
   <Provider store={store}>
     <SnackbarProvider>
-      <BrowserRouter history={history}>
+      <BrowserRouter history={history} basename={baseURL || ""}>
         <Switch>
           <PrivateRoute path="/" component={withRouter(SkydiveApp)} exact />
           <Route path="/login" component={Login} />
