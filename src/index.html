@@ -7,8 +7,8 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
     <script type="text/javascript">
-        var baseURL = "{{ .BaseURL }}";
-        if (baseURL != "{" + "{ .BaseURL }" + "}") document.write("<base href='" + baseURL + "' />");
+        var baseURL = "<< .BaseURL >>";
+        if (baseURL != "<" + "< .BaseURL >" + ">") document.write("<base href='" + baseURL + "' />");
     </script>
 
     <link rel='stylesheet' href='./assets/code-agate.css' />
