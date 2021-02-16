@@ -131,6 +131,7 @@ class App extends React.Component<Props, State> {
   wsContext: WSContext
   connected: boolean
   debSetState: (state: any) => void
+  debUpdateFilters: () => void
   config: ConfigReducer
   filters: Map<string, Filter>
   nextTag: string
@@ -164,6 +165,9 @@ class App extends React.Component<Props, State> {
 
     // debounce version of setState
     this.debSetState = debounce(200, this.setState.bind(this))
+
+    // debounce updateFilters
+    this.debUpdateFilters = debounce(5000, this.updateFilters.bind(this))
 
     // will handle multiple configuration files
     this.config = new ConfigReducer()
@@ -231,28 +235,30 @@ class App extends React.Component<Props, State> {
     }
   }
 
-  private updateFilters(node: Node) {
-    var updated: boolean = false
+  private updateFilters() {
+    this.config.filters().then(filters => {
+      var updated: boolean = false
 
-    for (let filter of this.config.filters(node)) {
-      if (!this.filters.has(filter.id)) {
-        this.filters.set(filter.id, filter)
+      for (let filter of filters) {
+        if (!this.filters.has(filter.id)) {
+          this.filters.set(filter.id, filter)
 
-        updated = true
-      }
-    }
-
-    if (updated) {
-      let fnc = (a: Filter, b: Filter) => {
-        if (a.category == b.category) {
-          return a.label.localeCompare(b.label)
+          updated = true
         }
-        return a.category.localeCompare(b.category)
       }
 
-      this.state.filters = Array.from(this.filters.values()).sort(fnc)
-      this.debSetState(this.state)
-    }
+      if (updated) {
+        let fnc = (a: Filter, b: Filter) => {
+          if (a.category == b.category) {
+            return a.label.localeCompare(b.label)
+          }
+          return a.category.localeCompare(b.category)
+        }
+
+        this.state.filters = Array.from(this.filters.values()).sort(fnc)
+        this.debSetState(this.state)
+      }
+    })
   }
 
   private updateSuggestions(node: Node) {
@@ -301,7 +307,7 @@ class App extends React.Component<Props, State> {
 
     this.updateSuggestions(n)
 
-    this.updateFilters(n)
+    this.debUpdateFilters()
 
     return true
   }
@@ -329,7 +335,7 @@ class App extends React.Component<Props, State> {
     // eventually update the panels
     this.bumpRevision(node.ID)
 
-    this.updateFilters(n)
+    this.debUpdateFilters()
 
     return true
   }
@@ -423,6 +429,8 @@ class App extends React.Component<Props, State> {
 
     this.state.nodeTagStates = this.tc.nodeTagStates
     this.debSetState(this.state)
+
+    this.updateFilters()
 
     this.tc.zoomFit()
   }
@@ -566,10 +574,10 @@ class App extends React.Component<Props, State> {
     var api = new StatusApi(conf)
 
     api.getStatus().catch(err => {
-        if (err.status === 401) {
-          this.logout()
-        }
+      if (err.status === 401) {
+        this.logout()
       }
+    }
     )
   }
 

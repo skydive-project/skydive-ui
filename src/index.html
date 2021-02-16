@@ -8,7 +8,9 @@
 
     <script type="text/javascript">
         var baseURL = "<< .BaseURL >>";
-        if (baseURL != "<" + "< .BaseURL >" + ">") document.write("<base href='" + baseURL + "' />");
+        if (baseURL == "<" + "< .BaseURL >" + ">") baseURL = "";
+
+        if (baseURL) document.write("<base href='" + baseURL + "' />");
     </script>
 
     <link rel='stylesheet' href='./assets/code-agate.css' />

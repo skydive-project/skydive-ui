@@ -77,7 +77,7 @@ export interface LinkDataField {
 
 export interface Config {
     subTitle?(subTitle: string): string
-    filters?(filters: Array<Filter>): Array<Filter>
+    filters?(): Promise<Array<Filter>>
     defaultFilter?(): Filter
 
     nodeAttrs?(attrs: NodeAttrs | null, node: Node): NodeAttrs
@@ -167,14 +167,33 @@ export default class ConfigReducer {
         return subTitle
     }
 
-    filters(node: Node): Array<Filter> {
-        var filters = this.default.filters(node)
-        for (let c of this.configs) {
-            if (c.config.filters) {
-                filters = c.config.filters(filters)
-            }
-        }
-        return filters
+    filters(): Promise<Array<Filter>> {
+        var promise = new Promise<Array<Filter>>(resolve => {
+            this.default.filters().then(filters => {
+                var all = new Array<Promise<Array<Filter>>>()
+                for (let c of this.configs) {
+                    if (c.config.filters) {
+                        all.push(c.config.filters())
+                    }
+                }
+
+                if (all.length > 0) {
+                    Promise.all(all).then(values => {
+                        for (let vfs of values) {
+                            for (let filter of vfs) {
+                                if (!filters.some(f => filter.id === f.id)) {
+                                    filters.push(filter)
+                                }
+                            }
+                        }
+                        resolve(filters)
+                    })
+                } else {
+                    resolve(filters)
+                }
+            })
+        })
+        return promise
     }
 
     defaultFilter(): Filter {
@@ -373,45 +392,45 @@ class DefaultConfig {
         return ""
     }
 
-    filters(node: Node): Array<Filter> {
-        switch (node.data.Type) {
-            case "host":
-                return [
-                    {
-                        id: node.data.Name,
-                        label: node.data.Name,
-                        category: "host",
-                        tag: "infrastructure",
-                        callback: () => {
-                            var gremlin = "G.V().Has(" +
-                                "'Name','" + node.data.Name + "'," +
-                                "'Type','host'" +
-                                ").descendants().SubGraph()"
+    filters(): Promise<Array<Filter>> {
+        var promise = new Promise<Array<Filter>>(resolve => {
 
-                            window.App.setGremlinFilter(gremlin)
-                        }
+            const nf = (name: string, type: string, tag: string, limit: number) => {
+                return {
+                    id: name,
+                    label: name,
+                    category: type,
+                    tag: tag,
+                    callback: () => {
+                        var gremlin = "G.V().Has(" +
+                            "'Name','" + name + "'," +
+                            "'Type','" + type + "').descendants(10).SubGraph()"
+                        window.App.setGremlinFilter(gremlin)
                     }
-                ]
-            case "namespace":
-                return [
-                    {
-                        id: node.data.Name,
-                        label: node.data.Name,
-                        category: "namespaces",
-                        tag: "kubernetes",
-                        callback: () => {
-                            var gremlin = "G.V().Has(" +
-                                "'Name','" + node.data.Name + "'," +
-                                "'Type','namespace'" +
-                                ").descendants(10).SubGraph()"
+                }
+            }
 
-                            window.App.setGremlinFilter(gremlin)
-                        }
+            var filters = new Array<Filter>()
+
+            // TODO replace by only one query once merged:
+            // https://github.com/skydive-project/skydive/pull/2338
+            var api = new window.API.TopologyApi(window.App.apiConf)
+            api.searchTopology({ GremlinQuery: `G.V().Has("Type", "host").Values("Name")` }).then(result => {
+                for (let name of result) {
+                    filters.push(nf(name, "host", "infrastucture", 1))
+                }
+
+                api.searchTopology({ GremlinQuery: `G.V().Has("Type", "namespace").Values("Name")` }).then(result => {
+                    for (let name of result) {
+                        filters.push(nf(name, "namespace", "kubernetes", 10))
                     }
-                ]
-            default:
-                return []
-        }
+
+                    resolve(filters)
+                })
+            })
+        })
+
+        return promise
     }
 
     defaultFilter(): Filter {
