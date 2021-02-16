@@ -403,7 +403,7 @@ class DefaultConfig {
                             var gremlin = "G.V().Has(" +
                                 "'Name','" + node.data.Name + "'," +
                                 "'Type','namespace'" +
-                                ").descendants().SubGraph()"
+                                ").descendants(10).SubGraph()"
 
                             window.App.setGremlinFilter(gremlin)
                         }
