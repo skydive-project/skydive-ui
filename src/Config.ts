@@ -18,23 +18,31 @@
 import { Node, Link, NodeAttrs, LinkAttrs } from './Topology'
 import Tools from './Tools'
 
-const WEIGHT_NONE = 0
-const WEIGHT_FABRIC = 10
-const WEIGHT_PHYSICAL = 13
-const WEIGHT_BRIDGES = 14
-const WEIGHT_PORTS = 15
-const WEIGHT_VIRTUAL = 17
-const WEIGHT_NAMESPACE = 18
-const WEIGHT_VMS = 19
-const WEIGHT_CONTAINERS = 20
-const WEIGHT_K8S_FEDERATION = 100
-const WEIGHT_K8S_CLUSTER = 101
-const WEIGHT_K8S_NODE = 102
-const WEIGHT_K8S_NAMESPACE = 103
-const WEIGHT_K8S_POD = 104
-const WEIGHT_K8S_CONTAINER = 105
-const WEIGHT_K8S_SERVICE = 106
-const WEIGHT_K8S_OTHER = 120
+const SHOW_DEBUG = false
+
+const WEIGHT_K8S_FEDERATION = 3000
+const WEIGHT_K8S_CLUSTER = 3010
+const WEIGHT_K8S_NODE = 3020
+const WEIGHT_K8S_NAMESPACE = 3030
+const WEIGHT_K8S_POD = 3040
+const WEIGHT_K8S_CONTAINER = 3050
+const WEIGHT_K8S_SERVICE = 3060
+const WEIGHT_K8S_OTHER = 3200
+
+const WEIGHT_PHY_FABRIC = 5010
+const WEIGHT_PHY_HOST = 5020
+const WEIGHT_PHY_BRIDGES = 5030
+const WEIGHT_PHY_NET = 5050
+const WEIGHT_PHY_PORTS = 5060
+
+const WEIGHT_VIRT_NAMESPACE = 7010
+const WEIGHT_VIRT_VMS = 7020
+const WEIGHT_VIRT_CONTAINERS = 7030
+const WEIGHT_VIRT_BRIDGES = 7040
+const WEIGHT_VIRT_NET = 7050
+const WEIGHT_VIRT_PORTS = 7060
+
+const WEIGHT_NONE = 20000
 
 export interface Filter {
     id: string
@@ -465,6 +473,15 @@ class DefaultConfig {
         return attrs
     }
 
+    nodeAttrs(node: Node): NodeAttrs {
+        switch (node.data.Manager) {
+            case "k8s":
+                return this.nodeAttrsK8s(node)
+            default:
+                return this.nodeAttrsInfra(node)
+        }
+    }
+
     private nodeAttrsK8s(node: Node): NodeAttrs {
         var attrs = this.newAttrs(node)
 
@@ -560,37 +577,34 @@ class DefaultConfig {
                 attrs.weight = WEIGHT_K8S_OTHER
         }
 
+        if (SHOW_DEBUG) {
+            attrs.name = attrs.weight.toString() + "|" + attrs.name
+        }
         return attrs
     }
 
     private nodeAttrsInfra(node: Node): NodeAttrs {
         var attrs = this.newAttrs(node)
 
-        if (node.data.OfPort) {
-            attrs.weight = WEIGHT_PORTS
-        }
-
         switch (node.data.Type) {
             case "host":
                 attrs.icon = "\uf109"
-                attrs.weight = WEIGHT_PHYSICAL
+                attrs.weight = WEIGHT_PHY_HOST
                 break
             case "switch":
-                attrs.icon = "\uf6ff"
-                break
             case "bridge":
-            case "ovsbridge":
                 attrs.icon = "\uf6ff"
-                attrs.weight = WEIGHT_BRIDGES
+                attrs.weight = WEIGHT_PHY_BRIDGES
+                break
+            case "patch":
+            case "port":
+            case "switchport":
+                attrs.icon = "\uf0e8"
+                attrs.weight = WEIGHT_PHY_PORTS
                 break
             case "erspan":
                 attrs.icon = "\uf1e0"
-                break
-            case "geneve":
-            case "vxlan":
-            case "gre":
-            case "gretap":
-                attrs.icon = "\uf55b"
+                attrs.weight = WEIGHT_PHY_PORTS
                 break
             case "device":
             case "internal":
@@ -598,68 +612,76 @@ class DefaultConfig {
             case "tun":
             case "tap":
                 attrs.icon = "\uf796"
-                attrs.weight = WEIGHT_VIRTUAL
+                attrs.weight = WEIGHT_PHY_NET
+                break
+            case "geneve":
+            case "vxlan":
+            case "gre":
+            case "gretap":
+                attrs.icon = "\uf55b"
+                attrs.weight = WEIGHT_VIRT_NET
                 break
             case "veth":
                 attrs.icon = "\uf4d7"
-                attrs.weight = WEIGHT_VIRTUAL
+                attrs.weight = WEIGHT_VIRT_NET
                 break
-            case "switchport":
-                attrs.icon = "\uf0e8"
-                break
-            case "patch":
-            case "port":
             case "ovsport":
                 attrs.icon = "\uf0e8"
-                attrs.weight = WEIGHT_PORTS
+                attrs.weight = WEIGHT_VIRT_PORTS
+                break
+            case "ovsbridge":
+            case "openvswitch":
+                attrs.icon = "\uf6ff"
+                attrs.weight = WEIGHT_VIRT_BRIDGES
                 break
             case "netns":
                 attrs.icon = "\uf24d"
-                attrs.weight = WEIGHT_NAMESPACE
-                break
-            case "container":
-                attrs.icon = "\uf49e"
-                attrs.weight = WEIGHT_CONTAINERS
+                attrs.weight = WEIGHT_VIRT_NAMESPACE
                 break
             case "libvirt":
                 attrs.icon = "\uf109"
-                attrs.weight = WEIGHT_VMS
+                attrs.weight = WEIGHT_VIRT_VMS
                 break
-        }
-
-        if (node.data.Manager === "docker") {
-            attrs.badges = [{ text: "\uf395", iconClass: 'font-brands', fill: '#3888ae', stroke: '#fff' }]
-        } else if (node.data.Manager === "runc") {
-            attrs.badges = [{ text: "\uf7bc", iconClass: 'font-brands', fill: '#000', stroke: '#f44336' }]
+            case "container":
+                attrs.icon = "\uf49e"
+                attrs.weight = WEIGHT_VIRT_CONTAINERS
+                break
+            default:
+                attrs.icon = "\uf796"
+                attrs.weight = WEIGHT_NONE
         }
 
         if (node.data.IPV4 && node.data.IPV4.length) {
-            attrs.weight = WEIGHT_PHYSICAL
-        }
-
-        var virt = ["tap", "veth", "tun", "openvswitch"]
-        if (node.data.Driver && virt.indexOf(node.data.Driver) < 0) {
-            attrs.weight = WEIGHT_PHYSICAL
+            attrs.weight = WEIGHT_PHY_NET
         }
 
         if (node.data.Probe === "fabric") {
-            attrs.weight = WEIGHT_FABRIC
+            attrs.weight = WEIGHT_PHY_FABRIC
+        }
+
+        if (node.data.OfPort) {
+            attrs.weight = WEIGHT_VIRT_PORTS
+        }
+
+        var virt = ["tap", "veth", "tun", "openvswitch"]
+        if (node.data.Driver && virt.indexOf(node.data.Driver) > 0) {
+            attrs.weight = WEIGHT_VIRT_NET
+        }
+
+        if (node.data.Manager === "docker") {
+            attrs.badges = [{text: "\uf395", iconClass: 'font-brands', fill: '#3888ae', stroke: '#fff'}]
+        } else if (node.data.Manager === "runc") {
+            attrs.badges = [{text: "\uf7bc", iconClass: 'font-brands', fill: '#000', stroke: '#f44336'}]
         }
 
         if (node.data.Captures) {
-            attrs.badges = [{ text: "\uf03d" }]
+            attrs.badges = [{text: "\uf03d"}]
         }
 
+        if (SHOW_DEBUG) {
+            attrs.name = attrs.weight.toString() + "|" + attrs.name
+        }
         return attrs
-    }
-
-    nodeAttrs(node: Node): NodeAttrs {
-        switch (node.data.Manager) {
-            case "k8s":
-                return this.nodeAttrsK8s(node)
-            default:
-                return this.nodeAttrsInfra(node)
-        }
     }
 
     nodeSortFnc(a: Node, b: Node): number {
@@ -694,16 +716,20 @@ class DefaultConfig {
     nodeTags(data: any): Array<string> {
         if (data.Manager && data.Manager === "k8s") {
             switch (data.Type) {
-                case "container":
+                case "namespace":
                 case "pod":
-                    return ["kubernetes", "compute"]
+                case "container":
+                    return ["kubernetes", "compute", "network"]
                 default:
                     return ["kubernetes"]
             }
         } else {
             switch (data.Type) {
                 case "container":
-                    return ["infrastructure", "compute"]
+                    return ["infrastructure", "compute", "network"]
+                case "netns":
+                case "veth":
+                    return ["infrastructure", "network"]
                 default:
                     return ["infrastructure"]
             }
@@ -775,15 +801,7 @@ class DefaultConfig {
 
     weightTitles(): Map<number, string> {
         var wt = new Map<number, string>()
-        wt.set(WEIGHT_NONE, "Not classified")
-        wt.set(WEIGHT_FABRIC, "Fabric")
-        wt.set(WEIGHT_PHYSICAL, "Physical")
-        wt.set(WEIGHT_BRIDGES, "Bridges")
-        wt.set(WEIGHT_PORTS, "Ports")
-        wt.set(WEIGHT_VIRTUAL, "Virtual")
-        wt.set(WEIGHT_NAMESPACE, "Namespaces")
-        wt.set(WEIGHT_VMS, "VMs")
-        wt.set(WEIGHT_CONTAINERS, "Containers")
+
         wt.set(WEIGHT_K8S_FEDERATION, "k8s-Federations")
         wt.set(WEIGHT_K8S_CLUSTER, "k8s-clusters")
         wt.set(WEIGHT_K8S_NODE, "k8s-nodes")
@@ -792,6 +810,27 @@ class DefaultConfig {
         wt.set(WEIGHT_K8S_CONTAINER, "k8s-containers")
         wt.set(WEIGHT_K8S_SERVICE, "k8s-services")
         wt.set(WEIGHT_K8S_OTHER, "k8s-more")
+
+        wt.set(WEIGHT_VIRT_VMS, "virt-VMs")
+        wt.set(WEIGHT_VIRT_CONTAINERS, "virt-containers")
+        wt.set(WEIGHT_VIRT_BRIDGES, "virt-bridges")
+        wt.set(WEIGHT_VIRT_NAMESPACE, "virt-namespaces")
+        wt.set(WEIGHT_VIRT_NET, "virt-net")
+        wt.set(WEIGHT_VIRT_PORTS, "virt-ports")
+
+        wt.set(WEIGHT_PHY_FABRIC, "phy-fabric")
+        wt.set(WEIGHT_PHY_HOST, "phy-hosts")
+        wt.set(WEIGHT_PHY_BRIDGES, "phy-bridges")
+        wt.set(WEIGHT_PHY_NET, "phy-net")
+        wt.set(WEIGHT_PHY_PORTS, "phy-ports")
+
+        wt.set(WEIGHT_NONE, "Not classified")
+
+        if (SHOW_DEBUG) {
+            for (let [key, value] of wt) {
+                wt.set(key, key.toString() + "|" + value)
+            }
+        }
 
         return wt
     }
