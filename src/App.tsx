@@ -47,8 +47,14 @@ import Menu from '@material-ui/core/Menu'
 import Fab from '@material-ui/core/Fab'
 import Badge from '@material-ui/core/Badge'
 import ListIcon from '@material-ui/icons/List'
-import Autocomplete from '@material-ui/lab/Autocomplete'
+import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete'
 import TextField from '@material-ui/core/TextField'
+import Dialog from '@material-ui/core/Dialog'
+import DialogTitle from '@material-ui/core/DialogTitle'
+import DialogContent from '@material-ui/core/DialogContent'
+import DialogContentText from '@material-ui/core/DialogContentText'
+import DialogActions from '@material-ui/core/DialogActions'
+import Button from '@material-ui/core/Button'
 
 import { styles } from './AppStyles'
 import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState, Link } from './Topology'
@@ -101,6 +107,13 @@ export interface WSContext {
   GremlinFilter: string | null
 }
 
+interface AddFilterValue {
+  label: string
+  gremlinFilter: string
+}
+
+const addFilterValue = createFilterOptions<AddFilterValue>();
+
 interface State {
   isContextMenuOn: string
   contextMenuX: number
@@ -116,6 +129,8 @@ interface State {
   wsContext: WSContext
   isGremlinPanelOpen: boolean
   isCapturePanelOpen: boolean
+  addFilterOpened: boolean
+  addFilterValue: AddFilterValue
 }
 
 class App extends React.Component<Props, State> {
@@ -134,7 +149,9 @@ class App extends React.Component<Props, State> {
   debUpdateFilters: () => void
   config: ConfigReducer
   filters: Map<string, Filter>
-  nextTag: string
+  nextTag?: string
+  filterInput: string
+  customFilters: Array<Filter>
 
   constructor(props) {
     super(props)
@@ -153,7 +170,9 @@ class App extends React.Component<Props, State> {
       wsContext: { GremlinFilter: null },
       isGremlinPanelOpen: false,
       isCapturePanelOpen: false,
-      activeFilter: null
+      activeFilter: null,
+      addFilterOpened: false,
+      addFilterValue: { label: "", gremlinFilter: "" },
     }
 
     this.synced = false
@@ -173,6 +192,8 @@ class App extends React.Component<Props, State> {
     this.config = new ConfigReducer()
 
     this.filters = new Map<string, Filter>()
+
+    this.customFilters = new Array<Filter>()
   }
 
   componentDidMount() {
@@ -237,27 +258,24 @@ class App extends React.Component<Props, State> {
 
   private updateFilters() {
     this.config.filters().then(filters => {
-      var updated: boolean = false
-
       for (let filter of filters) {
         if (!this.filters.has(filter.id)) {
           this.filters.set(filter.id, filter)
-
-          updated = true
         }
       }
 
-      if (updated) {
-        let fnc = (a: Filter, b: Filter) => {
-          if (a.category == b.category) {
-            return a.label.localeCompare(b.label)
-          }
-          return a.category.localeCompare(b.category)
+      let fnc = (a: Filter, b: Filter) => {
+        if (a.category == b.category) {
+          return a.label.localeCompare(b.label)
         }
-
-        this.state.filters = Array.from(this.filters.values()).sort(fnc)
-        this.debSetState(this.state)
+        return a.category.localeCompare(b.category)
       }
+
+      let configFilters = Array.from(this.filters.values()).sort(fnc)
+      this.state.filters = this.customFilters.concat(configFilters)
+
+
+      this.debSetState(this.state)
     })
   }
 
@@ -851,21 +869,134 @@ class App extends React.Component<Props, State> {
     )
   }
 
-  renderFilterButtons(classes: any) {
+  handleAddFilterOpen() {
+    this.state.addFilterOpened = true
+    this.state.addFilterValue.label = ""
+    this.setState(this.state)
+  }
+
+  handleAddFilterClose() {
+    this.state.addFilterOpened = false
+    this.setState(this.state)
+  }
+
+  setAddFilterDialogLabel(label: string) {
+    this.state.addFilterValue.label = label
+    this.setState(this.state)
+  }
+
+  setAddFilterDialogGremlin(gremlin: string) {
+    this.state.addFilterValue.gremlinFilter = gremlin
+    this.setState(this.state)
+  }
+
+  updateFilterInput(value: string) {
+    this.filterInput = value
+  }
+
+  handleAddFilterSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    var filter = {
+      id: this.state.addFilterValue.label,
+      label: this.state.addFilterValue.label,
+      category: "User defined",
+      callback: () => {
+        this.setGremlinFilter(this.state.addFilterValue.gremlinFilter + ".SubGraph()")
+      }
+    }
+
+    this.customFilters.push(filter)
+    this.updateFilters()
+
+    this.handleAddFilterClose()
+  }
+
+  renderFilters(classes: any) {
     return (
       <Container className={classes.filtersPanel}>
         <Autocomplete
           options={this.state.filters}
           value={this.state.activeFilter}
-          onChange={(event: any, filter: Filter | null) => {
-            this.applyFilter(filter)
+          onChange={(event: any, newValue: any) => {
+            if (typeof newValue === 'string') {
+              // timeout to avoid instant validation of the dialog's form.
+              setTimeout(() => {
+                this.handleAddFilterOpen()
+                this.setAddFilterDialogGremlin(newValue)
+              })
+            } else if (newValue && newValue.label && !newValue.id) {
+              this.handleAddFilterOpen()
+              this.setAddFilterDialogGremlin(newValue.gremlinFilter)
+            } else {
+              this.applyFilter(newValue)
+            }
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              this.setGremlinFilter(this.filterInput)
+            }
+          }}
+          filterOptions={(options, params) => {
+            const filtered = addFilterValue(options, params) as AddFilterValue[]
+
+            if (params.inputValue !== '') {
+              filtered.push({
+                label: `Add "${params.inputValue}"`,
+                gremlinFilter: params.inputValue
+              })
+            }
+
+            return filtered
           }}
           getOptionLabel={(filter: Filter) => filter.label}
           groupBy={(filter: Filter) => filter.category}
           style={{ width: 300 }}
           size="small"
-          renderInput={(params) => <TextField {...params} label="Filter" variant="outlined" />}
+          renderInput={(params) => <TextField {...params} label="Filter" variant="outlined" onChange={(event) => {
+            let fnc = this.updateFilterInput.bind(this)
+            fnc(event.target.value + ".SubGraph()")
+          }} />}
         />
+        <Dialog open={this.state.addFilterOpened} onClose={this.handleAddFilterClose.bind(this)} aria-labelledby="form-dialog-title">
+          <form onSubmit={this.handleAddFilterSubmit.bind(this)}>
+            <DialogTitle id="form-dialog-title">Add a new filter</DialogTitle>
+            <DialogContent>
+              <TextField
+                autoFocus
+                margin="dense"
+                id="label"
+                value={this.state.addFilterValue.label}
+                onChange={(event) => {
+                  let fnc = this.setAddFilterDialogLabel.bind(this)
+                  fnc(event.target.value)
+                }}
+                label="Label"
+                type="text"
+              />
+              <TextField
+                margin="dense"
+                id="name"
+                value={this.state.addFilterValue.gremlinFilter}
+                onChange={(event) => {
+                  let fnc = this.setAddFilterDialogGremlin.bind(this)
+                  fnc(event.target.value)
+                }}
+                label="Gremlin Filter"
+                type="text"
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={this.handleAddFilterClose.bind(this)} color="primary">
+                Cancel
+            </Button>
+              <Button type="submit" color="primary">
+                Add
+            </Button>
+            </DialogActions>
+          </form>
+        </Dialog>
       </Container>
     )
   }
@@ -1062,7 +1193,7 @@ class App extends React.Component<Props, State> {
             </Paper>
           </Container>
           {this.renderNodeTagButtons(classes)}
-          {this.renderFilterButtons(classes)}
+          {this.renderFilters(classes)}
           {this.renderLinkTagButtons(classes)}
         </main>
       </div>

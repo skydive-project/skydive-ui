@@ -48,7 +48,7 @@ export interface Filter {
     id: string
     label: string
     category: string
-    tag: string
+    tag?: string
     callback: () => void
 }
 
