@@ -412,7 +412,7 @@ class DefaultConfig {
                     callback: () => {
                         var gremlin = "G.V().Has(" +
                             "'Name','" + name + "'," +
-                            "'Type','" + type + "').descendants(10).SubGraph()"
+                            "'Type','" + type + "').descendants(10).as('k8s').Out().In().Has('Type', 'netns').Descendants(10).as('infra').select('k8s', 'infra').SubGraph()"
                         window.App.setGremlinFilter(gremlin)
                     }
                 }
