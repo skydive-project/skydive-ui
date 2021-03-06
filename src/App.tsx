@@ -52,13 +52,12 @@ import TextField from '@material-ui/core/TextField'
 import Dialog from '@material-ui/core/Dialog'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import DialogContent from '@material-ui/core/DialogContent'
-import DialogContentText from '@material-ui/core/DialogContentText'
 import DialogActions from '@material-ui/core/DialogActions'
 import Button from '@material-ui/core/Button'
 
 import { styles } from './AppStyles'
 import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState, Link } from './Topology'
-import { mainListItems, helpListItems } from './Menu'
+import { MenuListItems, HelpListItems } from './Menu'
 import AutoCompleteInput from './AutoComplete'
 import { AppState, selectElement, unselectElement, bumpRevision, session, closeSession } from './Store'
 import { withRouter } from 'react-router-dom'
@@ -72,10 +71,15 @@ import CaptureButton from './ActionButtons/Capture'
 import GremlinPanel from './DataPanels/Gremlin'
 import CapturePanel from './DataPanels/Capture'
 import FlowPanel from './DataPanels/Flow'
+import AboutDialog from './About'
+
+const packageJson = require('../package.json')
 
 import './App.css'
 import ConfigReducer, { Filter } from './Config'
 
+// from index.html
+declare var appVersion: string
 
 // expose app ouside
 declare global {
@@ -131,6 +135,7 @@ interface State {
   isCapturePanelOpen: boolean
   addFilterOpened: boolean
   addFilterValue: AddFilterValue
+  isAboutOpen: boolean
 }
 
 class App extends React.Component<Props, State> {
@@ -173,6 +178,7 @@ class App extends React.Component<Props, State> {
       activeFilter: null,
       addFilterOpened: false,
       addFilterValue: { label: "", gremlinFilter: "" },
+      isAboutOpen: false,
     }
 
     this.synced = false
@@ -1119,6 +1125,17 @@ class App extends React.Component<Props, State> {
     )
   }
 
+  closeAboutDialog() {
+    this.state.isAboutOpen = false
+    this.setState(this.state)
+  }
+
+  openAboutDialog() {
+    this.state.isNavOpen = false
+    this.state.isAboutOpen = true
+    this.setState(this.state)
+  }
+
   render() {
     const { classes } = this.props
 
@@ -1161,10 +1178,12 @@ class App extends React.Component<Props, State> {
             </IconButton>
           </div>
           <Divider />
-          <List>{mainListItems}</List>
+          <List><MenuListItems /></List>
           <Divider />
-          <List>{helpListItems}</List>
+          <List><HelpListItems onClick={this.openAboutDialog.bind(this)} /></List>
         </Drawer>
+        <AboutDialog open={this.state.isAboutOpen} onClose={this.closeAboutDialog.bind(this)}
+          appName="Skydive" appVersion={appVersion} uiVersion={packageJson.version} />
         <main className={classes.content}>
           <Container maxWidth="xl" className={classes.container}>
             <Topology className={classes.topology} ref={node => this.tc = node}

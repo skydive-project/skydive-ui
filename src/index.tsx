@@ -32,7 +32,7 @@ import Logo from '../assets/Logo.png'
 
 const queryString = require('query-string')
 
-// from options
+// from index.html
 declare var baseURL: string
 
 const history = createBrowserHistory()
