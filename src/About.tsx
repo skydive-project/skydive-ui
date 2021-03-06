@@ -39,22 +39,19 @@ export default function AboutDialog(props: AboutProps) {
         <Dialog
             open={open}
             onClose={onClose}
-            aria-labelledby="alert-dialog-title"
-            aria-describedby="alert-dialog-description"
         >
-            <DialogTitle id="alert-dialog-title"> {appName} </DialogTitle>
+            <DialogTitle> {appName} </DialogTitle>
             <DialogContent>
-                <DialogContentText id="alert-dialog-description">
+                <div style={{ minWidth: 400 }}>
                     {appVersion &&
-                        <div style={{ minWidth: 400 }}>
-                            <Typography>{appName} version : {appVersion}</Typography>
-                        </div>
+                        <DialogContentText>
+                            {appName} version : {appVersion}
+                        </DialogContentText>
                     }
-                    <div style={{ minWidth: 400 }}>
-                        <Typography>UI version : {uiVersion}</Typography>
-                    </div>
-
-                </DialogContentText>
+                    <DialogContentText>
+                        UI version : {uiVersion}
+                    </DialogContentText>
+                </div>
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose} color="primary" autoFocus>

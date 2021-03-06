@@ -64,7 +64,7 @@ import { withRouter } from 'react-router-dom'
 import SelectionPanel from './SelectionPanel'
 import { Configuration } from './api/configuration'
 import * as api from './api/api'
-import { StatusApi } from './api'
+import { StatusApi, APIInfoApi } from './api'
 import Tools from './Tools'
 import GremlinButton from './ActionButtons/Gremlin'
 import CaptureButton from './ActionButtons/Capture'
@@ -77,9 +77,6 @@ const packageJson = require('../package.json')
 
 import './App.css'
 import ConfigReducer, { Filter } from './Config'
-
-// from index.html
-declare var appVersion: string
 
 // expose app ouside
 declare global {
@@ -136,6 +133,7 @@ interface State {
   addFilterOpened: boolean
   addFilterValue: AddFilterValue
   isAboutOpen: boolean
+  appVersion: string
 }
 
 class App extends React.Component<Props, State> {
@@ -179,6 +177,7 @@ class App extends React.Component<Props, State> {
       addFilterOpened: false,
       addFilterValue: { label: "", gremlinFilter: "" },
       isAboutOpen: false,
+      appVersion: "",
     }
 
     this.synced = false
@@ -587,6 +586,9 @@ class App extends React.Component<Props, State> {
       this.notify("Not connected", "error")
     }
 
+    this.state.appVersion = ""
+    this.setState(this.state)
+
     this.synced = false
 
     // check if still authenticated
@@ -601,8 +603,17 @@ class App extends React.Component<Props, State> {
       if (err.status === 401) {
         this.logout()
       }
-    }
-    )
+    })
+  }
+
+  getAppVersion() {
+    var conf = new Configuration({ basePath: this.props.session.endpoint + "/api", accessToken: this.props.session.token })
+    var api = new APIInfoApi(conf)
+
+    api.getApi().then(data => {
+      this.state.appVersion = data.Version || ""
+      this.setState(this.state)
+    })
   }
 
   sendMessage(data: any) {
@@ -648,6 +659,8 @@ class App extends React.Component<Props, State> {
 
     // set API configuration
     this.apiConf = new Configuration({ basePath: this.props.session.endpoint + "/api", accessToken: this.props.session.token })
+
+    this.getAppVersion()
   }
 
   notify(msg, variant) {
@@ -1183,7 +1196,7 @@ class App extends React.Component<Props, State> {
           <List><HelpListItems onClick={this.openAboutDialog.bind(this)} /></List>
         </Drawer>
         <AboutDialog open={this.state.isAboutOpen} onClose={this.closeAboutDialog.bind(this)}
-          appName="Skydive" appVersion={appVersion} uiVersion={packageJson.version} />
+          appName="Skydive" appVersion={this.state.appVersion} uiVersion={packageJson.version} />
         <main className={classes.content}>
           <Container maxWidth="xl" className={classes.container}>
             <Topology className={classes.topology} ref={node => this.tc = node}
