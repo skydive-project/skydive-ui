@@ -124,7 +124,7 @@ const loadSession = (): session => {
 const initialState = {
     selection: new Array<Node | Link>(),
     selectionRevision: 0,
-    session: loadSession()
+    session: loadSession(),
 }
 
 function appReducer(state = initialState, action: ActionTypes) {

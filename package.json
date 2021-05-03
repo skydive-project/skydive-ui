@@ -39,6 +39,7 @@
     "html-webpack-plugin": "^5.0.0-alpha.14",
     "lodash.deburr": "^4.1.0",
     "mocha": "^8.2.1",
+    "moment": "^2.29.1",
     "mui-datatables": "^3.7.3",
     "node-fetch": ">=2.6.1",
     "notistack": "^1.0.2",

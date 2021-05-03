@@ -22,44 +22,45 @@ export const styles = (theme: Theme) => createStyles({
     padding: theme.spacing(2),
     width: `100%`,
     height: `100%`,
-    maxHeight: 'calc(100% - 90px)'
+    maxHeight: 'calc(100% - 60px)'
   },
-  jsonTree: {
-    backgroundColor: 'unset'
-  },
-  tabs: {
+  panel: {
     height: `100%`
+  },
+  title: {
+    marginLeft: 5,
+    marginRight: 5
+  },
+  connector: {
+    height: 25
+  },
+  root: {
+    paddingLeft: 0,
+    paddingRight: 0,
   },
   tabIconFree: {
     fontFamily: `"Font Awesome 5 Free" !important`,
     fontWeight: 900,
     fontSize: 24,
-    marginBottom: `0 !important`
+    marginBottom: `0 !important`,
+    minWidth: 34,
+    textAlign: 'center'
   },
   tabIconBrands: {
     fontFamily: `"Font Awesome 5 Brands" !important`,
     fontWeight: 900,
     fontSize: 24,
-    marginBottom: `0 !important`
+    marginBottom: `0 !important`,
+    minWidth: 34,
+    textAlign: 'center'
   },
-  tabTitle: {
-    fontSize: 18
+  textField: {
+    "& .MuiInputBase-root": {
+      display: "grid"
+    }
   },
-  tabActions: {
-    display: 'flex',
-    flexDirection: 'row-reverse',
-    marginBottom: theme.spacing(1)
-  },
-  gremlinExpr: {
-    fontSize: '16px',
-    padding: 0
-  },
-  actionPanel: {
-    marginBottom: 16
-  },
-  iconImg: {
-    maxWidth: 32,
-    maxHeight: 32,
-    verticalAlign: 'middle'
+  content: {
+    overflow: "auto",
+    height: "100%"
   }
 })

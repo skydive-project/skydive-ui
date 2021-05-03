@@ -54,13 +54,13 @@ export class Node {
     revision: number
     type: 'node'
 
-    constructor(id: string, tags: Array<string>, data: any, state: NodeState, weight: number | ((node: Node) => number)) {
+    constructor(id: string, tags: Array<string>, data: any, state?: NodeState, weight?: number | ((node: Node) => number)) {
         this.id = id
         this.tags = tags
         this.data = data
-        this.weight = weight
+        this.weight = weight || 0
         this.children = new Array<Node>()
-        this.state = state
+        this.state = state || Topology.defaultState()
         this.type = 'node'
     }
 
@@ -437,7 +437,7 @@ export class Topology extends React.Component<Props, {}> {
             .curve(curveCardinalClosed.tension(0.7))
     }
 
-    private defaultState(): NodeState {
+    static defaultState(): NodeState {
         return { expanded: false, selected: false, mouseover: false, groupOffset: 0, groupFullSize: false }
     }
 
@@ -515,7 +515,7 @@ export class Topology extends React.Component<Props, {}> {
     }
 
     addNode(id: string, tags: Array<string>, data: any, weight: number | ((node: Node) => number)): Node {
-        var node = new Node(id, tags, data, this.defaultState(), weight)
+        var node = new Node(id, tags, data, Topology.defaultState(), weight)
         this.nodes.set(id, node)
 
         tags.forEach(tag => {

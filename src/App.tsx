@@ -30,6 +30,8 @@ import Typography from '@material-ui/core/Typography'
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
 import KeyboardArrowDown from '@material-ui/icons/KeyboardArrowDown'
 import RemoveShoppingCartIcon from '@material-ui/icons/RemoveShoppingCart'
+import AccessTimeIcon from '@material-ui/icons/AccessTime'
+import RestoreIcon from '@material-ui/icons/Restore'
 import Divider from '@material-ui/core/Divider'
 import List from '@material-ui/core/List'
 import Container from '@material-ui/core/Container'
@@ -54,12 +56,18 @@ import DialogTitle from '@material-ui/core/DialogTitle'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogActions from '@material-ui/core/DialogActions'
 import Button from '@material-ui/core/Button'
+import Chip from '@material-ui/core/Chip'
 
 import { styles } from './AppStyles'
 import { Topology, Node, NodeAttrs, LinkAttrs, LinkTagState, Link } from './Topology'
 import { MenuListItems, HelpListItems } from './Menu'
 import AutoCompleteInput from './AutoComplete'
-import { AppState, selectElement, unselectElement, bumpRevision, session, closeSession } from './Store'
+import {
+  AppState,
+  selectElement, unselectElement,
+  bumpRevision,
+  session, closeSession
+} from './Store'
 import { withRouter } from 'react-router-dom'
 import SelectionPanel from './SelectionPanel'
 import { Configuration } from './api/configuration'
@@ -72,6 +80,7 @@ import GremlinPanel from './DataPanels/Gremlin'
 import CapturePanel from './DataPanels/Capture'
 import FlowPanel from './DataPanels/Flow'
 import AboutDialog from './About'
+import TimetravelPanel from './TimetravelPanel'
 
 const packageJson = require('../package.json')
 
@@ -106,6 +115,7 @@ interface Props extends WithSnackbarProps {
 
 export interface WSContext {
   GremlinFilter: string | null
+  Time: number | null
 }
 
 interface AddFilterValue {
@@ -127,6 +137,7 @@ interface State {
   suggestions: Array<string>
   anchorEl: Map<string, null | HTMLElement>
   isSelectionOpen: boolean
+  isTimetravelOpen: boolean
   wsContext: WSContext
   isGremlinPanelOpen: boolean
   isCapturePanelOpen: boolean
@@ -134,6 +145,7 @@ interface State {
   addFilterValue: AddFilterValue
   isAboutOpen: boolean
   appVersion: string
+  timeContext: Date | null
 }
 
 class App extends React.Component<Props, State> {
@@ -170,7 +182,8 @@ class App extends React.Component<Props, State> {
       suggestions: new Array<string>(),
       anchorEl: new Map<string, null | HTMLElement>(),
       isSelectionOpen: false,
-      wsContext: { GremlinFilter: null },
+      isTimetravelOpen: false,
+      wsContext: { GremlinFilter: null, Time: null },
       isGremlinPanelOpen: false,
       isCapturePanelOpen: false,
       activeFilter: null,
@@ -178,6 +191,7 @@ class App extends React.Component<Props, State> {
       addFilterValue: { label: "", gremlinFilter: "" },
       isAboutOpen: false,
       appVersion: "",
+      timeContext: null
     }
 
     this.synced = false
@@ -640,8 +654,16 @@ class App extends React.Component<Props, State> {
       return
     }
 
+    var obj = {}
+    if (this.state.wsContext.GremlinFilter) {
+      obj["GremlinFilter"]
+    }
+    if (this.state.wsContext.Time) {
+      obj["Time"] = this.state.wsContext.Time
+    }
+
     // then reset the topology view and re-sync
-    var msg = { "Namespace": "Graph", "Type": "SyncRequest", "Obj": this.state.wsContext }
+    var msg = { "Namespace": "Graph", "Type": "SyncRequest", "Obj": obj }
     this.sendMessage(msg)
   }
 
@@ -774,6 +796,7 @@ class App extends React.Component<Props, State> {
 
   onTopologyClick() {
     this.state.isSelectionOpen = false
+    this.state.isTimetravelOpen = false
     this.setState(this.state)
   }
 
@@ -791,10 +814,16 @@ class App extends React.Component<Props, State> {
     } else {
       this.tc.selectLink(el.id, false)
     }
+
+    if (this.props.selection.length == 1) {
+      this.state.isSelectionOpen = false
+      this.setState(this.state)
+    }
   }
 
   openSelection() {
     this.state.isSelectionOpen = true
+    this.state.isTimetravelOpen = false
     this.setState(this.state)
   }
 
@@ -802,6 +831,18 @@ class App extends React.Component<Props, State> {
     this.props.selection.forEach(el => {
       this.selectionClose(el)
     })
+  }
+
+  openTimetravel() {
+    this.state.isTimetravelOpen = true
+    this.setState(this.state)
+  }
+
+  resetTimetravel() {
+    this.state.timeContext = null
+    this.state.wsContext.Time = null
+    this.setState(this.state)
+    this.sync()
   }
 
   renderSelectionMenuItem(classes: any) {
@@ -1071,6 +1112,26 @@ class App extends React.Component<Props, State> {
   renderMenuButtons(classes: any) {
     return (
       <div>
+        {this.state.timeContext &&
+          <Chip
+            icon={<RestoreIcon />}
+            label={this.state.timeContext.toString().split(" (")[0]}
+            color="primary"
+            onClick={() => this.openTimetravel()}
+            onDelete={() => this.resetTimetravel()}
+          />
+        }
+        {!this.state.timeContext &&
+          <IconButton
+            aria-controls="menu-time"
+            aria-haspopup="true"
+            onClick={() => this.openTimetravel()}
+            color="inherit">
+            <Badge color="secondary">
+              <RestoreIcon />
+            </Badge>
+          </IconButton>
+        }
         <IconButton
           aria-controls="menu-selection"
           aria-haspopup="true"
@@ -1149,6 +1210,14 @@ class App extends React.Component<Props, State> {
     this.setState(this.state)
   }
 
+  onNavigate(date: Date) {
+    this.state.isTimetravelOpen = false
+    this.state.timeContext = date
+    this.state.wsContext.Time = date.getTime()
+    this.setState(this.state)
+    this.sync()
+  }
+
   render() {
     const { classes } = this.props
 
@@ -1218,10 +1287,15 @@ class App extends React.Component<Props, State> {
             />
           </Container>
           <Container className={classes.rightPanel}>
-            <Paper className={clsx(classes.rightPanelPaper, (!this.props.selection.length || !this.state.isSelectionOpen) && classes.rightPanelPaperClose)}
+            <Paper className={clsx(classes.rightPanelPaper, (!this.state.isSelectionOpen && !this.state.isTimetravelOpen) && classes.rightPanelPaperClose)}
               square={true}>
-              <SelectionPanel onLocation={this.onSelectionLocation.bind(this)} onClose={this.onSelectionClose.bind(this)} config={this.config}
-                buttonsContent={this.actionButtons.bind(this)} panelsContent={this.dataPanels.bind(this)} />
+              {!this.state.isTimetravelOpen &&
+                <SelectionPanel onLocation={this.onSelectionLocation.bind(this)} onClose={this.onSelectionClose.bind(this)} config={this.config}
+                  buttonsContent={this.actionButtons.bind(this)} panelsContent={this.dataPanels.bind(this)} />
+              }
+              {this.state.isTimetravelOpen &&
+                <TimetravelPanel config={this.config} onNavigate={this.onNavigate.bind(this)} />
+              }
             </Paper>
           </Container>
           {this.renderNodeTagButtons(classes)}
@@ -1235,14 +1309,14 @@ class App extends React.Component<Props, State> {
 
 export const mapStateToProps = (state: AppState) => ({
   selection: state.selection,
-  session: state.session
+  session: state.session,
 })
 
 export const mapDispatchToProps = ({
   selectElement,
   unselectElement,
   bumpRevision,
-  closeSession
+  closeSession,
 })
 
 export default withStyles(styles)(connect(mapStateToProps, mapDispatchToProps)(withSnackbar(withRouter(App))))

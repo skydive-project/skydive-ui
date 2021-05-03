@@ -1,17 +1,21 @@
 .host .node-hexagon {
   fill: #114B5F;
+  background-color: #114B5F;
 }
 
 .netns .node-hexagon {
   fill: #C6DABF;
+  background-color: #C6DABF;
 }
 
 .bridge .node-hexagon, .ovsbridge .node-hexagon, .port .node-hexagon, .ovsport .node-hexagon {
   fill: #36b791;
+  background-color: #36b791;
 }
 
-.interface .node-hexagon, .device .node-hexagon, .tun .node-hexagon, .tap .node-hexagon, .veth .node-hexagon {
+.interface .node-hexagon, .device .node-hexagon, .tun .node-hexagon, .tuntap .node-hexagon, .tap .node-hexagon, .veth .node-hexagon {
   fill: #88D498;
+  background-color: #88D498;
 }
 
 .down .node-hexagon {

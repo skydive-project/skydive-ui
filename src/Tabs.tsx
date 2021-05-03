@@ -35,7 +35,7 @@ export function TabPanel(props: TabPanelProps) {
             id={`tabpanel-${index}`}
             aria-labelledby={`tab-${index}`}
             {...other}>
-            <div style={{ padding: 0, paddingBottom: 100 }}>{children}</div>
+            {children}
         </Typography>
     )
 }
