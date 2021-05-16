@@ -27,6 +27,7 @@ export interface Column {
     options: {
         filterList: Array<any>
         display: string
+        customBodyRenderLite?: (dataIndex: number, rowIndex: number) => any
     }
 }
 
@@ -53,8 +54,6 @@ export class Result {
         let index = this.colIndexes.get(name)
         if (index === undefined) {
             this.colIndexes.set(name, this._columns.length)
-
-
             this._columns.push({ "name": name, options: { filterList: new Array<any>(), display: 'true' } })
         }
     }

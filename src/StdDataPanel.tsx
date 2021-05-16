@@ -43,6 +43,9 @@ interface Props {
     filterKeys?: Array<string>
     defaultColumns?: Array<string>
     revision: number
+    deletable?: boolean
+    onDelete?: (data: Array<Map<string, any>>) => void
+    customRenders?: Map<string, (value: any) => any>
 }
 
 interface State {
@@ -141,24 +144,25 @@ class DataPanel extends React.Component<Props, State> {
         } else if (this.state.result && this.state.result.rows.length) {
             details = <DataViewer columns={this.state.result.columns} data={this.state.result.rows} filterKeys={this.state.filterKeys}
                 graph={this.state.result.graph} details={this.state.result.details} onFilterReset={this.onFilterReset.bind(this)}
-                defaultColumns={this.props.defaultColumns} />
+                defaultColumns={this.props.defaultColumns} deletable={this.props.deletable} onDelete={this.props.onDelete}
+                customRenders={this.props.customRenders} />
         }
 
-        return (
-            <Accordion defaultExpanded={this.props.defaultExpanded} onChange={this.onExpandChange.bind(this)} TransitionProps={{ unmountOnExit: true }}>
-                <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls="panel1a-content"
-                    id="panel1a-header">
-                    <Typography className={iconClass}>{this.props.icon}</Typography>
-                    <Typography>{this.props.title}</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                    {details}
-                </AccordionDetails>
-            </Accordion>
-        )
+                return (
+                    <Accordion defaultExpanded={this.props.defaultExpanded} onChange={this.onExpandChange.bind(this)} TransitionProps={{ unmountOnExit: true }}>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="panel1a-content"
+                            id="panel1a-header">
+                            <Typography className={iconClass}>{this.props.icon}</Typography>
+                            <Typography>{this.props.title}</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            {details}
+                        </AccordionDetails>
+                    </Accordion>
+                )
+        }
     }
-}
 
-export default withStyles(styles)(DataPanel)
+    export default withStyles(styles)(DataPanel)

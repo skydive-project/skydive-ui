@@ -24,6 +24,7 @@ import JSONTree from 'react-json-tree'
 import FilterNoneIcon from '@material-ui/icons/FilterNone'
 import IconButton from '@material-ui/core/IconButton'
 import Tooltip from '@material-ui/core/Tooltip'
+import DeleteIcon from '@material-ui/icons/Delete'
 
 import { Column, Graph } from './StdDataNormalizer'
 import './StdDataViewer.css'
@@ -37,6 +38,9 @@ interface Props {
     filterKeys?: Array<string>
     onFilterReset?: () => void
     defaultColumns?: Array<string>
+    deletable?: boolean
+    onDelete?: (data: Array<Map<string, any>>) => void
+    customRenders?: Map<string, (value: any) => any>
 }
 
 interface State {
@@ -45,6 +49,7 @@ interface State {
     filterList: Map<string, Array<any>>
     graph?: Graph
     rowsExpanded: Array<number>
+    rowsSelected: Array<number>
 }
 
 export class DataViewer extends React.Component<Props, State> {
@@ -61,7 +66,8 @@ export class DataViewer extends React.Component<Props, State> {
             sortOrder: new Map<any, any>(),
             sortField: "",
             filterList: new Map<string, Array<any>>(),
-            rowsExpanded: new Array<number>()
+            rowsExpanded: new Array<number>(),
+            rowsSelected: new Array<number>()
         }
     }
 
@@ -90,7 +96,7 @@ export class DataViewer extends React.Component<Props, State> {
     }
 
     render() {
-        const options = {
+        var options: any = {
             filterType: 'multiselect',
             selectableRows: 'none',
             responsive: 'vertical',
@@ -105,6 +111,7 @@ export class DataViewer extends React.Component<Props, State> {
                     </Tooltip>
                 )
             },
+            rowsSelected: this.state.rowsSelected,
             setRowProps: (row, dataIndex) => {
                 if (!this.props.details.get(dataIndex)) {
                     return { "className": "not-expandable" }
@@ -156,6 +163,34 @@ export class DataViewer extends React.Component<Props, State> {
             sortOrder: this.state.sortOrder
         }
 
+        if (this.props.deletable) {
+            options.selectableRows = 'multiple'
+            options.onRowSelectionChange = (currentRowsSelected, allRowsSelected, rowsSelected) => {
+                this.state.rowsSelected = rowsSelected
+                this.setState({ rowsSelected: this.state.rowsSelected })
+            }
+            options.customToolbarSelect = (selectedRows, displayData, setSelectedRows) => {
+                var data = new Array<Map<string, any>>()
+                selectedRows.data.forEach((el: any) => {
+                    let row: any = this.props.data[el.dataIndex]
+
+                    let values = new Map<string, any>()
+                    for (let i = 0; i != this.props.columns.length; i++) {
+                        values[this.props.columns[i].name] = row[i]
+                    }
+                    data.push(values)
+                });
+
+                return (
+                    <Tooltip title="Delete selection" aria-label="Delete selection">
+                        <IconButton onClick={() => this.props.onDelete && this.props.onDelete(data)}>
+                            <DeleteIcon />
+                        </IconButton>
+                    </Tooltip>
+                )
+            }
+        }
+
         // re-apply sort and filter if need
         for (let column of this.props.columns) {
             if (this.applyDefaultColumns && this.props.defaultColumns) {
@@ -172,6 +207,20 @@ export class DataViewer extends React.Component<Props, State> {
             let filterList = this.state.filterList.get(column.name)
             if (filterList) {
                 column.options.filterList = filterList
+            }
+
+            var cb = this.props.customRenders?.get(column.name)
+            if (cb) {
+                column.options.customBodyRenderLite = (dataIndex: number, rowIndex: number): any => {
+                    var name = this.props.columns[dataIndex].name
+                    var value = this.props.data[rowIndex][dataIndex]
+
+                    var cb = this.props.customRenders?.get(column.name)
+                    if (cb) {
+                        return cb(value)
+                    }
+                    return value
+                }
             }
         }
         this.applyDefaultColumns = false

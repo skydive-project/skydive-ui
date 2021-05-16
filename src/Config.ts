@@ -74,6 +74,9 @@ export interface NodeDataField {
     filterKeys?: (data: any) => Array<string>
     normalizer?: (data: any) => any
     graph?: (data: any) => GraphField
+    deletable?: boolean
+    onDelete?: (data: Array<Map<string, any>>) => void
+    customRenders?: Map<string, (value: any) => any>
 }
 
 export interface LinkDataField {
@@ -699,6 +702,8 @@ class DefaultConfig {
     }
 
     nodeMenu(node: Node): Array<MenuItem> {
+        var captures = node.data.Captures?.length
+
         return [
             {
                 class: "", text: "Capture", disabled: false, callback: () => {
@@ -708,8 +713,19 @@ class DefaultConfig {
                     })
                 }
             },
-            { class: "", text: "Capture all", disabled: true, callback: () => { console.log("Capture all") } },
-            { class: "", text: "Injection", disabled: false, callback: () => { console.log("Injection") } },
+            {
+                class: "", text: "Delete captures", disabled: !captures, callback: () => {
+                    node.data.Captures.forEach(capture => {
+                        var api = new window.API.CapturesApi(window.App.apiConf)
+                        api.deleteCapture(capture.ID).then(result => {
+                            console.log(result)
+                        })
+                    });
+                }
+            },
+
+            //{ class: "", text: "Capture all", disabled: true, callback: () => { console.log("Capture all") } },
+            //{ class: "", text: "Injection", disabled: false, callback: () => { console.log("Injection") } },
             //{ class: "", text: "Flows", disabled: false, callback: () => { console.log("Flows") } },
             //{ class: "", text: "Filter NS(demo)", disabled: false, callback: () => { window.App.loadExtraConfig("/assets/nsconfig.js") } }
         ]
@@ -873,11 +889,21 @@ class DefaultConfig {
                 field: "Captures",
                 expanded: false,
                 icon: "\uf51f",
-                normalizer: (data: any): any => {
-                    for (let capture of data) {
-                        capture.ID = capture.ID.split('-')[0]
-                    }
-                    return data
+                customRenders: new Map<string, (value: any) => any>([
+                    [
+                        'ID', (value: any): any => {
+                            return value.split('-')[0]
+                        }
+                    ]
+                ]),
+                deletable: true,
+                onDelete: (data: Array<Map<string, any>>) => {
+                    data.forEach(values => {
+                        var api = new window.API.CapturesApi(window.App.apiConf)
+                        api.deleteCapture(values['ID']).then(result => {
+                            console.log(result)
+                        })
+                    })
                 }
             },
             {

@@ -106,7 +106,7 @@ export const styles = (theme: Theme) => createStyles({
     paddingRight: theme.spacing(0),
   },
   topology: {
-    height: `calc(100vh - 80px)`,
+    height: `calc(100vh - 10px)`,
   },
   rightPanel: {
     position: 'absolute',
