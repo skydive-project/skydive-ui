@@ -20,6 +20,17 @@ import Tools from './Tools'
 
 const SHOW_DEBUG = false
 
+const WEIGHT_OVN_LR = 2010
+const WEIGHT_OVN_RP = 2012
+const WEIGHT_OVN_NAT = 2014
+const WEIGHT_OVN_RSR = 2016
+const WEIGHT_OVN_LRP = 2016
+const WEIGHT_OVN_LSP_LRP = 2020
+const WEIGHT_OVN_LS = 2030
+const WEIGHT_OVN_ACL = 2035
+const WEIGHT_OVN_LB = 2040
+const WEIGHT_OVN_LSP = 2050
+
 const WEIGHT_K8S_FEDERATION = 3000
 const WEIGHT_K8S_CLUSTER = 3010
 const WEIGHT_K8S_NODE = 3020
@@ -482,6 +493,8 @@ class DefaultConfig {
         switch (node.data.Manager) {
             case "k8s":
                 return this.nodeAttrsK8s(node)
+            case "ovn":
+                return this.nodeAttrsOVN(node)
             default:
                 return this.nodeAttrsInfra(node)
         }
@@ -580,6 +593,53 @@ class DefaultConfig {
             default:
                 attrs.href = "assets/icons/k8s.png"
                 attrs.weight = WEIGHT_K8S_OTHER
+        }
+
+        if (SHOW_DEBUG) {
+            attrs.name = attrs.weight.toString() + "|" + attrs.name
+        }
+        return attrs
+    }
+
+    private nodeAttrsOVN(node: Node): NodeAttrs {
+        var attrs = this.newAttrs(node)
+
+        switch (node.data.Type) {
+            case "LogicalRouter":
+                attrs.weight = WEIGHT_OVN_LR
+                break
+            case "LogicalRouterPolicy":
+                attrs.weight = WEIGHT_OVN_RP
+                break
+            case "NAT":
+                attrs.weight = WEIGHT_OVN_NAT
+                break
+            case "LogicalRouterStaticRoute":
+                attrs.weight = WEIGHT_OVN_RSR
+                break
+            case "LogicalRouterPort":
+                attrs.weight = WEIGHT_OVN_LRP
+                break
+            case "LogicalSwitchPort":
+                attrs.icon = "\uf0e8"
+                if (node.data.OVN.Type == "router") {
+                    attrs.weight = WEIGHT_OVN_LSP_LRP
+                } else {
+                    attrs.weight = WEIGHT_OVN_LSP
+                }
+                break
+            case "LogicalSwitch":
+                attrs.icon = "\uf6ff"
+                attrs.weight = WEIGHT_OVN_LS
+                break
+            case "ACL":
+                attrs.weight = WEIGHT_OVN_ACL
+                break
+            case "LoadBalancer":
+                attrs.weight = WEIGHT_OVN_LB
+                break
+            default:
+                attrs.weight = WEIGHT_NONE
         }
 
         if (SHOW_DEBUG) {
@@ -734,20 +794,28 @@ class DefaultConfig {
     nodeTags(data: any): Array<string> {
         if (data.Manager && data.Manager === "k8s") {
             switch (data.Type) {
-                case "namespace":
                 case "pod":
+                    return ["kubernetes", "compute", "network", "ovn"]
+                case "namespace":
                 case "container":
                     return ["kubernetes", "compute", "network"]
                 default:
                     return ["kubernetes"]
             }
+        } else if (data.Manager && data.Manager === "ovn") {
+            return ["ovn"]
         } else {
             switch (data.Type) {
                 case "container":
                     return ["infrastructure", "compute", "network"]
                 case "netns":
-                case "veth":
                     return ["infrastructure", "network"]
+                case "internal":
+                case "veth":
+                    return ["infrastructure", "network", "ovn"]
+                case "ovsport":
+                case "ovsbridge":
+                    return ["infrastructure", "ovn"]
                 default:
                     return ["infrastructure"]
             }
@@ -841,6 +909,17 @@ class DefaultConfig {
         wt.set(WEIGHT_PHY_BRIDGES, "phy-bridges")
         wt.set(WEIGHT_PHY_NET, "phy-net")
         wt.set(WEIGHT_PHY_PORTS, "phy-ports")
+
+        wt.set(WEIGHT_OVN_LR, "Logical Routers")
+        wt.set(WEIGHT_OVN_RP, "Logical Router Policies")
+        wt.set(WEIGHT_OVN_NAT, "NAT")
+        wt.set(WEIGHT_OVN_RSR, "Logical Router Static Routes")
+        wt.set(WEIGHT_OVN_LRP, "Logical Router Ports")
+        wt.set(WEIGHT_OVN_LSP_LRP, "Logical Switch Ports")
+        wt.set(WEIGHT_OVN_LSP, "Logical Switch Ports")
+        wt.set(WEIGHT_OVN_LS, "Logical Switches")
+        wt.set(WEIGHT_OVN_ACL, "ACL"),
+        wt.set(WEIGHT_OVN_LB, "Load Balancers")
 
         wt.set(WEIGHT_NONE, "Not classified")
 
