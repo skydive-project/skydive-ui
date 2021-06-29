@@ -397,7 +397,7 @@ class App extends React.Component<Props, State> {
     let child = this.tc.nodes.get(edge.Child)
 
     if (parent && child) {
-      if (edge.Metadata.RelationType === "ownership") {
+      if (this.config.isHierarchyLink(edge.Metadata)) {
         this.tc.setParent(child, parent)
       } else {
         this.tc.addLink(edge.ID, parent, child, [edge.Metadata.RelationType], edge.Metadata)

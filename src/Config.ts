@@ -97,7 +97,7 @@ export interface Config {
     nodeDblClicked?(node: Node): void
 
     nodeMenu?(items: Array<MenuItem>, node: Node): Array<MenuItem>
-    nodeTags?(tags: Array<string>, node: Node): Array<string>
+    nodeTags?(tags: Array<string>, data: any): Array<string>
 
     defaultNodeTag?(): string
     nodeTabTitle?(node: Node): string
@@ -113,6 +113,7 @@ export interface Config {
 
     linkAttrs?(attrs: LinkAttrs | null, link: Link): LinkAttrs
     linkTabTitle?(link: Link): string
+    isHierarchyLink?(data: any): boolean
 
     linkDataFields?(dataFields: Array<LinkDataField>): Array<LinkDataField>
 
@@ -267,11 +268,11 @@ export default class ConfigReducer {
         return items
     }
 
-    nodeTags(node: Node): Array<string> {
-        var tags = this.default.nodeTags(node)
+    nodeTags(data: any): Array<string> {
+        var tags = this.default.nodeTags(data)
         for (let c of this.configs) {
             if (c.config.nodeTags) {
-                tags = c.config.nodeTags([], node)
+                tags = c.config.nodeTags([], data)
             }
         }
         return tags
@@ -375,6 +376,20 @@ export default class ConfigReducer {
             }
         }
         return title
+    }
+
+    isHierarchyLink(data: any): boolean {
+        if (this.default.isHierarchyLink(data)) {
+            return true
+        }
+        for (let c of this.configs) {
+            if (c.config.isHierarchyLink) {
+                if (c.config.isHierarchyLink(data)) {
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     linkDataFields(): Array<LinkDataField> {
@@ -1066,6 +1081,10 @@ class DefaultConfig {
             return src.substring(0, 8) + " / " + dst.substring(0, 8)
         }
         return link.id.split("-")[0]
+    }
+
+    isHierarchyLink(data: any): boolean {
+        return data?.RelationType === "ownership"
     }
 
     linkDataFields(): Array<LinkDataField> {
