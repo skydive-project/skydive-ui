@@ -16,18 +16,23 @@
  */
 
 import * as React from "react"
-import { hierarchy, tree } from 'd3-hierarchy'
+import { hierarchy } from 'd3-hierarchy'
 import { Selection, select, selectAll, event } from 'd3-selection'
 import { line, linkVertical, curveCatmullRom, curveCardinalClosed } from 'd3-shape'
 import { } from 'd3-transition'
 import { zoom, zoomIdentity } from 'd3-zoom'
 import ResizeObserver from 'react-resize-observer'
 
+const flextree = require('d3-flextree').flextree;
+
 import './Topology.css'
 
 const animDuration = 500
 const defaultGroupSize = 4
 const defaultMaxExpandSize = 8
+
+const nodeWidth = 150
+const nodeHeight = 280
 
 export enum LinkTagState {
     Hidden = 1,
@@ -130,6 +135,7 @@ class NodeWrapper {
     children: Array<NodeWrapper>
     parent: NodeWrapper | null
     type: WrapperType
+    size: Array<number>
 
     constructor(id: string, type: WrapperType, node: Node, parent: NodeWrapper | null) {
         this.id = id
@@ -137,6 +143,12 @@ class NodeWrapper {
         this.parent = parent
         this.children = new Array<NodeWrapper>()
         this.type = type
+
+        if (type === WrapperType.Hidden) {
+            this.size = [50, nodeHeight]
+        } else {
+            this.size = [nodeWidth, nodeHeight]
+        }
     }
 }
 
@@ -202,9 +214,7 @@ interface Props {
  */
 export class Topology extends React.Component<Props, {}> {
 
-    private nodeWidth: number
-    private nodeHeight: number
-    private tree: tree
+    private tree: any
     private isCtrlPressed: boolean
     private svgDiv: HTMLElement | null
     private svg: Selection<SVGSVGElement, any, null, undefined>
@@ -247,16 +257,13 @@ export class Topology extends React.Component<Props, {}> {
     constructor(props: Props) {
         super(props)
 
-        this.nodeWidth = 150
-        this.nodeHeight = 280
-
         if (this.props.weightTitles) {
             this.weightTitles = this.props.weightTitles
         } else {
             this.weightTitles = new Map<number, string>()
         }
 
-        this.tree = tree().nodeSize([this.nodeWidth, this.nodeHeight])
+        this.tree = flextree();
 
         this.initTree()
 
@@ -1021,10 +1028,10 @@ export class Topology extends React.Component<Props, {}> {
         }
 
         return {
-            x: minX - this.nodeWidth / 2,
-            y: minY - this.nodeHeight / 2,
-            width: maxX - minX + this.nodeWidth,
-            height: maxY - minY + this.nodeHeight
+            x: minX - nodeWidth / 2,
+            y: minY - nodeHeight / 2,
+            width: maxX - minX + nodeWidth,
+            height: maxY - minY + nodeHeight
         }
     }
 
@@ -1046,7 +1053,7 @@ export class Topology extends React.Component<Props, {}> {
         }
 
         var gBB = this.sceneSizeX()
-        const margin = this.nodeHeight / 2
+        const margin = nodeHeight / 2
 
         var width = this.svgDiv.clientWidth * 10
 
@@ -1837,7 +1844,7 @@ export class Topology extends React.Component<Props, {}> {
 
             let d3node = this.d3nodes.get(d.id)
             if (d3node) {
-                let xEnd = d.wrapped.state.expanded ? d3node.x + self.nodeWidth / 2 : x2
+                let xEnd = d.wrapped.state.expanded ? d3node.x + nodeWidth / 2 : x2
                 let junction = d.wrapped.state.expanded ? " L " + xEnd + " " + y1 + " " : right
                 brace
                     .attr("d",
@@ -1875,7 +1882,7 @@ export class Topology extends React.Component<Props, {}> {
                 return
             }
 
-            var y = d3node.y - this.nodeWidth / 2
+            var y = d3node.y - nodeWidth / 2
 
             var text = gIcon.select("text")
             var bb = text.node().getBBox()
@@ -1896,7 +1903,7 @@ export class Topology extends React.Component<Props, {}> {
 
             gIcon
                 .style("opacity", opacity)
-                .attr("transform", (d: D3Node) => d3node ? `translate(${d3node.x + this.nodeWidth / 2},${y + dy})` : ``)
+                .attr("transform", (d: D3Node) => d3node ? `translate(${d3node.x + nodeWidth / 2},${y + dy})` : ``)
         }
 
         const handleOffset = (gIcon: any, d: NodeWrapper, dy: number, offset: number, disabled: boolean) => {
@@ -1905,7 +1912,7 @@ export class Topology extends React.Component<Props, {}> {
                 return
             }
 
-            var y = d3node.y - this.nodeWidth / 2
+            var y = d3node.y - nodeWidth / 2
 
             var text = gIcon.select("text")
             text.text(offset)
@@ -1929,7 +1936,7 @@ export class Topology extends React.Component<Props, {}> {
             gIcon = gIcon.transition()
                 .duration(animDuration)
                 .style("opacity", opacity)
-                .attr("transform", (d: D3Node) => d3node ? `translate(${d3node.x + this.nodeWidth / 2},${y + dy})` : ``)
+                .attr("transform", (d: D3Node) => d3node ? `translate(${d3node.x + nodeWidth / 2},${y + dy})` : ``)
         }
 
         var groupButton = this.gGroupButtons.selectAll('g.group-button')
@@ -2184,7 +2191,7 @@ export class Topology extends React.Component<Props, {}> {
             // has the name can be updated
             .text((d: D3Node) => this.props.nodeAttrs(d.data.wrapped).name)
             .attr("pointer-events", "none")
-            .call(wrapText, 1.1, this.nodeWidth - 10)
+            .call(wrapText, 1.1, nodeWidth - 10)
 
         const renderNodeBadge = function (d: D3Node) {
             var badge = select(this).selectAll("g.node-badge")
@@ -2319,7 +2326,7 @@ export class Topology extends React.Component<Props, {}> {
             var x2 = d.target.x
             var y = d.source.y
 
-            if (Math.abs(x1 - x2) > this.nodeWidth) {
+            if (Math.abs(x1 - x2) > nodeWidth) {
                 let len = x2 - x1
                 var points = [
                     { x: x1 - 13, y: y + 35 },
