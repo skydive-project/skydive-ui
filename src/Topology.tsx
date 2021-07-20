@@ -28,8 +28,8 @@ const flextree = require('d3-flextree').flextree;
 import './Topology.css'
 
 const animDuration = 500
-const defaultGroupSize = 4
-const defaultMaxExpandSize = 8
+const defaultGroupSize = 6
+const defaultMaxExpandSize = 30
 
 const nodeWidth = 150
 const nodeHeight = 280
