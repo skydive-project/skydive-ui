@@ -31,17 +31,20 @@ const WEIGHT_K8S_OTHER = 3200
 
 const WEIGHT_PHY_FABRIC = 5010
 const WEIGHT_PHY_HOST = 5020
-const WEIGHT_PHY_BRIDGES = 5030
+const WEIGHT_PHY_NIC = 5030
+const WEIGHT_BRIDGES = 5035
+const WEIGHT_VIRT_VLAN = 5040
 const WEIGHT_PHY_NET = 5050
 const WEIGHT_PHY_PORTS = 5060
 
-const WEIGHT_VIRT_VLAN = 5070
 const WEIGHT_VIRT_NAMESPACE = 7010
-const WEIGHT_VIRT_VMS = 7020
 const WEIGHT_VIRT_CONTAINERS = 7030
 const WEIGHT_VIRT_BRIDGES = 7040
 const WEIGHT_VIRT_NET = 7050
-const WEIGHT_VIRT_PORTS = 7060
+const WEIGHT_SYSTEM_VMS = 7060
+const WEIGHT_VIRT_ROUTERS = 7070
+const WEIGHT_VIRT_VMS = 7080
+const WEIGHT_VIRT_PORTS = 7090
 
 const WEIGHT_NONE = 20000
 
@@ -452,7 +455,6 @@ class DefaultConfig {
                         for (let name of result) {
                             filters.push(nf(name, "namespace", "kubernetes", 10))
                         }
-
                         resolve(filters)
                     }
                 })
@@ -606,7 +608,6 @@ class DefaultConfig {
 
     private nodeAttrsInfra(node: Node): NodeAttrs {
         var attrs = this.newAttrs(node)
-
         switch (node.data.Type) {
             case "host":
                 attrs.icon = "\uf109"
@@ -615,7 +616,7 @@ class DefaultConfig {
             case "switch":
             case "bridge":
                 attrs.icon = "\uf6ff"
-                attrs.weight = WEIGHT_PHY_BRIDGES
+                attrs.weight = WEIGHT_BRIDGES
                 break
             case "patch":
             case "port":
@@ -628,6 +629,9 @@ class DefaultConfig {
                 attrs.weight = WEIGHT_PHY_PORTS
                 break
             case "device":
+                attrs.icon = "\uf796"
+                attrs.weight = WEIGHT_PHY_NIC
+                break
             case "internal":
             case "interface":
             case "tun":
@@ -676,8 +680,16 @@ class DefaultConfig {
                 attrs.weight = WEIGHT_NONE
         }
 
-        if (node.data.IPV4 && node.data.IPV4.length) {
+        if (node.data.IPV4 && node.data.IPV4.length && node.data.Type !== "bridge") {
             attrs.weight = WEIGHT_PHY_NET
+        }
+
+        if (node.data.IPV4 && node.data.IPV4.length && node.data.Type === "bridge") {
+            attrs.weight = WEIGHT_BRIDGES
+        }
+
+        if (!node.data.IPV4 && node.data.Type === "bridge") {
+            attrs.weight = WEIGHT_VIRT_BRIDGES
         }
 
         if (node.data.Probe === "fabric") {
@@ -687,6 +699,19 @@ class DefaultConfig {
         if (node.data.OfPort) {
             attrs.weight = WEIGHT_VIRT_PORTS
         }
+
+        if (node.data.Name === "lo") {
+            attrs.weight = WEIGHT_PHY_NIC
+        }
+
+        var regexpVirtRouter: RegExp = /^r-/
+        var regexpSystemVm: RegExp = /^[s-v-]/
+        if (regexpVirtRouter.test(node.data.Name)) {
+            attrs.weight = WEIGHT_VIRT_ROUTERS
+        }else if (regexpSystemVm.test(node.data.Name) || node.data.Name === "ccvm" || node.data.Name === "scvm") {
+            attrs.weight = WEIGHT_SYSTEM_VMS
+        }
+
 
         var virt = ["tap", "veth", "tun", "openvswitch"]
         if (node.data.Driver && virt.indexOf(node.data.Driver) > 0) {
@@ -834,6 +859,15 @@ class DefaultConfig {
             return
         }
 
+        var regexpVirtRouter: RegExp = /^r-/
+        var regexpSystemVm: RegExp = /^[s-]^[v-]/
+
+        if (regexpVirtRouter.test(node.data.Name)) {
+            nodeType = "virt-router"
+        }else if (regexpSystemVm.test(node.data.Name) || node.data.Name === "ccvm" || node.data.Name === "scvm") {
+            nodeType = "system-vm"
+        }
+        
         return nodeType + "(s)"
     }
 
@@ -850,6 +884,8 @@ class DefaultConfig {
         wt.set(WEIGHT_K8S_OTHER, "k8s-more")
 
         wt.set(WEIGHT_VIRT_VLAN, "virt-VLANs")
+        wt.set(WEIGHT_SYSTEM_VMS, "system-VMs")
+        wt.set(WEIGHT_VIRT_ROUTERS, "virt-Routers")
         wt.set(WEIGHT_VIRT_VMS, "virt-VMs")
         wt.set(WEIGHT_VIRT_CONTAINERS, "virt-containers")
         wt.set(WEIGHT_VIRT_BRIDGES, "virt-bridges")
@@ -859,7 +895,8 @@ class DefaultConfig {
 
         wt.set(WEIGHT_PHY_FABRIC, "phy-fabric")
         wt.set(WEIGHT_PHY_HOST, "phy-hosts")
-        wt.set(WEIGHT_PHY_BRIDGES, "phy-bridges")
+        wt.set(WEIGHT_PHY_NIC, "phy-nics")
+        wt.set(WEIGHT_BRIDGES, "bridges")
         wt.set(WEIGHT_PHY_NET, "phy-net")
         wt.set(WEIGHT_PHY_PORTS, "phy-ports")
 
@@ -897,7 +934,7 @@ class DefaultConfig {
                         case "host":
                             return ['Name']
                         default:
-                            return ['Name', 'Type', 'MAC', 'Driver', 'State']
+                            return ['Name', 'Type', 'MAC', 'Driver', 'State', 'Libvirt']
                     }
                 }
             },
