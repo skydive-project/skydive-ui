@@ -861,11 +861,16 @@ class DefaultConfig {
 
         var regexpVirtRouter: RegExp = /^r-/
         var regexpSystemVm: RegExp = /^[s-]^[v-]/
+        var regexpVirtBridge: RegExp = /^brenp/
 
         if (regexpVirtRouter.test(node.data.Name)) {
             nodeType = "virt-router"
         }else if (regexpSystemVm.test(node.data.Name) || node.data.Name === "ccvm" || node.data.Name === "scvm") {
             nodeType = "system-vm"
+        }
+
+        if (regexpVirtBridge.test(node.data.Name) && node.data.Type === "bridge") {
+            nodeType = "virt-bridge"
         }
         
         return nodeType + "(s)"
