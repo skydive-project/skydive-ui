@@ -32,7 +32,8 @@ import { styles } from './LoginStyles'
 import { Configuration } from './api/configuration'
 import { LoginApi } from './api'
 
-import Logo from '../assets/Logo-large.png'
+//import Logo from '../assets/Logo-large.png'
+import Logo from '../assets/ablestack.png'
 
 interface Props {
     classes: any
@@ -132,7 +133,7 @@ class Login extends React.Component<Props, State> {
                 <div className={classes.logo}>
                     <img src={Logo} alt="logo" className={classes.logoImg} />
                     <Typography className={classes.logoTitle} variant="h3" component="h3">
-                        SKYDIVE
+                        ABLESTACK Wall
                     </Typography>
                 </div>
                 <div className={classes.paper}>

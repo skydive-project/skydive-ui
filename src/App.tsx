@@ -1266,7 +1266,7 @@ class App extends React.Component<Props, State> {
           <List><HelpListItems onClick={this.openAboutDialog.bind(this)} /></List>
         </Drawer>
         <AboutDialog open={this.state.isAboutOpen} onClose={this.closeAboutDialog.bind(this)}
-          appName="Skydive" appVersion={this.state.appVersion} uiVersion={packageJson.version} />
+          appName="ABLESTACK Wall" appVersion={this.state.appVersion} uiVersion={packageJson.version} />
         <main className={classes.content}>
           <Container maxWidth="xl" className={classes.container}>
             <Topology className={classes.topology} ref={node => this.tc = node}

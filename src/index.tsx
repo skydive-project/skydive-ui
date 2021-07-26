@@ -28,7 +28,8 @@ import './index.css'
 import { AppState, store } from './Store'
 import Login from './Login'
 import App from './App'
-import Logo from '../assets/Logo.png'
+//import Logo from '../assets/Logo.png'
+import Logo from '../assets/ablestack-logo.png'
 
 const queryString = require('query-string')
 
