@@ -30,6 +30,8 @@ const WEIGHT_K8S_SERVICE = 3060
 const WEIGHT_K8S_OTHER = 3200
 
 const WEIGHT_PHY_FABRIC = 5010
+const WEIGHT_SWITCH = 5015
+const WEIGHT_SWITCH_PORTS = 5018
 const WEIGHT_PHY_HOST = 5020
 const WEIGHT_PHY_NIC = 5030
 const WEIGHT_BRIDGES = 5035
@@ -614,6 +616,8 @@ class DefaultConfig {
                 attrs.weight = WEIGHT_PHY_HOST
                 break
             case "switch":
+                attrs.weight = WEIGHT_SWITCH
+                break
             case "bridge":
                 attrs.icon = "\uf6ff"
                 attrs.weight = WEIGHT_BRIDGES
@@ -622,7 +626,7 @@ class DefaultConfig {
             case "port":
             case "switchport":
                 attrs.icon = "\uf0e8"
-                attrs.weight = WEIGHT_PHY_PORTS
+                attrs.weight = WEIGHT_SWITCH_PORTS
                 break
             case "erspan":
                 attrs.icon = "\uf1e0"
@@ -711,7 +715,6 @@ class DefaultConfig {
         }else if (regexpSystemVm.test(node.data.Name) || node.data.Name === "ccvm" || node.data.Name === "scvm") {
             attrs.weight = WEIGHT_SYSTEM_VMS
         }
-
 
         var virt = ["tap", "veth", "tun", "openvswitch"]
         if (node.data.Driver && virt.indexOf(node.data.Driver) > 0) {
@@ -899,6 +902,8 @@ class DefaultConfig {
         wt.set(WEIGHT_VIRT_PORTS, "virt-ports")
 
         wt.set(WEIGHT_PHY_FABRIC, "phy-fabric")
+        wt.set(WEIGHT_SWITCH, "phy-switch")
+        wt.set(WEIGHT_SWITCH_PORTS, "phy-switch-ports")
         wt.set(WEIGHT_PHY_HOST, "phy-hosts")
         wt.set(WEIGHT_PHY_NIC, "phy-nics")
         wt.set(WEIGHT_BRIDGES, "bridges")
