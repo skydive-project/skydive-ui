@@ -906,7 +906,7 @@ class DefaultConfig {
         wt.set(WEIGHT_SWITCH_PORTS, "phy-switch-ports")
         wt.set(WEIGHT_PHY_HOST, "phy-hosts")
         wt.set(WEIGHT_PHY_NIC, "phy-nics")
-        wt.set(WEIGHT_BRIDGES, "bridges")
+        wt.set(WEIGHT_BRIDGES, "host-bridges")
         wt.set(WEIGHT_PHY_NET, "phy-net")
         wt.set(WEIGHT_PHY_PORTS, "phy-ports")
 
@@ -944,7 +944,7 @@ class DefaultConfig {
                         case "host":
                             return ['Name']
                         default:
-                            return ['Name', 'Type', 'MAC', 'Driver', 'State', 'Libvirt']
+                            return ['Name', 'Type', 'MAC', 'Driver', 'State', 'Libvirt', 'IfIndex']
                     }
                 }
             },
