@@ -478,11 +478,15 @@ class DefaultConfig {
             }
         }
     }
-
     private newAttrs(node: Node): NodeAttrs {
         var name = node.data.Name
+        var ifName = node.data.IfName
         if (name.length > 24) {
             name = node.data.Name.substring(0, 24) + "."
+        }
+        // You can edid it. To change name of node
+        if (ifName != "" && ifName !== undefined && node.data.Type == "tuntap") {
+            name = ifName + " / " + name
         }
 
         var attrs = {
@@ -944,7 +948,7 @@ class DefaultConfig {
                         case "host":
                             return ['Name']
                         default:
-                            return ['Name', 'Type', 'MAC', 'Driver', 'State', 'Libvirt', 'IfIndex']
+                            return ['Name', 'Type', 'MAC', 'Driver', 'State', 'Libvirt', 'IfName' ,'IfAddr']
                     }
                 }
             },
@@ -1137,7 +1141,7 @@ class DefaultConfig {
     }
 
     isHierarchyLink(data: any): boolean {
-        return data?.RelationType === "ownership"
+        return data?.RelationType === "ownership" || data?.RelationType === "vownership"
     }
 
     linkDataFields(): Array<LinkDataField> {
