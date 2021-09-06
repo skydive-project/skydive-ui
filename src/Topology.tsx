@@ -29,7 +29,7 @@ import './Topology.css'
 
 const animDuration = 500
 const defaultGroupSize = 6
-const defaultMaxExpandSize = 30
+const defaultMaxExpandSize = 100
 
 const nodeWidth = 150
 const nodeHeight = 280
