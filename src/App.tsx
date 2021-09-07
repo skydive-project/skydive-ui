@@ -1122,7 +1122,7 @@ class App extends React.Component<Props, State> {
             onDelete={() => this.resetTimetravel()}
           />
         }
-        {!this.state.timeContext &&
+        {/* {!this.state.timeContext &&
           <IconButton
             aria-controls="menu-time"
             aria-haspopup="true"
@@ -1132,8 +1132,8 @@ class App extends React.Component<Props, State> {
               <RestoreIcon />
             </Badge>
           </IconButton>
-        }
-        <IconButton
+        } */}
+        {/* <IconButton
           aria-controls="menu-selection"
           aria-haspopup="true"
           onClick={(event: React.MouseEvent<HTMLElement>) => this.props.selection.length > 0 && this.openMenu("selection", event)}
@@ -1141,7 +1141,7 @@ class App extends React.Component<Props, State> {
           <Badge badgeContent={this.props.selection.length} color="secondary">
             <ListIcon />
           </Badge>
-        </IconButton>
+        </IconButton> */}
         <Menu
           id="menu-selection"
           anchorEl={this.state.anchorEl.get("selection")}
@@ -1172,14 +1172,14 @@ class App extends React.Component<Props, State> {
             <Typography>Unselect all</Typography>
           </MenuItem>
         </Menu>
-        <IconButton
+        {/* <IconButton
           aria-label="account of current user"
           aria-controls="menu-profile"
           aria-haspopup="true"
           onClick={this.openMenu.bind(this, "profile")}
           color="inherit">
           <AccountCircle />
-        </IconButton>
+        </IconButton> */}
         <Menu
           id="menu-profile"
           anchorEl={this.state.anchorEl.get("profile")}
@@ -1262,11 +1262,11 @@ class App extends React.Component<Props, State> {
           </div>
           <Divider />
           <List><MenuListItems /></List>
-          <Divider />
+          {/* <Divider /> */}
           <List><HelpListItems onClick={this.openAboutDialog.bind(this)} /></List>
         </Drawer>
         <AboutDialog open={this.state.isAboutOpen} onClose={this.closeAboutDialog.bind(this)}
-          appName="ABLESTACK Wall" appVersion={this.state.appVersion} uiVersion={packageJson.version} />
+          appName="ABLESTACK Topology" appVersion="0.10" uiVersion="0.10" />
         <main className={classes.content}>
           <Container maxWidth="xl" className={classes.container}>
             <Topology className={classes.topology} ref={node => this.tc = node}

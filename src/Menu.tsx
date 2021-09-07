@@ -26,12 +26,12 @@ import LibraryBooksIcon from '@material-ui/icons/LibraryBooks'
 export function MenuListItems() {
     return (
         <React.Fragment>
-            <ListItem button={true}>
+            {/* <ListItem button={true}>
                 <ListItemIcon>
                     <SettingsIcon />
                 </ListItemIcon>
                 <ListItemText primary="Settings" />
-            </ListItem>
+            </ListItem> */}
         </React.Fragment>
     )
 }
@@ -45,12 +45,12 @@ export function HelpListItems(props: HelpListItemsProps) {
 
     return (
         <React.Fragment>
-            <ListItem button={true}>
+            {/* <ListItem button={true}>
                 <ListItemIcon>
                     <LibraryBooksIcon />
                 </ListItemIcon>
                 <ListItemText primary="Documentation" />
-            </ListItem>
+            </ListItem> */}
             <ListItem button={true}>
                 <ListItemIcon>
                     <InfoIcon />
