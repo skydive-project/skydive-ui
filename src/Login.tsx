@@ -132,8 +132,8 @@ class Login extends React.Component<Props, State> {
                 <CssBaseline />
                 <div className={classes.logo}>
                     <img src={Logo} alt="logo" className={classes.logoImg} />
-                    <Typography className={classes.logoTitle} variant="h3" component="h3">
-                        ABLESTACK Wall
+                    <Typography className={classes.logoTitle} variant="h4" component="h4">
+                        ABLESTACK Topology
                     </Typography>
                 </div>
                 <div className={classes.paper}>
