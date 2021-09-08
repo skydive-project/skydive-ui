@@ -1122,7 +1122,7 @@ class App extends React.Component<Props, State> {
             onDelete={() => this.resetTimetravel()}
           />
         }
-        {/* {!this.state.timeContext &&
+        {!this.state.timeContext &&
           <IconButton
             aria-controls="menu-time"
             aria-haspopup="true"
@@ -1132,8 +1132,8 @@ class App extends React.Component<Props, State> {
               <RestoreIcon />
             </Badge>
           </IconButton>
-        } */}
-        {/* <IconButton
+        }
+        <IconButton
           aria-controls="menu-selection"
           aria-haspopup="true"
           onClick={(event: React.MouseEvent<HTMLElement>) => this.props.selection.length > 0 && this.openMenu("selection", event)}
@@ -1141,7 +1141,7 @@ class App extends React.Component<Props, State> {
           <Badge badgeContent={this.props.selection.length} color="secondary">
             <ListIcon />
           </Badge>
-        </IconButton> */}
+        </IconButton>
         <Menu
           id="menu-selection"
           anchorEl={this.state.anchorEl.get("selection")}
@@ -1266,7 +1266,7 @@ class App extends React.Component<Props, State> {
           <List><HelpListItems onClick={this.openAboutDialog.bind(this)} /></List>
         </Drawer>
         <AboutDialog open={this.state.isAboutOpen} onClose={this.closeAboutDialog.bind(this)}
-          appName="ABLESTACK Topology" appVersion="0.10" uiVersion="0.10" />
+          appName="ABLESTACK SKYDIVE" appVersion="1.00" uiVersion="1.00"/>
         <main className={classes.content}>
           <Container maxWidth="xl" className={classes.container}>
             <Topology className={classes.topology} ref={node => this.tc = node}

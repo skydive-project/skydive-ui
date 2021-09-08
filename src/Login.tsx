@@ -133,7 +133,7 @@ class Login extends React.Component<Props, State> {
                 <div className={classes.logo}>
                     <img src={Logo} alt="logo" className={classes.logoImg} />
                     <Typography className={classes.logoTitle} variant="h4" component="h4">
-                        ABLESTACK Topology
+                        ABLESTACK SKYDIVE
                     </Typography>
                 </div>
                 <div className={classes.paper}>

@@ -48,8 +48,11 @@ export default function AboutDialog(props: AboutProps) {
                             {appName} version : {appVersion}
                         </DialogContentText>
                     }
-                    <DialogContentText>
+                    {/* <DialogContentText>
                         UI version : {uiVersion}
+                    </DialogContentText> */}
+                    <DialogContentText>
+                    Copyright (c) 2021, ABLECLOUD.Co.Ltd
                     </DialogContentText>
                 </div>
             </DialogContent>
