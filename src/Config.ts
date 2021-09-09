@@ -35,7 +35,7 @@ const WEIGHT_SWITCH_PORTS = 5018
 const WEIGHT_PHY_HOST = 5020
 const WEIGHT_PHY_NIC = 5030
 const WEIGHT_BRIDGES = 5035
-const WEIGHT_VIRT_VLAN = 5040
+const WEIGHT_VLAN = 5040
 const WEIGHT_PHY_NET = 5050
 const WEIGHT_PHY_PORTS = 5060
 
@@ -681,7 +681,7 @@ class DefaultConfig {
                 break
             case "vlan":
                 attrs.icon = "\uf6ff"
-                attrs.weight = WEIGHT_VIRT_VLAN
+                attrs.weight = WEIGHT_VLAN
                 break    
             default:
                 attrs.icon = "\uf796"
@@ -878,6 +878,8 @@ class DefaultConfig {
 
         if (regexpVirtBridge.test(node.data.Name) && node.data.Type === "bridge") {
             nodeType = "virt-bridge"
+        }else if (node.data.Type === "bridge"){
+            nodeType = "host-bridge"
         }
         
         return nodeType + "(s)"
@@ -895,7 +897,7 @@ class DefaultConfig {
         wt.set(WEIGHT_K8S_SERVICE, "k8s-services")
         wt.set(WEIGHT_K8S_OTHER, "k8s-more")
 
-        wt.set(WEIGHT_VIRT_VLAN, "virt-VLANs")
+        wt.set(WEIGHT_VLAN, "vlans")
         wt.set(WEIGHT_SYSTEM_VMS, "system-VMs")
         wt.set(WEIGHT_VIRT_ROUTERS, "virt-Routers")
         wt.set(WEIGHT_VIRT_VMS, "virt-VMs")

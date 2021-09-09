@@ -354,7 +354,6 @@ class App extends React.Component<Props, State> {
     if (!this.tc) {
       return false
     }
-
     if (!node.Metadata) {
       console.warn("no metadata found: " + node)
       return false
