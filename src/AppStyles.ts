@@ -213,6 +213,7 @@ export const styles = (theme: Theme) => createStyles({
     paddingLeft: theme.spacing(0),
     paddingRight: theme.spacing(0),
     backgroundColor: theme.palette.common.white,
+    display: 'none',
   },
   filtersFab: {
     margin: theme.spacing(1),
