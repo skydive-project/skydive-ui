@@ -949,6 +949,10 @@ class DefaultConfig {
                     switch (data.Type) {
                         case "host":
                             return ['Name']
+                        case "switch":
+                            return ['Name','Type', 'LLDP','Probe']    
+                        case "switchport":
+                            return ['Name','Type', 'LLDP','RemoteSysName']   
                         default:
                             return ['Name', 'Type', 'MAC', 'Driver', 'State', 'Libvirt', 'IfName' ,'IfAddr']
                     }
